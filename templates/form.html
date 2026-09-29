@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ accion }} Producto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ accion }} Producto</h1>
+        
+    <form action="" method="POST" class="bg-white shadow-md rounded-lg p-6 space-y-4">
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Producto ID:</label>
+                <input type="text" name="productoID" value="{{ producto.productoID if producto else '' }}" {% if accion == 'Editar' %}readonly class="w-full border rounded p-2 bg-gray-100 text-gray-500" {% else %}required class="w-full border rounded p-2 focus:ring focus:ring-blue-300"{% endif %}>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Nombre:</label>
+                    <input type="text" name="nombre" value="{{ producto.Nombre if producto else '' }}" required class="w-full border rounded p-2">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Categoría:</label>
+                    <input type="text" name="categoria" value="{{ producto.Categoria if producto else '' }}" required class="w-full border rounded p-2">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Precio ($):</label>
+                    <input type="number" step="0.01" name="precio" value="{{ producto.Precio if producto else '' }}" required class="w-full border rounded p-2">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Stock:</label>
+                    <input type="number" name="stock" value="{{ producto.Stock if producto else '' }}" required class="w-full border rounded p-2">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Color:</label>
+                    <input type="text" name="color" value="{{ producto.Color if producto else '' }}" class="w-full border rounded p-2">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Material:</label>
+                    <input type="text" name="material" value="{{ producto.Material if producto else '' }}" class="w-full border rounded p-2">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Talla:</label>
+                    <input type="text" name="talla" value="{{ producto.Talla if producto else '' }}" class="w-full border rounded p-2">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Vendedor ID:</label>
+                <input type="text" name="vendedorID" value="{{ producto.VendedorID if producto else '' }}" class="w-full border rounded p-2">
+            </div>
+
+            <!-- Sección de Logística de Envíos (Objeto Anidado) -->
+            <fieldset class="border p-4 rounded mt-4 bg-gray-50">
+                <legend class="font-bold text-gray-700 px-2">Logística de Envío</legend>
+                <div class="grid grid-cols-3 gap-2 mt-2">
+                    <div>
+                        <label class="text-xs text-gray-600">Alto (cm):</label>
+                        <input type="number" step="0.1" name="alto" value="{{ producto.LogisticaEnvio.DimensionesCm.Alto if producto else '' }}" class="w-full border rounded p-1 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-600">Ancho (cm):</label>
+                        <input type="number" step="0.1" name="ancho" value="{{ producto.LogisticaEnvio.DimensionesCm.Ancho if producto else '' }}" class="w-full border rounded p-1 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-600">Profundidad (cm):</label>
+                        <input type="number" step="0.1" name="profundidad" value="{{ producto.LogisticaEnvio.DimensionesCm.Profundidad if producto else '' }}" class="w-full border rounded p-1 text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mt-3">
+                    <div>
+                        <label class="text-xs text-gray-600">Peso (Kg):</label>
+                        <input type="number" step="0.1" name="peso_kg" value="{{ producto.LogisticaEnvio.PesoKg if producto else '' }}" class="w-full border rounded p-1 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-600">Tipo de Empaque:</label>
+                        <input type="text" name="tipo_empaque" value="{{ producto.LogisticaEnvio.TipoEmpaque if producto else '' }}" class="w-full border rounded p-1 text-sm">
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center">
+                    <input type="checkbox" name="requiere_fragil" id="requiere_fragil" class="mr-2 h-4 w-4" {% if producto and producto.LogisticaEnvio.RequiereFragil %}checked{% endif %}>
+                    <label for="requiere_fragil" class="text-sm text-gray-700">¿Requiere manejo frágil?</label>
+                </div>
+            </fieldset>
+
+            <div class="flex justify-between items-center mt-6">
+                <a href="/" class="text-gray-600 hover:underline">← Cancelar</a>
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded shadow">Guardar</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
