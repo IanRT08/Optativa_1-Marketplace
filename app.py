@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Blueprint
+from functools import wraps
 import requests
 import os
 import re
@@ -21,187 +22,164 @@ API_GATEWAY_URL = "https://mpucrluxrh.execute-api.us-east-1.amazonaws.com"
 ID_PATTERN = re.compile(r'^[a-zA-Z0-9_-]{1,50}$')
 
 def validar_producto_id(producto_id):
-    """Retorna True si el ID tiene formato válido, False si es sospechoso."""
     return bool(ID_PATTERN.match(producto_id))
 
-@app.route('/')
-def index():
+def _solo_fetch(f):
+    """
+    SEGURIDAD: Decorador que restringe el acceso a las rutas /api solo a peticiones
+    internas del frontend (fetch). Verifica el header X-Requested-With que el JS
+    agrega en cada llamada. Cualquier acceso directo desde el navegador, Postman
+    u otra herramienta externa recibe un 403 sin revelar que el endpoint existe.
+    """
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+            return jsonify({"error": "Forbidden"}), 403
+        return f(*args, **kwargs)
+    return wrapper
+
+
+# ── Blueprint /api ────────────────────────────────────────────────────────────
+# SEGURIDAD: Las rutas de la API viven en un Blueprint separado.
+# No aparecen en ningún template ni son enlazadas desde el HTML.
+api = Blueprint('api', __name__, url_prefix='/api')
+
+@api.route('/productos', methods=['GET'])
+@csrf.exempt
+@_solo_fetch
+def api_listar():
     try:
-        # Consume el endpoint GET /consultar
         response = requests.get(f"{API_GATEWAY_URL}/consultar")
-        productos = response.json() if response.status_code == 200 else []
-    except Exception as e:
-        productos = []
-        # SEGURIDAD: No se expone el detalle de la excepción al usuario para no filtrar información interna.
-        flash("Error al conectar con el servidor. Intente nuevamente.", "error")
-    
-    return render_template('index.html', productos=productos)
-
-@app.route('/crear', methods=['GET', 'POST'])
-def crear():
-    if request.method == 'POST':
-        try:
-            # Mapeo usando DTO
-            logistica = LogisticaEnvioDTO(
-                alto=request.form.get('alto'),
-                ancho=request.form.get('ancho'),
-                profundidad=request.form.get('profundidad'),
-                peso_kg=request.form.get('peso_kg'),
-                requiere_fragil=True if request.form.get('requiere_fragil') == 'on' else False,
-                tipo_empaque=request.form.get('tipo_empaque')
-            )
-            
-            producto_dto = ProductoDTO(
-                productoID=request.form.get('productoID'),
-                categoria=request.form.get('categoria'),
-                color=request.form.get('color'),
-                logistica=logistica,
-                material=request.form.get('material'),
-                nombre=request.form.get('nombre'),
-                precio=request.form.get('precio'),
-                stock=request.form.get('stock'),
-                talla=request.form.get('talla'),
-                vendedorID=request.form.get('vendedorID')
-            )
-
-            # CORREGIDO: Apunta al endpoint POST /crear de tu API Gateway
-            response = requests.post(f"{API_GATEWAY_URL}/crear", json=producto_dto.to_dict())
-
-            if response.status_code in [200, 201]:
-                flash("Producto creado exitosamente", "success")
-                return redirect(url_for('index'))
-            else:
-                # SEGURIDAD: No se reenvía response.text al usuario para no exponer detalles de la API/AWS.
-                flash("Error al crear el producto. Intente nuevamente.", "error")
-        except Exception as e:
-            # SEGURIDAD: Se registra el error internamente pero no se muestra al usuario.
-            print(f"[ERROR crear]: {str(e)}")
-            flash("Ocurrió un error interno. Intente nuevamente.", "error")
-
-    return render_template('form.html', accion="Crear", producto=None)
-
-@app.route('/editar/<producto_id>', methods=['GET', 'POST'])
-def editar(producto_id):
-    # SEGURIDAD: Se valida el formato del ID antes de usarlo en la URL de la API (previene NoSQL Injection y Path Traversal).
-    if not validar_producto_id(producto_id):
-        flash("ID de producto inválido.", "error")
-        return redirect(url_for('index'))
-    if request.method == 'GET':
-        producto = None
-        try:
-            response = requests.get(f"{API_GATEWAY_URL}/consultar/{producto_id}")
-            if response.status_code == 200:
-                data = response.json()
-                # Si por error la API devolvió una lista, filtramos exactamente el productoID que buscamos
-                if isinstance(data, list):
-                    for item in data:
-                        if item.get('productoID') == producto_id:
-                            producto = item
-                            break
-                elif isinstance(data, dict):
-                    producto = data
-        except Exception as e:
-            print(f"[ERROR editar GET]: {str(e)}")
-            # SEGURIDAD: No se expone el detalle de la excepción al usuario.
-            flash("Error al obtener el producto. Intente nuevamente.", "error")
-            
-        return render_template('form.html', accion="Editar", producto=producto)
-    
-    if request.method == 'POST':
-        try:
-            logistica = LogisticaEnvioDTO(
-                alto=request.form.get('alto'),
-                ancho=request.form.get('ancho'),
-                profundidad=request.form.get('profundidad'),
-                peso_kg=request.form.get('peso_kg'),
-                requiere_fragil=True if request.form.get('requiere_fragil') == 'on' else False,
-                tipo_empaque=request.form.get('tipo_empaque')
-            )
-            
-            producto_dto = ProductoDTO(
-                productoID=producto_id,
-                categoria=request.form.get('categoria'),
-                color=request.form.get('color'),
-                logistica=logistica,
-                material=request.form.get('material'),
-                nombre=request.form.get('nombre'),
-                precio=request.form.get('precio'),
-                stock=request.form.get('stock'),
-                talla=request.form.get('talla'),
-                vendedorID=request.form.get('vendedorID')
-            )
-
-            # Consume el endpoint PUT /modificar/{productoID}
-            response = requests.put(f"{API_GATEWAY_URL}/modificar/{producto_id}", json=producto_dto.to_dict())
-
-            if response.status_code == 200:
-                flash("Producto actualizado exitosamente", "success")
-                return redirect(url_for('index'))
-            else:
-                # SEGURIDAD: No se reenvía response.text al usuario para no exponer detalles de la API/AWS.
-                flash("Error al actualizar el producto. Intente nuevamente.", "error")
-        except Exception as e:
-            print(f"[ERROR editar POST]: {str(e)}")
-            # SEGURIDAD: Se registra el error internamente pero no se muestra al usuario.
-            flash("Ocurrió un error interno. Intente nuevamente.", "error")
-
-    return redirect(url_for('index'))
-
-@app.route('/eliminar/<producto_id>', methods=['POST'])
-def eliminar(producto_id):
-    # SEGURIDAD: Se valida el formato del ID antes de usarlo en la URL de la API (previene NoSQL Injection y Path Traversal).
-    if not validar_producto_id(producto_id):
-        flash("ID de producto inválido.", "error")
-        return redirect(url_for('index'))
-    try:
-        # Consume el endpoint DELETE /eliminar/{productoID} que creaste en API Gateway
-        response = requests.delete(f"{API_GATEWAY_URL}/eliminar/{producto_id}")
         if response.status_code == 200:
-            flash("Producto eliminado correctamente", "success")
-        else:
-            # SEGURIDAD: No se reenvía response.text al usuario para no exponer detalles de la API/AWS.
-            flash("Error al eliminar el producto. Intente nuevamente.", "error")
+            return jsonify(response.json()), 200
+        return jsonify({"error": "Error al obtener productos"}), 502
     except Exception as e:
-        print(f"[ERROR eliminar]: {str(e)}")
-        # SEGURIDAD: Se registra el error internamente pero no se muestra al usuario.
-        flash("Ocurrió un error interno. Intente nuevamente.", "error")
-    return redirect(url_for('index'))
+        print(f"[ERROR api_listar]: {str(e)}")
+        return jsonify({"error": "Error interno"}), 500
 
-@app.route('/detalle/<producto_id>')
-def detalle(producto_id):
-    # SEGURIDAD: Se valida el formato del ID antes de usarlo en la URL de la API (previene NoSQL Injection y Path Traversal).
+@api.route('/productos/<producto_id>', methods=['GET'])
+@csrf.exempt
+@_solo_fetch
+def api_obtener(producto_id):
     if not validar_producto_id(producto_id):
-        flash("ID de producto inválido.", "error")
-        return redirect(url_for('index'))
-    producto = None
+        return jsonify({"error": "ID inválido"}), 400
     try:
         response = requests.get(f"{API_GATEWAY_URL}/consultar/{producto_id}")
         if response.status_code == 200:
             data = response.json()
             if isinstance(data, list):
-                # Buscamos si la lista contiene el producto específico
-                for item in data:
-                    if item.get('productoID') == producto_id:
-                        producto = item
-                        break
-            elif isinstance(data, dict):
+                producto = next((i for i in data if i.get('productoID') == producto_id), None)
+            else:
                 producto = data
-        else:
-            # SEGURIDAD: No se reenvía el status code ni response.text de AWS al usuario.
-            flash("Error al obtener el producto. Intente nuevamente.", "error")
-            return redirect(url_for('index'))
-            
+            if not producto:
+                return jsonify({"error": "Producto no encontrado"}), 404
+            return jsonify(producto), 200
+        return jsonify({"error": "Error al obtener producto"}), 502
     except Exception as e:
-        print(f"[ERROR detalle]: {str(e)}")
-        # SEGURIDAD: Se registra el error internamente pero no se muestra al usuario.
-        flash("Ocurrió un error interno. Intente nuevamente.", "error")
-        return redirect(url_for('index'))
+        print(f"[ERROR api_obtener]: {str(e)}")
+        return jsonify({"error": "Error interno"}), 500
 
-    if not producto:
-        flash("No se pudo cargar la información del producto.", "error")
-        return redirect(url_for('index'))
+@api.route('/productos', methods=['POST'])
+@csrf.exempt
+@_solo_fetch
+def api_crear():
+    try:
+        data = request.get_json(silent=True) or {}
+        logistica = LogisticaEnvioDTO(
+            alto=data.get('alto'), ancho=data.get('ancho'),
+            profundidad=data.get('profundidad'), peso_kg=data.get('peso_kg'),
+            requiere_fragil=data.get('requiere_fragil', False),
+            tipo_empaque=data.get('tipo_empaque')
+        )
+        producto_dto = ProductoDTO(
+            productoID=data.get('productoID'), categoria=data.get('categoria'),
+            color=data.get('color'), logistica=logistica,
+            material=data.get('material'), nombre=data.get('nombre'),
+            precio=data.get('precio'), stock=data.get('stock'),
+            talla=data.get('talla'), vendedorID=data.get('vendedorID')
+        )
+        response = requests.post(f"{API_GATEWAY_URL}/crear", json=producto_dto.to_dict())
+        if response.status_code in [200, 201]:
+            return jsonify({"mensaje": "Producto creado exitosamente"}), 201
+        return jsonify({"error": "Error al crear el producto"}), 502
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        print(f"[ERROR api_crear]: {str(e)}")
+        return jsonify({"error": "Error interno"}), 500
 
-    return render_template('detalle.html', producto=producto)
+@api.route('/productos/<producto_id>', methods=['PUT'])
+@csrf.exempt
+@_solo_fetch
+def api_editar(producto_id):
+    if not validar_producto_id(producto_id):
+        return jsonify({"error": "ID inválido"}), 400
+    try:
+        data = request.get_json(silent=True) or {}
+        logistica = LogisticaEnvioDTO(
+            alto=data.get('alto'), ancho=data.get('ancho'),
+            profundidad=data.get('profundidad'), peso_kg=data.get('peso_kg'),
+            requiere_fragil=data.get('requiere_fragil', False),
+            tipo_empaque=data.get('tipo_empaque')
+        )
+        producto_dto = ProductoDTO(
+            productoID=producto_id, categoria=data.get('categoria'),
+            color=data.get('color'), logistica=logistica,
+            material=data.get('material'), nombre=data.get('nombre'),
+            precio=data.get('precio'), stock=data.get('stock'),
+            talla=data.get('talla'), vendedorID=data.get('vendedorID')
+        )
+        response = requests.put(f"{API_GATEWAY_URL}/modificar/{producto_id}", json=producto_dto.to_dict())
+        if response.status_code == 200:
+            return jsonify({"mensaje": "Producto actualizado exitosamente"}), 200
+        return jsonify({"error": "Error al actualizar el producto"}), 502
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        print(f"[ERROR api_editar]: {str(e)}")
+        return jsonify({"error": "Error interno"}), 500
+
+@api.route('/productos/<producto_id>', methods=['DELETE'])
+@csrf.exempt
+@_solo_fetch
+def api_eliminar(producto_id):
+    if not validar_producto_id(producto_id):
+        return jsonify({"error": "ID inválido"}), 400
+    try:
+        response = requests.delete(f"{API_GATEWAY_URL}/eliminar/{producto_id}")
+        if response.status_code == 200:
+            return jsonify({"mensaje": "Producto eliminado correctamente"}), 200
+        return jsonify({"error": "Error al eliminar el producto"}), 502
+    except Exception as e:
+        print(f"[ERROR api_eliminar]: {str(e)}")
+        return jsonify({"error": "Error interno"}), 500
+
+app.register_blueprint(api)
+
+
+# ── Rutas HTML — solo renderizan la vista, los datos los carga el JS ──────────
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/crear', methods=['GET'])
+def crear():
+    return render_template('form.html', accion="Crear")
+
+@app.route('/editar/<producto_id>', methods=['GET'])
+def editar(producto_id):
+    if not validar_producto_id(producto_id):
+        flash("ID de producto inválido.", "error")
+        return redirect(url_for('index'))
+    return render_template('form.html', accion="Editar", producto_id=producto_id)
+
+@app.route('/detalle/<producto_id>')
+def detalle(producto_id):
+    if not validar_producto_id(producto_id):
+        flash("ID de producto inválido.", "error")
+        return redirect(url_for('index'))
+    return render_template('detalle.html', producto_id=producto_id)
 
 if __name__ == '__main__':
     # SEGURIDAD: El modo debug se controla desde variable de entorno.

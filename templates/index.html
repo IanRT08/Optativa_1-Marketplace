@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Gestión de Productos - AWS</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 font-sans leading-normal tracking-normal">
@@ -13,16 +12,8 @@
             <a href="/crear" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow">➕ Nuevo Producto</a>
         </div>
 
-        <!-- Alertas flash -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded text-white {% if category == 'success' %}bg-green-500{% else %}bg-red-500{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <!-- Alertas -->
+        <div id="alerta" class="hidden mb-4 p-4 rounded text-white"></div>
 
         <!-- Tabla de Productos -->
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
@@ -37,37 +28,87 @@
                         <th class="py-3 px-6 text-center">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="text-gray-600 text-sm font-light">
-                    {% for p in productos %}
-                    <tr class="border-b border-gray-200 hover:bg-gray-100">
-                        <td class="py-3 px-6 text-left whitespace-nowrap font-medium">{{ p.productoID }}</td>
-                        <td class="py-3 px-6 text-left">{{ p.Nombre }}</td>
-                        <td class="py-3 px-6 text-left">{{ p.Categoria }}</td>
-                        <td class="py-3 px-6 text-center">${{ p.Precio }}</td>
-                        <td class="py-3 px-6 text-center">{{ p.Stock }}</td>
-                        <td class="py-3 px-6 text-center">
-                            <div class="flex item-center justify-center space-x-2">
-                                <!-- Botón de Ver Detalle -->
-                                <a href="/detalle/{{ p.productoID }}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">👁️ Ver</a>
-                                <!-- Botón de Editar -->
-                                <a href="/editar/{{ p.productoID }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs">✏️ Editar</a>
-                                <!-- Botón de Eliminar -->
-                                <!-- SEGURIDAD: Token CSRF — previene ataques Cross-Site Request Forgery desde páginas externas. -->
-                                <form action="/eliminar/{{ p.productoID }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este producto?');">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">🗑️ Eliminar</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="6" class="text-center py-4 text-gray-500">No hay productos registrados.</td>
-                    </tr>
-                    {% endfor %}
+                <tbody id="tabla-body" class="text-gray-600 text-sm font-light">
+                    <tr><td colspan="6" class="text-center py-4 text-gray-400">Cargando productos...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
+
+    <script>
+        // SEGURIDAD: Todas las peticiones al /api incluyen X-Requested-With
+        // para que el backend rechace cualquier acceso externo directo.
+        function apiFetch(url, opciones = {}) {
+            return fetch(url, {
+                ...opciones,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(opciones.headers || {})
+                }
+            });
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            const alerta = document.getElementById('alerta');
+            alerta.textContent = mensaje;
+            alerta.className = `mb-4 p-4 rounded text-white ${tipo === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            alerta.classList.remove('hidden');
+            setTimeout(() => alerta.classList.add('hidden'), 4000);
+        }
+
+        function renderTabla(productos) {
+            const tbody = document.getElementById('tabla-body');
+            if (!productos.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No hay productos registrados.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = productos.map(p => `
+                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                    <td class="py-3 px-6 text-left whitespace-nowrap font-medium">${p.productoID}</td>
+                    <td class="py-3 px-6 text-left">${p.Nombre}</td>
+                    <td class="py-3 px-6 text-left">${p.Categoria}</td>
+                    <td class="py-3 px-6 text-center">$${p.Precio}</td>
+                    <td class="py-3 px-6 text-center">${p.Stock}</td>
+                    <td class="py-3 px-6 text-center">
+                        <div class="flex item-center justify-center space-x-2">
+                            <a href="/detalle/${p.productoID}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">👁️ Ver</a>
+                            <a href="/editar/${p.productoID}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs">✏️ Editar</a>
+                            <button onclick="eliminar('${p.productoID}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">🗑️ Eliminar</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function cargarProductos() {
+            try {
+                const res = await apiFetch('/api/productos');
+                const data = await res.json();
+                if (res.ok) renderTabla(data);
+                else mostrarAlerta('Error al cargar productos.', 'error');
+            } catch {
+                mostrarAlerta('Error al conectar con el servidor.', 'error');
+            }
+        }
+
+        async function eliminar(id) {
+            if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+            try {
+                const res = await apiFetch(`/api/productos/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (res.ok) {
+                    mostrarAlerta(data.mensaje, 'success');
+                    cargarProductos();
+                } else {
+                    mostrarAlerta(data.error || 'Error al eliminar.', 'error');
+                }
+            } catch {
+                mostrarAlerta('Error al conectar con el servidor.', 'error');
+            }
+        }
+
+        cargarProductos();
+    </script>
 </body>
 </html>

@@ -12,87 +12,110 @@
             <a href="/" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded shadow">← Volver al Catálogo</a>
         </div>
 
-        <div class="bg-white shadow-md rounded-lg p-6 space-y-6">
-            <!-- Información Principal -->
-            <div class="grid grid-cols-2 gap-4 border-b pb-4">
-                <div>
-                    <span class="block text-xs font-bold text-gray-400 uppercase">ID de Producto</span>
-                    <span class="text-lg font-semibold text-gray-800">{{ producto.productoID }}</span>
-                </div>
-                <div>
-                    <span class="block text-xs font-bold text-gray-400 uppercase">Nombre</span>
-                    <span class="text-lg font-semibold text-gray-800">{{ producto.Nombre }}</span>
-                </div>
-            </div>
+        <!-- Alerta de error -->
+        <div id="alerta" class="hidden mb-4 p-4 rounded text-white bg-red-500"></div>
 
-            <div class="grid grid-cols-3 gap-4 border-b pb-4">
-                <div>
-                    <span class="block text-xs font-bold text-gray-400 uppercase">Categoría</span>
-                    <span class="text-gray-700">{{ producto.Categoria }}</span>
-                </div>
-                <div>
-                    <span class="block text-xs font-bold text-gray-400 uppercase">Precio</span>
-                    <span class="text-gray-700 font-bold text-green-600">${{ producto.Precio }}</span>
-                </div>
-                <div>
-                    <span class="block text-xs font-bold text-gray-400 uppercase">Stock</span>
-                    <span class="text-gray-700">{{ producto.Stock }} unidades</span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-4 border-b pb-4">
-                <div>
-                    <span class="block text-xs font-bold text-gray-400 uppercase">Color</span>
-                    <span class="text-gray-700">{{ producto.Color or 'N/A' }}</span>
-                </div>
-                <div>
-                    <span class="block text-xs font-bold text-gray-400 uppercase">Material</span>
-                    <span class="text-gray-700">{{ producto.Material or 'N/A' }}</span>
-                </div>
-                <div>
-                    <span class="block text-xs font-bold text-gray-400 uppercase">Talla</span>
-                    <span class="text-gray-700">{{ producto.Talla or 'N/A' }}</span>
-                </div>
-            </div>
-
-            <div class="border-b pb-4">
-                <span class="block text-xs font-bold text-gray-400 uppercase">Vendedor ID</span>
-                <span class="text-gray-700">{{ producto.VendedorID or 'N/A' }}</span>
-            </div>
-
-            <!-- Sección de Logística de Envíos (Mapa Anidado) -->
-            <div class="bg-gray-50 border p-4 rounded-lg">
-                <h3 class="font-bold text-gray-700 mb-3 border-b pb-2">📦 Logística de Envío</h3>
-                {% if producto.LogisticaEnvio %}
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <span class="block font-semibold text-gray-600">Dimensiones (Alto x Ancho x Profundidad):</span>
-                        <span class="text-gray-700">
-                            {{ producto.LogisticaEnvio.DimensionesCm.Alto }}cm x 
-                            {{ producto.LogisticaEnvio.DimensionesCm.Ancho }}cm x 
-                            {{ producto.LogisticaEnvio.DimensionesCm.Profundidad }}cm
-                        </span>
-                    </div>
-                    <div>
-                        <span class="block font-semibold text-gray-600">Peso:</span>
-                        <span class="text-gray-700">{{ producto.LogisticaEnvio.PesoKg }} Kg</span>
-                    </div>
-                    <div>
-                        <span class="block font-semibold text-gray-600">Tipo de Empaque:</span>
-                        <span class="text-gray-700">{{ producto.LogisticaEnvio.TipoEmpaque }}</span>
-                    </div>
-                    <div>
-                        <span class="block font-semibold text-gray-600">Manejo Frágil:</span>
-                        <span class="text-gray-700">
-                            {% if producto.LogisticaEnvio.RequiereFragil %} Sí ⚠️ {% else %} No {% endif %}
-                        </span>
-                    </div>
-                </div>
-                {% else %}
-                <p class="text-sm text-gray-500">No hay información de logística registrada.</p>
-                {% endif %}
-            </div>
+        <div id="contenido" class="bg-white shadow-md rounded-lg p-6 space-y-6">
+            <p class="text-center text-gray-400">Cargando producto...</p>
         </div>
     </div>
+
+    <script>
+        // SEGURIDAD: Todas las peticiones al /api incluyen X-Requested-With
+        // para que el backend rechace cualquier acceso externo directo.
+        function apiFetch(url) {
+            return fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+        }
+
+        function mostrarError(msg) {
+            document.getElementById('alerta').textContent = msg;
+            document.getElementById('alerta').classList.remove('hidden');
+            document.getElementById('contenido').innerHTML = '';
+        }
+
+        function renderDetalle(p) {
+            const log = p.LogisticaEnvio || {};
+            const dim = log.DimensionesCm || {};
+            const tieneLogistica = dim.Alto !== undefined;
+            document.getElementById('contenido').innerHTML = `
+                <div class="grid grid-cols-2 gap-4 border-b pb-4">
+                    <div>
+                        <span class="block text-xs font-bold text-gray-400 uppercase">ID de Producto</span>
+                        <span class="text-lg font-semibold text-gray-800">${p.productoID}</span>
+                    </div>
+                    <div>
+                        <span class="block text-xs font-bold text-gray-400 uppercase">Nombre</span>
+                        <span class="text-lg font-semibold text-gray-800">${p.Nombre}</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4 border-b pb-4">
+                    <div>
+                        <span class="block text-xs font-bold text-gray-400 uppercase">Categoría</span>
+                        <span class="text-gray-700">${p.Categoria}</span>
+                    </div>
+                    <div>
+                        <span class="block text-xs font-bold text-gray-400 uppercase">Precio</span>
+                        <span class="text-gray-700 font-bold text-green-600">$${p.Precio}</span>
+                    </div>
+                    <div>
+                        <span class="block text-xs font-bold text-gray-400 uppercase">Stock</span>
+                        <span class="text-gray-700">${p.Stock} unidades</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4 border-b pb-4">
+                    <div>
+                        <span class="block text-xs font-bold text-gray-400 uppercase">Color</span>
+                        <span class="text-gray-700">${p.Color || 'N/A'}</span>
+                    </div>
+                    <div>
+                        <span class="block text-xs font-bold text-gray-400 uppercase">Material</span>
+                        <span class="text-gray-700">${p.Material || 'N/A'}</span>
+                    </div>
+                    <div>
+                        <span class="block text-xs font-bold text-gray-400 uppercase">Talla</span>
+                        <span class="text-gray-700">${p.Talla || 'N/A'}</span>
+                    </div>
+                </div>
+                <div class="border-b pb-4">
+                    <span class="block text-xs font-bold text-gray-400 uppercase">Vendedor ID</span>
+                    <span class="text-gray-700">${p.VendedorID || 'N/A'}</span>
+                </div>
+                <div class="bg-gray-50 border p-4 rounded-lg">
+                    <h3 class="font-bold text-gray-700 mb-3 border-b pb-2">📦 Logística de Envío</h3>
+                    ${tieneLogistica ? `
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="block font-semibold text-gray-600">Dimensiones (Alto x Ancho x Profundidad):</span>
+                            <span class="text-gray-700">${dim.Alto}cm x ${dim.Ancho}cm x ${dim.Profundidad}cm</span>
+                        </div>
+                        <div>
+                            <span class="block font-semibold text-gray-600">Peso:</span>
+                            <span class="text-gray-700">${log.PesoKg} Kg</span>
+                        </div>
+                        <div>
+                            <span class="block font-semibold text-gray-600">Tipo de Empaque:</span>
+                            <span class="text-gray-700">${log.TipoEmpaque}</span>
+                        </div>
+                        <div>
+                            <span class="block font-semibold text-gray-600">Manejo Frágil:</span>
+                            <span class="text-gray-700">${log.RequiereFragil ? 'Sí ⚠️' : 'No'}</span>
+                        </div>
+                    </div>` : '<p class="text-sm text-gray-500">No hay información de logística registrada.</p>'}
+                </div>
+            `;
+        }
+
+        const productoID = window.location.pathname.split('/')[2];
+
+        apiFetch(`/api/productos/${productoID}`)
+            .then(res => {
+                if (!res.ok) throw new Error();
+                return res.json();
+            })
+            .then(renderDetalle)
+            .catch(() => mostrarError('No se pudo cargar la información del producto.'));
+    </script>
 </body>
 </html>
