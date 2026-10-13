@@ -47,8 +47,14 @@
                         <td class="py-3 px-6 text-center">{{ p.Stock }}</td>
                         <td class="py-3 px-6 text-center">
                             <div class="flex item-center justify-center space-x-2">
+                                <!-- Botón de Ver Detalle -->
+                                <a href="/detalle/{{ p.productoID }}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">👁️ Ver</a>
+                                <!-- Botón de Editar -->
                                 <a href="/editar/{{ p.productoID }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs">✏️ Editar</a>
+                                <!-- Botón de Eliminar -->
+                                <!-- SEGURIDAD: Token CSRF — previene ataques Cross-Site Request Forgery desde páginas externas. -->
                                 <form action="/eliminar/{{ p.productoID }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este producto?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">🗑️ Eliminar</button>
                                 </form>
                             </div>
