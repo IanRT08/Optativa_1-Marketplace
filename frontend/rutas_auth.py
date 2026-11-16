@@ -70,7 +70,7 @@ def registro():
             flash(MSG_REGISTRO_EXITOSO, "exito")
             return redirect(url_for("auth.login"))
         flash(MSG_REGISTRO_EXITOSO, "exito")
-        return redirect(url_for("inicio"))
+        return redirect(url_for("catalogo.inicio"))
 
     return render_template("registro.html", previo=previo)
 

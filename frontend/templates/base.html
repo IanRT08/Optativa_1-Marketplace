@@ -10,7 +10,7 @@
 <body>
     <header class="barra">
         <div class="barra-contenido">
-            <a class="marca" href="{{ url_for('inicio') }}">SMAVIB</a>
+            <a class="marca" href="{{ url_for('catalogo.inicio') }}">SMAVIB</a>
             <nav class="menu" aria-label="Principal">
                 {% if usuario %}
                     <span class="saludo">{{ usuario.nombre }} · <span class="etiqueta-rol">{{ usuario.rol }}</span></span>

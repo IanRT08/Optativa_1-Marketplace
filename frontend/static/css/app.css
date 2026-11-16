@@ -107,3 +107,63 @@ h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
 .alerta { padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.95rem; }
 .alerta-exito { background: var(--exito-fondo); color: var(--exito-texto); }
 .alerta-error { background: var(--error-fondo); color: var(--error-texto); }
+
+/* --- Catálogo (4.1) --- */
+.filtros {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr 1fr;
+    gap: 0 1rem;
+    align-items: end;
+    margin: 1rem 0 1.5rem;
+}
+.filtros-acciones { display: flex; gap: 0.5rem; margin-bottom: 1rem; grid-column: 1 / -1; }
+@media (max-width: 760px) { .filtros { grid-template-columns: 1fr 1fr; } .campo-ancho { grid-column: 1 / -1; } }
+@media (max-width: 420px) { .filtros { grid-template-columns: 1fr; } }
+
+.rejilla-productos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 1rem;
+}
+.tarjeta-producto {
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    overflow: hidden;
+    box-shadow: var(--sombra);
+}
+.tarjeta-producto a { display: flex; flex-direction: column; height: 100%; color: inherit; text-decoration: none; }
+.tarjeta-producto a:hover .producto-nombre { color: var(--primario); }
+.tarjeta-producto a:focus-visible { outline: 2px solid var(--primario); outline-offset: -2px; }
+.tarjeta-producto img, .tarjeta-producto .sin-imagen { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; background: var(--fondo); }
+.tarjeta-producto-cuerpo { padding: 0.75rem 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; }
+.producto-nombre { font-weight: 600; }
+.producto-meta { color: var(--texto-suave); font-size: 0.85rem; }
+.producto-precio { font-weight: 700; font-size: 1.1rem; margin-top: 0.25rem; }
+.producto-precio.grande { font-size: 1.6rem; margin: 0.25rem 0 1rem; }
+.sin-imagen { display: flex; align-items: center; justify-content: center; color: var(--texto-suave); font-size: 0.9rem; }
+.vacio { text-align: center; color: var(--texto-suave); padding: 2rem 0; }
+.paginacion { display: flex; justify-content: center; gap: 0.75rem; margin-top: 1.5rem; }
+
+/* --- Detalle (4.2) --- */
+.migas { margin: 0 0 0.75rem; font-size: 0.9rem; }
+.detalle { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; }
+@media (max-width: 760px) { .detalle { grid-template-columns: 1fr; } }
+.detalle-imagen img, .detalle-imagen .sin-imagen { width: 100%; border-radius: 6px; aspect-ratio: 3 / 2; object-fit: cover; background: var(--fondo); }
+h2 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; }
+.seccion { margin-top: 1rem; }
+.seccion h2:first-child, .seccion div > h2:first-child { margin-top: 0; }
+.dos-columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+@media (max-width: 640px) { .dos-columnas { grid-template-columns: 1fr; } }
+.datos { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin: 0; }
+.datos dt { color: var(--texto-suave); }
+.datos dd { margin: 0; }
+.insignia { display: inline-block; padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
+.insignia-ok { background: var(--exito-fondo); color: var(--exito-texto); }
+.insignia-agotado { background: var(--error-fondo); color: var(--error-texto); }
+.tabla { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.tabla th, .tabla td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--borde); }
+.tabla th { color: var(--texto-suave); font-weight: 600; }

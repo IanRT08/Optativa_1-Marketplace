@@ -10,6 +10,7 @@ import api
 from config import Config
 from constantes import MSG_ACCESO_RESTRINGIDO, MSG_ERROR_INTERNO, MSG_SESION_INVALIDA
 from rutas_auth import bp as auth_bp
+from rutas_catalogo import bp as catalogo_bp
 from seguridad import agregar_encabezados, cerrar_sesion, hay_sesion
 
 
@@ -20,7 +21,12 @@ def crear_app():
     Session(app)
     CSRFProtect(app)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(catalogo_bp)
     app.after_request(agregar_encabezados)
+
+    @app.template_filter("moneda")
+    def moneda(valor):
+        return f"${valor:,.2f}"
 
     @app.context_processor
     def usuario_actual():
@@ -28,11 +34,6 @@ def crear_app():
         if hay_sesion():
             return {"usuario": {"nombre": session.get("nombre"), "rol": session.get("rol")}}
         return {"usuario": None}
-
-    # --- Pantalla principal (etapa 2: catálogo 4.1) ------------------------
-    @app.route("/")
-    def inicio():
-        return render_template("inicio.html")
 
     # --- Errores -----------------------------------------------------------
     @app.errorhandler(api.SesionExpirada)

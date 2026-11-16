@@ -13,6 +13,8 @@ ROLES = (ROL_ADMINISTRADOR, ROL_VENDEDOR, ROL_COMPRADOR)
 # --- Longitudes máximas (iguales a las de las Lambdas) -----------------------
 NOMBRE_MAX = 80    # usuario.nombre y usuario.apellido VARCHAR(80)
 EMAIL_MAX = 150    # usuario.email VARCHAR(150)
+BUSQUEDA_MAX = 100     # 4.1: la Lambda recorta la palabra clave a 100
+URL_IMAGEN_MAX = 500   # 3.1: URL de imagen hasta 500
 
 # --- Mensajes (texto exacto del DFR o aprobados por Ian) ---------------------
 MSG_CAMPOS_OBLIGATORIOS = "Debe completar los campos obligatorios"
@@ -22,8 +24,12 @@ MSG_SESION_INVALIDA = "Tu sesión no es válida o ya venció. Inicia sesión nue
 MSG_ACCESO_RESTRINGIDO = "Acceso restringido"
 MSG_ERROR_INTERNO = "Ocurrió un error interno. Intenta más tarde"
 MSG_REGISTRO_EXITOSO = "Registro exitoso"
+MSG_SIN_PRODUCTOS = "No se encontraron productos"   # DFR 4.1
 
 # --- Llamadas a API Gateway --------------------------------------------------
 # Las Lambdas tienen 10 s de timeout; se deja margen para el arranque en frío.
 API_TIMEOUT_S = 15
 SESION_HORAS = 2   # igual que la vigencia del JWT de la 1.2
+CATEGORIAS_CACHE_S = 300   # el filtro de categorías se refresca cada 5 min
+# 4.1 revisa hasta 2,000 ítems por llamada: 9 llamadas cubren los 17,000.
+BUSQUEDA_MAX_LLAMADAS = 9

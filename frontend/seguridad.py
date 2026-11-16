@@ -13,9 +13,9 @@ from constantes import MSG_SESION_INVALIDA, ROL_ADMINISTRADOR, ROL_COMPRADOR, RO
 # Pantalla de inicio de cada rol después del login (DFR 1.2: "según el rol").
 # Se irá ajustando al construir las etapas de Vendedor y Administrador.
 DESTINO_POR_ROL = {
-    ROL_COMPRADOR: "inicio",
-    ROL_VENDEDOR: "inicio",
-    ROL_ADMINISTRADOR: "inicio",
+    ROL_COMPRADOR: "catalogo.inicio",
+    ROL_VENDEDOR: "catalogo.inicio",
+    ROL_ADMINISTRADOR: "catalogo.inicio",
 }
 
 
@@ -51,7 +51,7 @@ def hay_sesion():
 
 
 def destino_por_rol():
-    return url_for(DESTINO_POR_ROL.get(session.get("rol"), "inicio"))
+    return url_for(DESTINO_POR_ROL.get(session.get("rol"), "catalogo.inicio"))
 
 
 # --- Decoradores -----------------------------------------------------------------
