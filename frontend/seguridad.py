@@ -11,11 +11,10 @@ from flask import abort, current_app, flash, redirect, request, session, url_for
 from constantes import MSG_SESION_INVALIDA, ROL_ADMINISTRADOR, ROL_COMPRADOR, ROL_VENDEDOR
 
 # Pantalla de inicio de cada rol después del login (DFR 1.2: "según el rol").
-# Se irá ajustando al construir las etapas de Vendedor y Administrador.
 DESTINO_POR_ROL = {
     ROL_COMPRADOR: "catalogo.inicio",
     ROL_VENDEDOR: "vendedor.productos",
-    ROL_ADMINISTRADOR: "catalogo.inicio",
+    ROL_ADMINISTRADOR: "admin.pedidos",
 }
 
 

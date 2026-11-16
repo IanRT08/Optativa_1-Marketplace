@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios{% endblock %}
+{% block contenido %}
+<div class="encabezado-pagina">
+    <h1>Usuarios</h1>
+    <a class="btn btn-primario" href="{{ url_for('admin.usuario_nuevo') }}">Crear usuario</a>
+</div>
+
+<form method="get" action="{{ url_for('admin.usuarios') }}" class="tarjeta filtros filtros-fechas">
+    <label class="campo"><span>Rol</span>
+        <select name="rol">
+            <option value="">Todos</option>
+            {% for r in roles %}<option value="{{ r }}" {% if filtro.rol == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+        </select></label>
+    <label class="campo"><span>Estado</span>
+        <select name="estado">
+            <option value="">Todos</option>
+            {% for e in estados %}<option value="{{ e }}" {% if filtro.estado == e %}selected{% endif %}>{{ e }}</option>{% endfor %}
+        </select></label>
+    <div class="filtros-acciones">
+        <button type="submit" class="btn btn-primario">Buscar</button>
+        <a class="btn btn-secundario" href="{{ url_for('admin.usuarios') }}">Limpiar</a>
+    </div>
+</form>
+
+{% if error %}
+    <div class="alerta alerta-error" role="alert">{{ error }}</div>
+{% elif pagina and not pagina.usuarios %}
+    <p class="vacio">{{ pagina.mensaje }}</p>
+{% elif pagina %}
+    <section class="tarjeta">
+        <div class="tabla-desplazable">
+        <table class="tabla">
+            <thead><tr><th scope="col">Nombre</th><th scope="col">Correo</th><th scope="col">Rol</th><th scope="col">Estado</th><th scope="col">Registro</th><th scope="col"><span class="solo-lector">Acciones</span></th></tr></thead>
+            <tbody>
+            {% for u in pagina.usuarios %}
+                <tr>
+                    <td>{{ u.nombre_completo }}{% if u.id_usuario == id_propio %} <span class="producto-meta">(tú)</span>{% endif %}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.rol }}</td>
+                    <td><span class="insignia {{ 'insignia-ok' if u.estado == 'Activo' else 'insignia-agotado' }}">{{ u.estado }}</span></td>
+                    <td>{{ u.fecha_registro|fecha }}</td>
+                    <td>
+                        <div class="acciones-renglon">
+                            <a class="btn btn-secundario btn-chico" href="{{ url_for('admin.usuario_editar', id_usuario=u.id_usuario) }}">Editar</a>
+                            {# 1.6: no sobre la propia cuenta (regla de Ian) ni sobre una ya inactiva #}
+                            {% if u.id_usuario != id_propio and u.estado == 'Activo' %}
+                            <form method="post" action="{{ url_for('admin.usuario_desactivar', id_usuario=u.id_usuario) }}" data-un-envio
+                                  data-confirmar="¿Eliminar a {{ u.nombre_completo }}? Su cuenta quedará Inactiva.">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="volver" value="{{ request.full_path }}">
+                                <button type="submit" class="btn btn-secundario btn-chico">Eliminar</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </section>
+    <nav class="paginacion" aria-label="Páginas">
+        {% if filtro.cursor %}<a class="btn btn-secundario" href="{{ url_for('admin.usuarios', **filtro.filtros()) }}">Primera página</a>{% endif %}
+        {% if pagina.siguiente_cursor %}<a class="btn btn-primario" href="{{ url_for('admin.usuarios', cursor=pagina.siguiente_cursor, **filtro.filtros()) }}">Página siguiente</a>{% endif %}
+    </nav>
+{% endif %}
+{% endblock %}

@@ -17,6 +17,8 @@ from urllib.parse import urlsplit
 from constantes import (
     BUSQUEDA_MAX,
     CALLE_MAX,
+    CATEGORIA_DESCRIPCION_MAX,
+    CATEGORIA_NOMBRE_MAX,
     CIUDAD_MAX,
     COLONIA_MAX,
     DESCRIPCION_MAX,
@@ -26,12 +28,16 @@ from constantes import (
     ESPEC_NOMBRE_MAX,
     ESPEC_VALOR_MAX,
     ESTADO_MAX,
+    ESTADOS_PEDIDO,
     ESTADOS_PRODUCTO,
+    ESTADOS_USUARIO,
     MSG_CAMPOS_OBLIGATORIOS,
     MSG_CANTIDAD_ENTERA,
     MSG_CORREO_FORMATO,
     MSG_DIRECCION_LARGA,
+    MSG_CATEGORIA_LARGA,
     MSG_CATEGORIA_NO_EXISTE,
+    MSG_CATEGORIA_PADRE_NO_EXISTE,
     MSG_COMBINACION_LARGA,
     MSG_DIRECCION_NO_VALIDA,
     MSG_ESPECIFICACIONES,
@@ -41,9 +47,11 @@ from constantes import (
     MSG_NOMBRE_LARGO,
     MSG_PRODUCTO_LARGO,
     MSG_PRODUCTO_NO_EXISTE,
+    MSG_ROL_NO_VALIDO,
     MSG_STOCK_ENTERO,
     MSG_VALOR_NO_EXISTE,
     MSG_VARIANTE_NO_EXISTE,
+    MSG_VENDEDOR_NO_EXISTE,
     NOMBRE_MAX,
     NUMERO_MAX,
     PRODUCTO_NOMBRE_MAX,
@@ -245,6 +253,8 @@ class CategoriaDTO:
     id_categoria: int
     nombre: str
     categoria_padre: str
+    descripcion: str = ""
+    id_categoria_padre: Optional[int] = None
 
     @property
     def etiqueta(self):
@@ -257,7 +267,9 @@ class CategoriaDTO:
             raise ErrorRespuesta("categorias")
         return [cls(id_categoria=_entero(f, "id_categoria"),
                     nombre=_cadena(f, "nombre"),
-                    categoria_padre=_cadena(f, "categoria_padre", obligatorio=False))
+                    categoria_padre=_cadena(f, "categoria_padre", obligatorio=False),
+                    descripcion=_cadena(f, "descripcion", obligatorio=False),
+                    id_categoria_padre=_entero_opcional(f, "id_categoria_padre"))
                 for f in filas if isinstance(f, dict)]
 
     def to_dict(self):
@@ -1025,6 +1037,315 @@ class ReporteVentasDTO:
             total_ventas=_numero(datos, "total_ventas"),
             vendedor=_cadena(datos, "vendedor", obligatorio=False),
         )
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# DFR 1.3 a 1.6 Usuarios (Administrador) -> /admin/usuarios
+# =============================================================================
+def _nombre_apellido(nombre, apellido):
+    if len(nombre) > NOMBRE_MAX or len(apellido) > NOMBRE_MAX:
+        raise ErrorValidacion(MSG_NOMBRE_LARGO)
+
+
+def _opcion(valor, opciones, mensaje):
+    """Valor de un selector: debe ser una de las opciones (forma)."""
+    if valor not in opciones:
+        raise ErrorValidacion(mensaje)
+    return valor
+
+
+@dataclass(frozen=True)
+class UsuarioNuevoDTO:
+    """1.3. Formato de correo y fuerza de la contraseña: los valida la Lambda."""
+    nombre: str
+    apellido: str
+    email: str
+    password: str = field(repr=False)
+    rol: str = ""
+
+    @classmethod
+    def from_form(cls, form):
+        dto = cls(nombre=_texto(form, "nombre"), apellido=_texto(form, "apellido"),
+                  email=_texto(form, "email"), password=_password(form, "password"),
+                  rol=_texto(form, "rol"))
+        _obligatorios(dto.nombre, dto.apellido, dto.email, dto.password, dto.rol)
+        _nombre_apellido(dto.nombre, dto.apellido)
+        if len(dto.email) > EMAIL_MAX:
+            raise ErrorValidacion(MSG_CORREO_FORMATO)
+        _opcion(dto.rol, ROLES, MSG_ROL_NO_VALIDO)
+        return dto
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class EditarUsuarioDTO:
+    """1.5. Si el administrador se edita a sí mismo solo manda nombre y
+    apellido (regla de Ian): rol y estado no se envían."""
+    nombre: str
+    apellido: str
+    rol: Optional[str] = None
+    estado: Optional[str] = None
+
+    @classmethod
+    def from_form(cls, form, es_propio=False):
+        nombre, apellido = _texto(form, "nombre"), _texto(form, "apellido")
+        if es_propio:
+            _obligatorios(nombre, apellido)
+            _nombre_apellido(nombre, apellido)
+            return cls(nombre=nombre, apellido=apellido)
+        rol, estado = _texto(form, "rol"), _texto(form, "estado")
+        _obligatorios(nombre, apellido, rol, estado)
+        _nombre_apellido(nombre, apellido)
+        return cls(nombre=nombre, apellido=apellido,
+                   rol=_opcion(rol, ROLES, MSG_ROL_NO_VALIDO),
+                   estado=_opcion(estado, ESTADOS_USUARIO, MSG_ESTADO_NO_VALIDO))
+
+    def to_dict(self):
+        return {k: v for k, v in asdict(self).items() if v is not None}
+
+
+@dataclass(frozen=True)
+class FiltroUsuariosDTO:
+    rol: str = ""
+    estado: str = ""
+    cursor: str = ""
+
+    @classmethod
+    def from_form(cls, args):
+        return cls(**{c: _texto(args, c) for c in ("rol", "estado", "cursor")})
+
+    def to_dict(self):
+        return {k: v for k, v in asdict(self).items() if v}
+
+    def filtros(self):
+        return {k: v for k, v in self.to_dict().items() if k != "cursor"}
+
+
+@dataclass(frozen=True)
+class UsuarioDTO:
+    id_usuario: int
+    nombre: str
+    apellido: str
+    email: str
+    rol: str
+    estado: str
+    fecha_registro: str
+
+    @property
+    def nombre_completo(self):
+        return f"{self.nombre} {self.apellido}".strip()
+
+    @classmethod
+    def from_api(cls, d):
+        return cls(
+            id_usuario=_entero(d, "id_usuario"),
+            nombre=_cadena(d, "nombre"),
+            apellido=_cadena(d, "apellido", obligatorio=False),
+            email=_cadena(d, "email", obligatorio=False),
+            rol=_cadena(d, "rol"),
+            estado=_cadena(d, "estado"),
+            fecha_registro=_cadena(d, "fecha_registro", obligatorio=False),
+        )
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class PaginaUsuariosDTO:
+    mensaje: str
+    usuarios: list
+    siguiente_cursor: Optional[int]
+
+    @classmethod
+    def from_api(cls, datos):
+        filas = datos.get("usuarios")
+        if not isinstance(filas, list):
+            raise ErrorRespuesta("usuarios")
+        return cls(mensaje=_cadena(datos, "mensaje", obligatorio=False),
+                   usuarios=[UsuarioDTO.from_api(f) for f in filas if isinstance(f, dict)],
+                   siguiente_cursor=_entero_opcional(datos, "siguiente_cursor"))
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# DFR 2.1 Crear / 2.3 Editar categoría -> POST /categorias, PUT /categorias/{id}
+# =============================================================================
+@dataclass(frozen=True)
+class CategoriaFormDTO:
+    """Descripción y padre son opcionales; en 2.3 (PUT) si van vacíos quedan
+    en NULL, así que el formulario reenvía los valores actuales."""
+    nombre: str
+    descripcion: Optional[str] = None
+    id_categoria_padre: Optional[int] = None
+
+    @classmethod
+    def from_form(cls, form):
+        nombre, descripcion, padre = (_texto(form, c) for c in ("nombre", "descripcion", "id_categoria_padre"))
+        _obligatorios(nombre)
+        if len(nombre) > CATEGORIA_NOMBRE_MAX or len(descripcion) > CATEGORIA_DESCRIPCION_MAX:
+            raise ErrorValidacion(MSG_CATEGORIA_LARGA)
+        return cls(nombre=nombre, descripcion=descripcion or None,
+                   id_categoria_padre=_entero_form(padre, MSG_CATEGORIA_PADRE_NO_EXISTE) if padre else None)
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# DFR 7.1 / A3 Pedidos, 7.2 Detalle, 7.3 Estado
+# =============================================================================
+@dataclass(frozen=True)
+class FiltroPedidosDTO:
+    estado: str = ""
+    fecha: str = ""
+    cursor: str = ""
+
+    @classmethod
+    def from_form(cls, args, estado_por_defecto=""):
+        """estado_por_defecto se usa solo si el parámetro no viene en la URL
+        (A3 abre con Pendiente; elegir "Todos" lo manda vacío)."""
+        estado = _texto(args, "estado") if "estado" in args else estado_por_defecto
+        return cls(estado=estado, fecha=_texto(args, "fecha"), cursor=_texto(args, "cursor"))
+
+    def to_dict(self):
+        return {k: v for k, v in asdict(self).items() if v}
+
+    def filtros(self):
+        """Para los enlaces de paginación: el estado va siempre (aun vacío)."""
+        return {"estado": self.estado, **({"fecha": self.fecha} if self.fecha else {})}
+
+
+@dataclass(frozen=True)
+class PedidoResumenDTO:
+    id_pedido: int
+    fecha: str
+    total: float
+    estado: str
+    comprador: str = ""   # solo A3
+
+    @classmethod
+    def from_api(cls, d):
+        return cls(id_pedido=_entero(d, "id_pedido"), fecha=_cadena(d, "fecha", obligatorio=False),
+                   total=_numero(d, "total"), estado=_cadena(d, "estado"),
+                   comprador=_cadena(d, "comprador", obligatorio=False))
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class PaginaPedidosDTO:
+    mensaje: str
+    pedidos: list
+    siguiente_cursor: Optional[int]
+
+    @classmethod
+    def from_api(cls, datos):
+        filas = datos.get("pedidos")
+        if not isinstance(filas, list):
+            raise ErrorRespuesta("pedidos")
+        return cls(mensaje=_cadena(datos, "mensaje", obligatorio=False),
+                   pedidos=[PedidoResumenDTO.from_api(f) for f in filas if isinstance(f, dict)],
+                   siguiente_cursor=_entero_opcional(datos, "siguiente_cursor"))
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ProductoPedidoDTO:
+    id_producto: int
+    nombre: str
+    sku: str
+    atributos: dict
+    cantidad: int
+    precio_unitario: float   # histórico (DFR 7.2)
+    subtotal: float
+    url_imagen: Optional[str]
+
+    @classmethod
+    def from_api(cls, d):
+        return cls(id_producto=_entero(d, "id_producto"), nombre=_cadena(d, "nombre"),
+                   sku=_cadena(d, "sku", obligatorio=False), atributos=_mapa_texto(d.get("atributos")),
+                   cantidad=_entero(d, "cantidad"), precio_unitario=_numero(d, "precio_unitario"),
+                   subtotal=_numero(d, "subtotal"), url_imagen=url_segura(d.get("url_imagen")))
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class PedidoDetalleDTO:
+    """7.2. Comprador: dirección completa y pago (últimos 4 y estado).
+    Administrador: nombre del comprador, dirección reducida y sin pago."""
+    id_pedido: int
+    fecha: str
+    estado: str
+    total: float
+    productos: list
+    direccion: dict
+    pago: Optional[dict]
+    comprador: str
+
+    @classmethod
+    def from_api(cls, datos):
+        p = datos.get("pedido")
+        if not isinstance(p, dict):
+            raise ErrorRespuesta("pedido")
+        pago = p.get("pago")
+        return cls(
+            id_pedido=_entero(p, "id_pedido"),
+            fecha=_cadena(p, "fecha", obligatorio=False),
+            estado=_cadena(p, "estado"),
+            total=_numero(p, "total"),
+            productos=[ProductoPedidoDTO.from_api(f) for f in (p.get("productos") or []) if isinstance(f, dict)],
+            direccion=_mapa_texto(p.get("direccion")),
+            pago=_mapa_texto(pago) if isinstance(pago, dict) else None,
+            comprador=_cadena(p, "comprador", obligatorio=False),
+        )
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class EstadoPedidoDTO:
+    estado: str
+
+    @classmethod
+    def from_form(cls, form):
+        estado = _texto(form, "estado")
+        _obligatorios(estado)
+        return cls(estado=_opcion(estado, ESTADOS_PEDIDO, MSG_ESTADO_NO_VALIDO))
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# DFR 8.2 Reporte de ventas por vendedor -> GET /admin/ventas
+# =============================================================================
+@dataclass(frozen=True)
+class FiltroVentasAdminDTO:
+    id_vendedor: int
+    fecha_inicio: str
+    fecha_fin: str
+
+    @classmethod
+    def from_form(cls, args):
+        vendedor = _texto(args, "id_vendedor")
+        fechas = FiltroFechasDTO(fecha_inicio=_texto(args, "fecha_inicio"), fecha_fin=_texto(args, "fecha_fin"))
+        _obligatorios(vendedor, fechas.fecha_inicio, fechas.fecha_fin)
+        return cls(id_vendedor=_entero_form(vendedor, MSG_VENDEDOR_NO_EXISTE),
+                   fecha_inicio=fechas.fecha_inicio, fecha_fin=fechas.fecha_fin)
 
     def to_dict(self):
         return asdict(self)

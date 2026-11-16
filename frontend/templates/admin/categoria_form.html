@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Editar categoría{% endblock %}
+{% block contenido %}
+<p class="migas"><a href="{{ url_for('admin.categorias') }}">← Categorías</a></p>
+<section class="tarjeta tarjeta-angosta">
+    <h1>Editar categoría</h1>
+    <p class="nota">Los campos con * son obligatorios. Si dejas la descripción o la categoría padre vacías, se quitan.</p>
+    <form method="post" action="{{ url_for('admin.categoria_editar', id_categoria=categoria.id_categoria) }}" data-un-envio novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% include "admin/_campos_categoria.html" %}
+        <div class="acciones-derecha">
+            <a class="btn btn-secundario" href="{{ url_for('admin.categorias') }}">Cancelar</a>
+            <button type="submit" class="btn btn-primario">Guardar cambios</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

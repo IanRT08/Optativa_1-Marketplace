@@ -210,3 +210,9 @@ h2 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; }
 .opcion-simple { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem; cursor: pointer; }
 .filtros-fechas { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 640px) { .filtros-fechas { grid-template-columns: 1fr; } }
+
+/* --- Administrador: estados de pedido --- */
+.insignia-pendiente { background: #fff4d6; color: #7a5300; }
+.insignia-enviado { background: #e3edfd; color: #1e40af; }
+.insignia-entregado { background: var(--exito-fondo); color: var(--exito-texto); }
+.insignia-cancelado, .insignia-devuelto { background: #eceef1; color: #4b5563; }

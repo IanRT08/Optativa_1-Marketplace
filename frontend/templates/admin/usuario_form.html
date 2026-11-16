@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}{{ "Crear usuario" if nuevo else "Editar usuario" }}{% endblock %}
+{% block contenido %}
+<p class="migas"><a href="{{ url_for('admin.usuarios') }}">← Usuarios</a></p>
+<section class="tarjeta tarjeta-angosta">
+    <h1>{{ "Crear usuario" if nuevo else "Editar usuario" }}</h1>
+    <p class="nota">Los campos con * son obligatorios.{% if nuevo %} La contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un carácter especial.{% endif %}</p>
+    <form method="post" action="{{ url_for('admin.usuario_nuevo') if nuevo else url_for('admin.usuario_editar', id_usuario=id_usuario) }}" data-un-envio novalidate autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="fila-doble">
+            <label class="campo"><span>Nombre *</span>
+                <input type="text" name="nombre" value="{{ valores.nombre }}" maxlength="80" required></label>
+            <label class="campo"><span>Apellido *</span>
+                <input type="text" name="apellido" value="{{ valores.apellido }}" maxlength="80" required></label>
+        </div>
+        {% if nuevo %}
+            <label class="campo"><span>Correo electrónico *</span>
+                <input type="email" name="email" value="{{ valores.email }}" maxlength="150" required></label>
+            <label class="campo"><span>Contraseña *</span>
+                <input type="password" name="password" autocomplete="new-password" required></label>
+        {% elif valores.email %}
+            <p class="nota">Correo: {{ valores.email }}</p>
+        {% endif %}
+
+        {% if es_propio %}
+            {# Regla de Ian: el administrador no cambia su propio rol ni su estado. #}
+            <p class="nota">Es tu propia cuenta: solo puedes cambiar tu nombre y apellido.</p>
+        {% else %}
+            <div class="fila-doble">
+                <label class="campo"><span>Rol *</span>
+                    <select name="rol" required>
+                        <option value="">Selecciona</option>
+                        {% for r in roles %}<option value="{{ r }}" {% if valores.rol == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+                    </select></label>
+                {% if not nuevo %}
+                <label class="campo"><span>Estado *</span>
+                    <select name="estado" required>
+                        {% for e in estados %}<option value="{{ e }}" {% if valores.estado == e %}selected{% endif %}>{{ e }}</option>{% endfor %}
+                    </select></label>
+                {% endif %}
+            </div>
+        {% endif %}
+        <div class="acciones-derecha">
+            <a class="btn btn-secundario" href="{{ url_for('admin.usuarios') }}">Cancelar</a>
+            <button type="submit" class="btn btn-primario">{{ "Crear usuario" if nuevo else "Guardar cambios" }}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

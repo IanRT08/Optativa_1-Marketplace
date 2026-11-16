@@ -24,6 +24,19 @@ ESPEC_VALOR_MAX = 200
 EMPAQUE_MAX = 100
 VALORES_VARIANTE_MAX = 20   # 3.6
 ESTADOS_PRODUCTO = ("Activo", "Inactivo")
+ESTADOS_USUARIO = ("Activo", "Inactivo")
+CATEGORIA_NOMBRE_MAX = 100
+CATEGORIA_DESCRIPCION_MAX = 255
+# Estados de pedido (CLAUDE.md, regla 3) y transiciones válidas (DFR 7.3)
+ESTADOS_PEDIDO = ("Pendiente", "Enviado", "Entregado", "Cancelado", "Devuelto")
+TRANSICIONES_PEDIDO = {
+    "Pendiente": ("Enviado", "Cancelado"),
+    "Enviado": ("Entregado", "Cancelado"),
+    "Entregado": ("Devuelto",),
+    "Cancelado": (),
+    "Devuelto": (),
+}
+VENDEDORES_MAX_PAGINAS = 10   # selector de 8.2: hasta 200 vendedores (1.4 pagina de 20)
 # 9.1 (tabla direccion)
 CALLE_MAX = 150
 NUMERO_MAX = 20
@@ -66,6 +79,13 @@ MSG_COMBINACION_LARGA = ("La combinación de valores es demasiado larga; elige m
                          "o valores más cortos")
 MSG_PRODUCTO_INACTIVO_EDITAR = "El producto está inactivo y no se puede editar"
 MSG_FECHA_NO_VALIDA = "La fecha no es válida"
+# Administrador (1.x, 2.x, 7.x, 8.2; aprobados por Ian)
+MSG_ROL_NO_VALIDO = "El rol seleccionado no es válido"
+MSG_USUARIO_NO_EXISTE = "El usuario no existe"
+MSG_CATEGORIA_LARGA = "El nombre no puede superar 100 caracteres y la descripción 255"
+MSG_CATEGORIA_PADRE_NO_EXISTE = "La categoría padre no existe"
+MSG_PEDIDO_NO_EXISTE = "El pedido no existe"
+MSG_VENDEDOR_NO_EXISTE = "El vendedor no existe"
 
 # --- Llamadas a API Gateway --------------------------------------------------
 # Las Lambdas tienen 10 s de timeout; se deja margen para el arranque en frío.

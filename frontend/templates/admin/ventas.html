@@ -1,0 +1,10 @@
+{% extends "reporte_ventas.html" %}
+{% block filtros_extra %}
+    <label class="campo"><span>Vendedor *</span>
+        <select name="id_vendedor" required>
+            <option value="">Selecciona</option>
+            {% for v in vendedores %}
+                <option value="{{ v.id_usuario }}" {% if fechas.id_vendedor == v.id_usuario|string %}selected{% endif %}>{{ v.nombre_completo }}{% if v.estado != "Activo" %} ({{ v.estado }}){% endif %}</option>
+            {% endfor %}
+        </select></label>
+{% endblock %}

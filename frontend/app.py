@@ -2,6 +2,8 @@
 
 Ejecutar desde esta carpeta:  python app.py   (debug siempre apagado)
 """
+from datetime import datetime
+
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from flask_session import Session
 from flask_wtf.csrf import CSRFError, CSRFProtect
@@ -9,6 +11,7 @@ from flask_wtf.csrf import CSRFError, CSRFProtect
 import api
 from config import Config
 from constantes import MSG_ACCESO_RESTRINGIDO, MSG_ERROR_INTERNO, MSG_SESION_INVALIDA
+from rutas_admin import bp as admin_bp
 from rutas_auth import bp as auth_bp
 from rutas_catalogo import bp as catalogo_bp
 from rutas_comprador import bp as comprador_bp
@@ -26,11 +29,20 @@ def crear_app():
     app.register_blueprint(catalogo_bp)
     app.register_blueprint(comprador_bp)
     app.register_blueprint(vendedor_bp)
+    app.register_blueprint(admin_bp)
     app.after_request(agregar_encabezados)
 
     @app.template_filter("moneda")
     def moneda(valor):
         return f"${valor:,.2f}"
+
+    @app.template_filter("fecha")
+    def fecha(valor):
+        """ISO de la API (ya en hora de México) -> "14/11/2026 19:05"."""
+        try:
+            return datetime.fromisoformat(valor).strftime("%d/%m/%Y %H:%M")
+        except (TypeError, ValueError):
+            return valor or ""
 
     @app.context_processor
     def usuario_actual():

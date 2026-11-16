@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Categorías{% endblock %}
+{% block contenido %}
+<h1>Categorías</h1>
+<div class="dos-columnas">
+    <section class="tarjeta">
+        {% if error %}
+            <div class="alerta alerta-error" role="alert">{{ error }}</div>
+        {% elif not categorias %}
+            <p class="vacio">{{ mensaje_lista or "No se encontraron registros" }}</p>
+        {% else %}
+            <table class="tabla">
+                <thead><tr><th scope="col">Categoría</th><th scope="col">Categoría padre</th><th scope="col"><span class="solo-lector">Acciones</span></th></tr></thead>
+                <tbody>
+                {% for c in categorias %}
+                    <tr>
+                        <td>{{ c.nombre }}{% if c.descripcion %}<div class="producto-meta">{{ c.descripcion }}</div>{% endif %}</td>
+                        <td>{{ c.categoria_padre or "—" }}</td>
+                        <td>
+                            <div class="acciones-renglon">
+                                <a class="btn btn-secundario btn-chico" href="{{ url_for('admin.categoria_editar', id_categoria=c.id_categoria) }}">Editar</a>
+                                <form method="post" action="{{ url_for('admin.categoria_eliminar', id_categoria=c.id_categoria) }}" data-un-envio
+                                      data-confirmar="¿Eliminar la categoría {{ c.nombre }}?">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-secundario btn-chico">Eliminar</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </section>
+
+    <section class="tarjeta">
+        <h2>Crear categoría</h2>
+        <p class="nota">Los campos con * son obligatorios.</p>
+        <form method="post" action="{{ url_for('admin.categorias') }}" data-un-envio novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% include "admin/_campos_categoria.html" %}
+            <button type="submit" class="btn btn-primario">Crear categoría</button>
+        </form>
+    </section>
+</div>
+{% endblock %}

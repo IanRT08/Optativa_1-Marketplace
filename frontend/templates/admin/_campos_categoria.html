@@ -1,0 +1,11 @@
+<label class="campo"><span>Nombre de la categoría *</span>
+    <input type="text" name="nombre" value="{{ valores.nombre }}" maxlength="100" required></label>
+<label class="campo"><span>Descripción</span>
+    <textarea name="descripcion" rows="3" maxlength="255">{{ valores.descripcion }}</textarea></label>
+<label class="campo"><span>Categoría padre</span>
+    <select name="id_categoria_padre">
+        <option value="">Ninguna</option>
+        {% for c in categorias %}
+            <option value="{{ c.id_categoria }}" {% if valores.id_categoria_padre == c.id_categoria|string %}selected{% endif %}>{{ c.etiqueta }}</option>
+        {% endfor %}
+    </select></label>

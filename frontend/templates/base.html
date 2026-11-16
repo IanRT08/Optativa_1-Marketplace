@@ -20,6 +20,11 @@
                         <a class="enlace-menu" href="{{ url_for('vendedor.productos') }}">Mis productos</a>
                         <a class="enlace-menu" href="{{ url_for('vendedor.stock_masivo') }}">Stock masivo</a>
                         <a class="enlace-menu" href="{{ url_for('vendedor.ventas') }}">Mis ventas</a>
+                    {% elif usuario.rol == "Administrador" %}
+                        <a class="enlace-menu" href="{{ url_for('admin.pedidos') }}">Pedidos</a>
+                        <a class="enlace-menu" href="{{ url_for('admin.usuarios') }}">Usuarios</a>
+                        <a class="enlace-menu" href="{{ url_for('admin.categorias') }}">Categorías</a>
+                        <a class="enlace-menu" href="{{ url_for('admin.ventas') }}">Ventas</a>
                     {% endif %}
                     <span class="saludo">{{ usuario.nombre }} · <span class="etiqueta-rol">{{ usuario.rol }}</span></span>
                     <form method="post" action="{{ url_for('auth.logout') }}" class="en-linea">
