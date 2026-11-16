@@ -19,20 +19,37 @@ from constantes import (
     CALLE_MAX,
     CIUDAD_MAX,
     COLONIA_MAX,
+    DESCRIPCION_MAX,
     EMAIL_MAX,
+    EMPAQUE_MAX,
+    ESPEC_MAX,
+    ESPEC_NOMBRE_MAX,
+    ESPEC_VALOR_MAX,
     ESTADO_MAX,
+    ESTADOS_PRODUCTO,
     MSG_CAMPOS_OBLIGATORIOS,
     MSG_CANTIDAD_ENTERA,
     MSG_CORREO_FORMATO,
     MSG_DIRECCION_LARGA,
+    MSG_CATEGORIA_NO_EXISTE,
+    MSG_COMBINACION_LARGA,
     MSG_DIRECCION_NO_VALIDA,
+    MSG_ESPECIFICACIONES,
+    MSG_ESTADO_NO_VALIDO,
+    MSG_LOGISTICA,
+    MSG_MARCA_NO_EXISTE,
     MSG_NOMBRE_LARGO,
+    MSG_PRODUCTO_LARGO,
     MSG_PRODUCTO_NO_EXISTE,
+    MSG_STOCK_ENTERO,
+    MSG_VALOR_NO_EXISTE,
     MSG_VARIANTE_NO_EXISTE,
     NOMBRE_MAX,
     NUMERO_MAX,
+    PRODUCTO_NOMBRE_MAX,
     ROLES,
     URL_IMAGEN_MAX,
+    VALORES_VARIANTE_MAX,
 )
 
 
@@ -392,6 +409,7 @@ class ProductoDetalleDTO:
     precio: float
     marca: str
     categoria: str
+    id_categoria: Optional[int]
     url_imagen: Optional[str]
     vendedor: str
     especificaciones: dict
@@ -414,6 +432,7 @@ class ProductoDetalleDTO:
             precio=_numero(p, "precio"),
             marca=_cadena(p, "marca", obligatorio=False),
             categoria=_cadena(p, "categoria", obligatorio=False),
+            id_categoria=_entero_opcional(p, "id_categoria"),
             url_imagen=url_segura(p.get("url_imagen")),
             vendedor=_cadena(p, "vendedor", obligatorio=False),
             especificaciones=_mapa_texto(p.get("especificaciones")),
@@ -650,6 +669,362 @@ class CompraRespuestaDTO:
         return cls(mensaje=_cadena(datos, "mensaje"),
                    id_pedido=_entero(datos, "id_pedido"),
                    total=_numero(datos, "total"))
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# Catálogos de apoyo: A1 marcas, A2 atributos (formularios del Vendedor)
+# =============================================================================
+@dataclass(frozen=True)
+class MarcaDTO:
+    id_marca: int
+    nombre: str
+
+    @classmethod
+    def lista_from_api(cls, datos):
+        filas = datos.get("marcas")
+        if not isinstance(filas, list):
+            raise ErrorRespuesta("marcas")
+        return [cls(_entero(f, "id_marca"), _cadena(f, "nombre")) for f in filas if isinstance(f, dict)]
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class AtributoDTO:
+    id_atributo: int
+    nombre: str
+    valores: tuple   # ((id_valor, valor), ...)
+
+    @classmethod
+    def lista_from_api(cls, datos):
+        filas = datos.get("atributos")
+        if not isinstance(filas, list):
+            raise ErrorRespuesta("atributos")
+        salida = []
+        for f in filas:
+            if not isinstance(f, dict):
+                continue
+            valores = tuple((_entero(v, "id_valor"), _cadena(v, "valor"))
+                            for v in (f.get("valores") or []) if isinstance(v, dict))
+            salida.append(cls(_entero(f, "id_atributo"), _cadena(f, "nombre"), valores))
+        return salida
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# DFR 3.1 Registrar / 3.3 Editar producto -> POST /vendedor/productos, PUT .../{id}
+# =============================================================================
+CAMPOS_PRODUCTO = ("nombre", "descripcion", "precio", "id_marca", "id_categoria", "url_imagen", "stock")
+CAMPOS_LOGISTICA = ("alto", "ancho", "profundidad", "peso_kg", "tipo_empaque")
+
+
+@dataclass(frozen=True)
+class ProductoFormDTO:
+    """Mismo body para 3.1 y 3.3 (en 3.3 es un PUT completo: sin
+    especificaciones o logística, se quitan del catálogo). El precio va como
+    texto: su formato, que sea mayor a cero y el rango los valida la Lambda."""
+    nombre: str
+    descripcion: str
+    precio: str
+    id_marca: int
+    id_categoria: int
+    url_imagen: str
+    stock: int
+    especificaciones: dict = field(default_factory=dict)
+    logistica_envio: Optional[dict] = None
+
+    @classmethod
+    def from_form(cls, form):
+        v = {c: _texto(form, c) for c in CAMPOS_PRODUCTO}
+        _obligatorios(*v.values())
+        if (len(v["nombre"]) > PRODUCTO_NOMBRE_MAX or len(v["descripcion"]) > DESCRIPCION_MAX
+                or len(v["url_imagen"]) > URL_IMAGEN_MAX):
+            raise ErrorValidacion(MSG_PRODUCTO_LARGO)
+        return cls(
+            nombre=v["nombre"],
+            descripcion=v["descripcion"],
+            precio=v["precio"],
+            id_marca=_entero_form(v["id_marca"], MSG_MARCA_NO_EXISTE),
+            id_categoria=_entero_form(v["id_categoria"], MSG_CATEGORIA_NO_EXISTE),
+            url_imagen=v["url_imagen"],
+            stock=_entero_form(v["stock"], MSG_STOCK_ENTERO),
+            especificaciones=cls._especificaciones(form),
+            logistica_envio=cls._logistica(form),
+        )
+
+    @staticmethod
+    def _especificaciones(form):
+        nombres = form.getlist("espec_nombre")
+        valores = form.getlist("espec_valor")
+        salida = {}
+        for nombre, valor in zip(nombres, valores):
+            nombre, valor = nombre.strip(), valor.strip()
+            if not nombre and not valor:
+                continue                      # renglón vacío del formulario
+            _obligatorios(nombre, valor)      # renglón a medias
+            if (nombre in salida or len(nombre) > ESPEC_NOMBRE_MAX
+                    or len(valor) > ESPEC_VALOR_MAX or len(salida) >= ESPEC_MAX):
+                raise ErrorValidacion(MSG_ESPECIFICACIONES)
+            salida[nombre] = valor
+        return salida
+
+    @staticmethod
+    def _logistica(form):
+        if form.get("con_logistica") != "1":
+            return None
+        v = {c: _texto(form, f"log_{c}") for c in CAMPOS_LOGISTICA}
+        _obligatorios(*v.values())
+        if len(v["tipo_empaque"]) > EMPAQUE_MAX:
+            raise ErrorValidacion(MSG_LOGISTICA)
+        return {**v, "requiere_fragil": form.get("log_requiere_fragil") == "1"}
+
+    def to_dict(self):
+        datos = {c: getattr(self, c) for c in CAMPOS_PRODUCTO}
+        if self.especificaciones:
+            datos["especificaciones"] = dict(self.especificaciones)
+        if self.logistica_envio:
+            datos["logistica_envio"] = dict(self.logistica_envio)
+        return datos
+
+
+def valores_form_producto(detalle, id_marca):
+    """Valores iniciales del formulario de 3.3 a partir del detalle (4.2)."""
+    estandar = next((v for v in detalle.variantes if v.es_estandar), None)
+    valores = {
+        "nombre": detalle.nombre,
+        "descripcion": detalle.descripcion,
+        "precio": f"{detalle.precio:.2f}",
+        "id_marca": str(id_marca or ""),
+        "id_categoria": str(detalle.id_categoria or ""),
+        "url_imagen": detalle.url_imagen or "",
+        "stock": "" if estandar is None or estandar.stock is None else str(estandar.stock),
+        "especificaciones": list(detalle.especificaciones.items()),
+        "con_logistica": detalle.logistica is not None,
+    }
+    if detalle.logistica:
+        lg = detalle.logistica
+        valores.update(log_alto=lg.alto, log_ancho=lg.ancho, log_profundidad=lg.profundidad,
+                       log_peso_kg=lg.peso_kg, log_tipo_empaque=lg.tipo_empaque,
+                       log_requiere_fragil=lg.requiere_fragil)
+    return valores
+
+
+def valores_form_desde_post(form):
+    """Lo que el vendedor escribió, para volver a mostrar el formulario con error."""
+    valores = {c: _texto(form, c) for c in CAMPOS_PRODUCTO}
+    valores["especificaciones"] = [(n.strip(), v.strip()) for n, v in
+                                   zip(form.getlist("espec_nombre"), form.getlist("espec_valor"))
+                                   if n.strip() or v.strip()]
+    valores["con_logistica"] = form.get("con_logistica") == "1"
+    valores.update({f"log_{c}": _texto(form, f"log_{c}") for c in CAMPOS_LOGISTICA})
+    valores["log_requiere_fragil"] = form.get("log_requiere_fragil") == "1"
+    return valores
+
+
+# =============================================================================
+# DFR 3.2 Consultar mis productos -> GET /vendedor/productos
+# =============================================================================
+@dataclass(frozen=True)
+class FiltroMisProductosDTO:
+    id_categoria: str = ""
+    estado: str = ""
+    q: str = ""
+    cursor: str = ""
+
+    @classmethod
+    def from_form(cls, args):
+        return cls(**{c: _texto(args, c) for c in ("id_categoria", "estado", "q", "cursor")})
+
+    def to_dict(self):
+        return {k: v for k, v in asdict(self).items() if v}
+
+    def filtros(self):
+        return {k: v for k, v in self.to_dict().items() if k != "cursor"}
+
+
+@dataclass(frozen=True)
+class ProductoVendedorDTO:
+    id_producto: int
+    nombre: str
+    precio: float
+    estado: str
+    marca: str
+    id_categoria: Optional[int]
+    categoria: str
+    stock: int
+    variantes: int
+
+    @property
+    def activo(self):
+        return self.estado == "Activo"
+
+    @classmethod
+    def from_api(cls, d):
+        return cls(
+            id_producto=_entero(d, "id_producto"),
+            nombre=_cadena(d, "nombre"),
+            precio=_numero(d, "precio"),
+            estado=_cadena(d, "estado"),
+            marca=_cadena(d, "marca", obligatorio=False),
+            id_categoria=_entero_opcional(d, "id_categoria"),
+            categoria=_cadena(d, "categoria", obligatorio=False),
+            stock=_entero_opcional(d, "stock") or 0,
+            variantes=_entero_opcional(d, "variantes") or 0,
+        )
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class PaginaMisProductosDTO:
+    mensaje: str
+    productos: list
+    siguiente_cursor: Optional[int]
+
+    @classmethod
+    def from_api(cls, datos):
+        filas = datos.get("productos")
+        if not isinstance(filas, list):
+            raise ErrorRespuesta("productos")
+        return cls(
+            mensaje=_cadena(datos, "mensaje", obligatorio=False),
+            productos=[ProductoVendedorDTO.from_api(f) for f in filas if isinstance(f, dict)],
+            siguiente_cursor=_entero_opcional(datos, "siguiente_cursor"),
+        )
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# DFR 3.4 Activar / desactivar -> PATCH /vendedor/productos/{id}/estado
+# =============================================================================
+@dataclass(frozen=True)
+class EstadoProductoDTO:
+    estado: str
+
+    @classmethod
+    def from_form(cls, form):
+        estado = _texto(form, "estado")
+        _obligatorios(estado)
+        if estado not in ESTADOS_PRODUCTO:
+            raise ErrorValidacion(MSG_ESTADO_NO_VALIDO)
+        return cls(estado=estado)
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# DFR 3.5 Stock masivo -> POST /vendedor/stock-masivo (sp_ActualizarStockMasivo)
+# =============================================================================
+@dataclass(frozen=True)
+class StockMasivoDTO:
+    """La cantidad va como entero (con signo) para que el SP responda
+    "La cantidad debe ser mayor a cero" con su texto del DFR."""
+    id_categoria: int
+    cantidad: int
+
+    @classmethod
+    def from_form(cls, form):
+        categoria, cantidad = _texto(form, "id_categoria"), _texto(form, "cantidad")
+        _obligatorios(categoria, cantidad)
+        return cls(id_categoria=_entero_form(categoria, MSG_CATEGORIA_NO_EXISTE),
+                   cantidad=_entero_form(cantidad, MSG_CANTIDAD_ENTERA))
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# DFR 3.6 Registrar variante -> POST /vendedor/productos/{id}/variantes
+# =============================================================================
+@dataclass(frozen=True)
+class VarianteFormDTO:
+    valores: tuple
+    stock: int
+
+    @classmethod
+    def from_form(cls, form):
+        elegidos = [v.strip() for v in form.getlist("valores") if isinstance(v, str) and v.strip()]
+        stock = _texto(form, "stock")
+        if not elegidos or not stock:
+            raise ErrorValidacion(MSG_CAMPOS_OBLIGATORIOS)
+        if len(elegidos) > VALORES_VARIANTE_MAX:
+            raise ErrorValidacion(MSG_COMBINACION_LARGA)
+        return cls(valores=tuple(_entero_form(v, MSG_VALOR_NO_EXISTE) for v in elegidos),
+                   stock=_entero_form(stock, MSG_STOCK_ENTERO))
+
+    def to_dict(self):
+        return {"valores": list(self.valores), "stock": self.stock}
+
+
+# =============================================================================
+# DFR 8.1 / 8.2 / 7.4 Reportes por rango de fechas (sp_HistorialVentas)
+# =============================================================================
+@dataclass(frozen=True)
+class FiltroFechasDTO:
+    """Formato AAAA-MM-DD (input type=date). Que la fecha sea válida y el orden
+    ("La fecha inicial no puede ser mayor a la fecha final") los validan la
+    Lambda y el SP."""
+    fecha_inicio: str
+    fecha_fin: str
+
+    @classmethod
+    def from_form(cls, args):
+        dto = cls(fecha_inicio=_texto(args, "fecha_inicio"), fecha_fin=_texto(args, "fecha_fin"))
+        _obligatorios(dto.fecha_inicio, dto.fecha_fin)
+        return dto
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class VentaProductoDTO:
+    id_producto: Optional[int]
+    producto: str
+    unidades_vendidas: int
+    total_vendido: float
+
+    @classmethod
+    def from_api(cls, d):
+        return cls(
+            id_producto=_entero_opcional(d, "id_producto"),
+            producto=_cadena(d, "producto", obligatorio=False),
+            unidades_vendidas=_entero_opcional(d, "unidades_vendidas") or 0,
+            total_vendido=_numero(d, "total_vendido"),
+        )
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ReporteVentasDTO:
+    mensaje: str
+    productos: list
+    total_ventas: float
+    vendedor: str = ""   # solo en 8.2
+
+    @classmethod
+    def from_api(cls, datos):
+        filas = datos.get("productos")
+        if not isinstance(filas, list):
+            raise ErrorRespuesta("productos")
+        return cls(
+            mensaje=_cadena(datos, "mensaje", obligatorio=False),
+            productos=[VentaProductoDTO.from_api(f) for f in filas if isinstance(f, dict)],
+            total_ventas=_numero(datos, "total_ventas"),
+            vendedor=_cadena(datos, "vendedor", obligatorio=False),
+        )
 
     def to_dict(self):
         return asdict(self)

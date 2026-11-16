@@ -14,7 +14,7 @@ from constantes import MSG_SESION_INVALIDA, ROL_ADMINISTRADOR, ROL_COMPRADOR, RO
 # Se irá ajustando al construir las etapas de Vendedor y Administrador.
 DESTINO_POR_ROL = {
     ROL_COMPRADOR: "catalogo.inicio",
-    ROL_VENDEDOR: "catalogo.inicio",
+    ROL_VENDEDOR: "vendedor.productos",
     ROL_ADMINISTRADOR: "catalogo.inicio",
 }
 
@@ -54,7 +54,7 @@ def destino_por_rol():
     return url_for(DESTINO_POR_ROL.get(session.get("rol"), "catalogo.inicio"))
 
 
-def _ruta_interna(ruta):
+def ruta_interna(ruta):
     """Solo rutas de este sitio ("/x"), nunca "//otro.com" ni "\\": evita
     redirecciones abiertas."""
     return (isinstance(ruta, str) and ruta.startswith("/") and not ruta.startswith("//")
@@ -63,14 +63,14 @@ def _ruta_interna(ruta):
 
 def recordar_destino(ruta):
     """Página a la que se vuelve después de iniciar sesión."""
-    if _ruta_interna(ruta):
+    if ruta_interna(ruta):
         session["volver_a"] = ruta
 
 
 def tomar_destino():
     """Saca de la sesión la página guardada (antes de iniciar_sesion, que la limpia)."""
     ruta = session.pop("volver_a", None)
-    return ruta if _ruta_interna(ruta) else None
+    return ruta if ruta_interna(ruta) else None
 
 
 def mandar_a_login():

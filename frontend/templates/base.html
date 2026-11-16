@@ -16,6 +16,10 @@
                     {% if usuario.rol == "Comprador" %}
                         <a class="enlace-menu" href="{{ url_for('comprador.carrito') }}">Carrito</a>
                         <a class="enlace-menu" href="{{ url_for('comprador.direcciones') }}">Mis direcciones</a>
+                    {% elif usuario.rol == "Vendedor" %}
+                        <a class="enlace-menu" href="{{ url_for('vendedor.productos') }}">Mis productos</a>
+                        <a class="enlace-menu" href="{{ url_for('vendedor.stock_masivo') }}">Stock masivo</a>
+                        <a class="enlace-menu" href="{{ url_for('vendedor.ventas') }}">Mis ventas</a>
                     {% endif %}
                     <span class="saludo">{{ usuario.nombre }} · <span class="etiqueta-rol">{{ usuario.rol }}</span></span>
                     <form method="post" action="{{ url_for('auth.logout') }}" class="en-linea">

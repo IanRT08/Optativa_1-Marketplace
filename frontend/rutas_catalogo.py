@@ -3,34 +3,14 @@
 Ambas rutas son abiertas, igual que las Lambdas. Con sesión se manda el token
 a la 4.2 para que la API devuelva el stock exacto (regla de Ian).
 """
-import time
-
-from flask import Blueprint, abort, current_app, render_template, request
+from flask import Blueprint, abort, render_template, request
 
 import api
-from constantes import BUSQUEDA_MAX_LLAMADAS, CATEGORIAS_CACHE_S, MSG_ERROR_INTERNO, MSG_SIN_PRODUCTOS
-from dtos import BusquedaDTO, CategoriaDTO, ErrorRespuesta, PaginaProductosDTO, ProductoDetalleDTO
+import catalogos
+from constantes import BUSQUEDA_MAX_LLAMADAS, MSG_ERROR_INTERNO, MSG_SIN_PRODUCTOS
+from dtos import BusquedaDTO, ErrorRespuesta, PaginaProductosDTO, ProductoDetalleDTO
 
 bp = Blueprint("catalogo", __name__)
-
-_cache_categorias = {"hasta": 0.0, "lista": []}
-
-
-def _categorias():
-    """Lista para el filtro. Se guarda unos minutos para no llamar a la 2.2
-    (RDS) en cada página. Si falla, el catálogo sigue sin el filtro."""
-    if time.monotonic() < _cache_categorias["hasta"]:
-        return _cache_categorias["lista"]
-    try:
-        lista = CategoriaDTO.lista_from_api(api.llamar("GET", "/categorias", token=None))
-    except (api.ApiError, ErrorRespuesta):
-        current_app.logger.warning("No se pudieron cargar las categorías del filtro")
-        # Reintento en 1 min: si RDS está caído, cada visita no espera el timeout.
-        _cache_categorias["hasta"] = time.monotonic() + 60
-        return _cache_categorias["lista"]
-    lista.sort(key=lambda c: c.etiqueta.lower())
-    _cache_categorias.update(hasta=time.monotonic() + CATEGORIAS_CACHE_S, lista=lista)
-    return lista
 
 
 @bp.route("/")
@@ -56,7 +36,7 @@ def inicio():
     return render_template(
         "catalogo.html",
         busqueda=busqueda,
-        categorias=_categorias(),
+        categorias=catalogos.categorias(),
         pagina=pagina,
         error=error,
         msg_sin_productos=MSG_SIN_PRODUCTOS,

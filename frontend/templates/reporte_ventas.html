@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<h1>{{ titulo }}</h1>
+
+<form method="get" action="{{ accion }}" class="tarjeta filtros filtros-fechas">
+    {% block filtros_extra %}{% endblock %}
+    <label class="campo"><span>Fecha inicial *</span>
+        <input type="date" name="fecha_inicio" value="{{ fechas.fecha_inicio }}" required></label>
+    <label class="campo"><span>Fecha final *</span>
+        <input type="date" name="fecha_fin" value="{{ fechas.fecha_fin }}" required></label>
+    <div class="filtros-acciones">
+        <button type="submit" class="btn btn-primario">Consultar</button>
+    </div>
+</form>
+
+{% if error %}
+    <div class="alerta alerta-error" role="alert">{{ error }}</div>
+{% elif reporte and not reporte.productos %}
+    <p class="vacio">{{ reporte.mensaje }}</p>
+{% elif reporte %}
+    <section class="tarjeta">
+        {% if reporte.vendedor %}<h2>{{ reporte.vendedor }}</h2>{% endif %}
+        <table class="tabla">
+            <thead><tr><th scope="col">Producto</th><th scope="col">Unidades vendidas</th><th scope="col">Total vendido</th></tr></thead>
+            <tbody>
+                {% for p in reporte.productos %}
+                    <tr><td>{{ p.producto }}</td><td>{{ p.unidades_vendidas }}</td><td>{{ p.total_vendido|moneda }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="carrito-total"><span>Total de ventas</span><strong>{{ reporte.total_ventas|moneda }}</strong></div>
+        <p class="nota">Los pedidos Cancelados y Devueltos no se suman.</p>
+    </section>
+{% endif %}
+{% endblock %}

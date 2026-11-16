@@ -198,3 +198,15 @@ h2 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; }
 .opcion input { margin-top: 0.3rem; }
 .numero-orden { font-size: 1.15rem; }
 .compra { align-items: start; }
+
+/* --- Vendedor (3.x, 8.1) --- */
+.encabezado-pagina { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.acciones-renglon { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+.acciones-renglon form { margin: 0; }
+.fila-triple { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 1rem; }
+@media (max-width: 640px) { .fila-triple { grid-template-columns: 1fr; } }
+.formulario-producto { max-width: 760px; }
+.campo textarea { resize: vertical; min-height: 6rem; }
+.opcion-simple { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem; cursor: pointer; }
+.filtros-fechas { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 640px) { .filtros-fechas { grid-template-columns: 1fr; } }

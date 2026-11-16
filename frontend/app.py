@@ -12,6 +12,7 @@ from constantes import MSG_ACCESO_RESTRINGIDO, MSG_ERROR_INTERNO, MSG_SESION_INV
 from rutas_auth import bp as auth_bp
 from rutas_catalogo import bp as catalogo_bp
 from rutas_comprador import bp as comprador_bp
+from rutas_vendedor import bp as vendedor_bp
 from seguridad import agregar_encabezados, cerrar_sesion, hay_sesion
 
 
@@ -24,6 +25,7 @@ def crear_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(catalogo_bp)
     app.register_blueprint(comprador_bp)
+    app.register_blueprint(vendedor_bp)
     app.after_request(agregar_encabezados)
 
     @app.template_filter("moneda")
