@@ -9,17 +9,28 @@
 Los campos sensibles (contraseñas, token) llevan repr=False para que nunca
 aparezcan si un DTO se imprime o termina en un log.
 """
+import re
 from dataclasses import asdict, dataclass, field
 from typing import Optional
 from urllib.parse import urlsplit
 
 from constantes import (
     BUSQUEDA_MAX,
+    CALLE_MAX,
+    CIUDAD_MAX,
+    COLONIA_MAX,
     EMAIL_MAX,
+    ESTADO_MAX,
     MSG_CAMPOS_OBLIGATORIOS,
+    MSG_CANTIDAD_ENTERA,
     MSG_CORREO_FORMATO,
+    MSG_DIRECCION_LARGA,
+    MSG_DIRECCION_NO_VALIDA,
     MSG_NOMBRE_LARGO,
+    MSG_PRODUCTO_NO_EXISTE,
+    MSG_VARIANTE_NO_EXISTE,
     NOMBRE_MAX,
+    NUMERO_MAX,
     ROLES,
     URL_IMAGEN_MAX,
 )
@@ -49,6 +60,17 @@ def _password(form, campo):
 def _obligatorios(*valores):
     if any(v == "" for v in valores):
         raise ErrorValidacion(MSG_CAMPOS_OBLIGATORIOS)
+
+
+def _entero_form(texto, mensaje):
+    """Entero escrito en un formulario (solo dígitos ASCII, con signo opcional).
+    El rango (mayor a cero, stock) lo valida la Lambda."""
+    if not _RE_ENTERO.fullmatch(texto):
+        raise ErrorValidacion(mensaje)
+    return int(texto)
+
+
+_RE_ENTERO = re.compile(r"[+-]?[0-9]{1,12}")
 
 
 def _entero(datos, campo):
@@ -405,6 +427,229 @@ class ProductoDetalleDTO:
     def tiene_variantes(self):
         """True si hay variantes además de la estándar (3.6)."""
         return any(not v.es_estandar for v in self.variantes)
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# DFR 5.1 a 5.4 Carrito -> /carrito, /carrito/items
+# =============================================================================
+@dataclass(frozen=True)
+class AgregarCarritoDTO:
+    """5.1. id_variante es opcional: sin ella la Lambda usa la estándar."""
+    id_producto: int
+    cantidad: int
+    id_variante: Optional[int] = None
+
+    @classmethod
+    def from_form(cls, form):
+        producto, cantidad, variante = (_texto(form, c) for c in ("id_producto", "cantidad", "id_variante"))
+        _obligatorios(producto, cantidad)
+        return cls(
+            id_producto=_entero_form(producto, MSG_PRODUCTO_NO_EXISTE),
+            cantidad=_entero_form(cantidad, MSG_CANTIDAD_ENTERA),
+            id_variante=_entero_form(variante, MSG_VARIANTE_NO_EXISTE) if variante else None,
+        )
+
+    def to_dict(self):
+        return {k: v for k, v in asdict(self).items() if v is not None}
+
+
+@dataclass(frozen=True)
+class CantidadCarritoDTO:
+    """5.3. La cantidad reemplaza a la actual. Con 0, Flask llama a la 5.4."""
+    cantidad: int
+
+    @classmethod
+    def from_form(cls, form):
+        cantidad = _texto(form, "cantidad")
+        _obligatorios(cantidad)
+        return cls(cantidad=_entero_form(cantidad, MSG_CANTIDAD_ENTERA))
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class QuitarCarritoDTO:
+    """5.4. Uno o varios id_variante (repetidos se cuentan una vez)."""
+    variantes: tuple
+
+    @classmethod
+    def from_form(cls, form):
+        valores = [v.strip() for v in form.getlist("variantes") if isinstance(v, str) and v.strip()]
+        if not valores:
+            raise ErrorValidacion(MSG_CAMPOS_OBLIGATORIOS)
+        ids =tuple(dict.fromkeys(_entero_form(v, MSG_VARIANTE_NO_EXISTE) for v in valores))
+        return cls(variantes=ids)
+
+    @classmethod
+    def de_una(cls, id_variante):
+        return cls(variantes=(id_variante,))
+
+    def to_dict(self):
+        return {"variantes": list(self.variantes)}
+
+
+@dataclass(frozen=True)
+class ItemCarritoDTO:
+    id_producto: int
+    nombre: str
+    id_variante: int
+    sku: str
+    atributos: dict
+    precio: float
+    cantidad: int
+    subtotal: float
+    url_imagen: Optional[str]
+    disponible: bool
+    stock: int
+    stock_suficiente: bool
+
+    @classmethod
+    def from_api(cls, datos):
+        return cls(
+            id_producto=_entero(datos, "id_producto"),
+            nombre=_cadena(datos, "nombre"),
+            id_variante=_entero(datos, "id_variante"),
+            sku=_cadena(datos, "sku", obligatorio=False),
+            atributos=_mapa_texto(datos.get("atributos")),
+            precio=_numero(datos, "precio"),
+            cantidad=_entero(datos, "cantidad"),
+            subtotal=_numero(datos, "subtotal"),
+            url_imagen=url_segura(datos.get("url_imagen")),
+            disponible=datos.get("disponible") is True,
+            stock=_entero_opcional(datos, "stock") or 0,
+            stock_suficiente=datos.get("stock_suficiente") is True,
+        )
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class CarritoDTO:
+    mensaje: str
+    items: list
+    total: float
+    puede_comprar: bool
+
+    @classmethod
+    def from_api(cls, datos):
+        filas = datos.get("items")
+        if not isinstance(filas, list):
+            raise ErrorRespuesta("items")
+        items = [ItemCarritoDTO.from_api(f) for f in filas if isinstance(f, dict)]
+        return cls(
+            mensaje=_cadena(datos, "mensaje", obligatorio=False),
+            items=items,
+            total=_numero(datos, "total"),
+            # Se exige además que haya renglones: un carrito vacío no se compra.
+            puede_comprar=datos.get("puede_comprar") is True and bool(items),
+        )
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# DFR 9.1 a 9.3 Direcciones -> /direcciones
+# =============================================================================
+@dataclass(frozen=True)
+class DireccionFormDTO:
+    """9.1. El código postal va como texto (con número se pierde el 0 inicial);
+    sus 5 dígitos los valida la Lambda."""
+    calle: str
+    numero: str
+    colonia: str
+    ciudad: str
+    estado: str
+    codigo_postal: str
+
+    @classmethod
+    def from_form(cls, form):
+        dto = cls(**{c: _texto(form, c) for c in
+                     ("calle", "numero", "colonia", "ciudad", "estado", "codigo_postal")})
+        _obligatorios(*asdict(dto).values())
+        if (len(dto.calle) > CALLE_MAX or len(dto.numero) > NUMERO_MAX
+                or len(dto.colonia) > COLONIA_MAX or len(dto.ciudad) > CIUDAD_MAX
+                or len(dto.estado) > ESTADO_MAX):
+            raise ErrorValidacion(MSG_DIRECCION_LARGA)
+        return dto
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class DireccionDTO:
+    id_direccion: int
+    calle: str
+    numero: str
+    colonia: str
+    ciudad: str
+    estado: str
+    codigo_postal: str
+
+    @property
+    def texto(self):
+        return (f"{self.calle} {self.numero}, {self.colonia}, {self.ciudad}, "
+                f"{self.estado}, C.P. {self.codigo_postal}")
+
+    @classmethod
+    def from_api(cls, datos):
+        return cls(id_direccion=_entero(datos, "id_direccion"),
+                   **{c: _cadena(datos, c, obligatorio=False) for c in
+                      ("calle", "numero", "colonia", "ciudad", "estado", "codigo_postal")})
+
+    @classmethod
+    def lista_from_api(cls, datos):
+        filas = datos.get("direcciones")
+        if not isinstance(filas, list):
+            raise ErrorRespuesta("direcciones")
+        return [cls.from_api(f) for f in filas if isinstance(f, dict)]
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# DFR 6.1 Confirmar compra -> POST /compras (sp_RegistrarCompra)
+# =============================================================================
+@dataclass(frozen=True)
+class CompraDTO:
+    """Tarjeta y CVV: solo viajan en esta petición a la Lambda. No se guardan
+    en la sesión, ni en cookies, ni en logs, ni vuelven al formulario. El
+    formato (16 dígitos, CVV de 3) lo valida la Lambda: "Datos de pago no válidos"."""
+    id_direccion: int
+    numero_tarjeta: str = field(repr=False)
+    cvv: str = field(repr=False)
+
+    @classmethod
+    def from_form(cls, form):
+        direccion = _texto(form, "id_direccion")
+        tarjeta = _texto(form, "numero_tarjeta")
+        cvv = _texto(form, "cvv")
+        _obligatorios(direccion, tarjeta, cvv)
+        return cls(id_direccion=_entero_form(direccion, MSG_DIRECCION_NO_VALIDA),
+                   numero_tarjeta=tarjeta, cvv=cvv)
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class CompraRespuestaDTO:
+    mensaje: str
+    id_pedido: int
+    total: float
+
+    @classmethod
+    def from_api(cls, datos):
+        return cls(mensaje=_cadena(datos, "mensaje"),
+                   id_pedido=_entero(datos, "id_pedido"),
+                   total=_numero(datos, "total"))
 
     def to_dict(self):
         return asdict(self)

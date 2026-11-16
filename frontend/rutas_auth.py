@@ -1,5 +1,5 @@
 """DFR 1.1 Registro de usuario y DFR 1.2 Inicio de sesión."""
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 import api
 from constantes import MSG_ERROR_INTERNO, MSG_REGISTRO_EXITOSO
@@ -11,7 +11,14 @@ from dtos import (
     RegistroRespuestaDTO,
     SesionDTO,
 )
-from seguridad import cerrar_sesion, destino_por_rol, hay_sesion, iniciar_sesion
+from seguridad import (
+    cerrar_sesion,
+    destino_por_rol,
+    hay_sesion,
+    iniciar_sesion,
+    recordar_destino,
+    tomar_destino,
+)
 
 bp = Blueprint("auth", __name__)
 
@@ -34,9 +41,12 @@ def login():
     email = ""
     if request.method == "POST":
         email = request.form.get("email", "").strip()
+        volver_a = session.get("volver_a")
         try:
             _iniciar_con_api(LoginDTO.from_form(request.form))
-            return redirect(destino_por_rol())
+            # Si venía de una página protegida (p. ej. agregar al carrito), vuelve ahí.
+            recordar_destino(volver_a)
+            return redirect(tomar_destino() or destino_por_rol())
         except (ErrorValidacion, api.ApiError) as exc:
             flash(getattr(exc, "mensaje", str(exc)), "error")
     # La contraseña nunca se devuelve al formulario.

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titulo %}Mis direcciones{% endblock %}
+{% block contenido %}
+<h1>Mis direcciones</h1>
+{% if volver == "compra" %}
+    <p class="migas"><a href="{{ url_for('comprador.compra') }}">← Volver a la compra</a></p>
+{% endif %}
+
+<div class="dos-columnas">
+    <section class="tarjeta">
+        <h2>Direcciones activas</h2>
+        {% if error %}
+            <div class="alerta alerta-error" role="alert">{{ error }}</div>
+        {% elif not direcciones %}
+            <p class="vacio">{{ mensaje_lista or "No tienes direcciones registradas" }}</p>
+        {% else %}
+            <ul class="lista-direcciones">
+                {% for d in direcciones %}
+                    <li>
+                        <span>{{ d.texto }}</span>
+                        <form method="post" action="{{ url_for('comprador.desactivar_direccion', id_direccion=d.id_direccion) }}" data-un-envio data-confirmar="¿Desactivar esta dirección? Ya no podrás elegirla al comprar.">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-secundario btn-chico">Desactivar</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+
+    <section class="tarjeta">
+        <h2>Registrar dirección</h2>
+        <p class="nota">Los campos con * son obligatorios.</p>
+        <form method="post" action="{{ url_for('comprador.direcciones') }}" data-un-envio novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="volver" value="{{ volver }}">
+            <div class="fila-doble">
+                <label class="campo"><span>Calle *</span>
+                    <input type="text" name="calle" value="{{ previo.calle }}" maxlength="150" autocomplete="address-line1" required></label>
+                <label class="campo"><span>Número *</span>
+                    <input type="text" name="numero" value="{{ previo.numero }}" maxlength="20" required></label>
+            </div>
+            <label class="campo"><span>Colonia *</span>
+                <input type="text" name="colonia" value="{{ previo.colonia }}" maxlength="100" required></label>
+            <div class="fila-doble">
+                <label class="campo"><span>Ciudad *</span>
+                    <input type="text" name="ciudad" value="{{ previo.ciudad }}" maxlength="100" autocomplete="address-level2" required></label>
+                <label class="campo"><span>Estado *</span>
+                    <input type="text" name="estado" value="{{ previo.estado }}" maxlength="100" autocomplete="address-level1" required></label>
+            </div>
+            <label class="campo campo-cantidad"><span>Código postal *</span>
+                <input type="text" name="codigo_postal" value="{{ previo.codigo_postal }}" maxlength="5" inputmode="numeric" autocomplete="postal-code" required></label>
+            <button type="submit" class="btn btn-primario">Registrar dirección</button>
+        </form>
+    </section>
+</div>
+{% endblock %}

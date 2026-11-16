@@ -6,7 +6,7 @@ API: cada Lambda vuelve a revisar el token y el rol.
 import time
 from functools import wraps
 
-from flask import abort, current_app, flash, redirect, session, url_for
+from flask import abort, current_app, flash, redirect, request, session, url_for
 
 from constantes import MSG_SESION_INVALIDA, ROL_ADMINISTRADOR, ROL_COMPRADOR, ROL_VENDEDOR
 
@@ -54,13 +54,39 @@ def destino_por_rol():
     return url_for(DESTINO_POR_ROL.get(session.get("rol"), "catalogo.inicio"))
 
 
+def _ruta_interna(ruta):
+    """Solo rutas de este sitio ("/x"), nunca "//otro.com" ni "\\": evita
+    redirecciones abiertas."""
+    return (isinstance(ruta, str) and ruta.startswith("/") and not ruta.startswith("//")
+            and "\\" not in ruta and all(32 < ord(c) < 127 for c in ruta))
+
+
+def recordar_destino(ruta):
+    """Página a la que se vuelve después de iniciar sesión."""
+    if _ruta_interna(ruta):
+        session["volver_a"] = ruta
+
+
+def tomar_destino():
+    """Saca de la sesión la página guardada (antes de iniciar_sesion, que la limpia)."""
+    ruta = session.pop("volver_a", None)
+    return ruta if _ruta_interna(ruta) else None
+
+
+def mandar_a_login():
+    """DFR 5.1: sin sesión se redirige a la pantalla de inicio de sesión."""
+    if request.method == "GET":
+        recordar_destino(request.path)
+    return redirect(url_for("auth.login"))
+
+
 # --- Decoradores -----------------------------------------------------------------
 def login_requerido(f):
     """Sin sesión válida -> pantalla de inicio de sesión (DFR 5.1)."""
     @wraps(f)
     def envoltura(*args, **kwargs):
         if not hay_sesion():
-            return redirect(url_for("auth.login"))
+            return mandar_a_login()
         return f(*args, **kwargs)
     return envoltura
 

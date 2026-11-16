@@ -22,11 +22,22 @@ class ApiError(Exception):
         self.mensaje = mensaje
 
 
-class SesionExpirada(ApiError):
+class _ErrorDeSesion(Exception):
+    """No hereda de ApiError a propósito: las rutas atrapan ApiError para
+    mostrar mensajes, y estos dos deben llegar siempre a los manejadores
+    globales de app.py (cerrar sesión / página de acceso restringido)."""
+
+    def __init__(self, status, mensaje):
+        super().__init__(mensaje)
+        self.status = status
+        self.mensaje = mensaje
+
+
+class SesionExpirada(_ErrorDeSesion):
     """401 en una ruta con token: se cierra la sesión y se manda al login."""
 
 
-class AccesoRestringido(ApiError):
+class AccesoRestringido(_ErrorDeSesion):
     """403 "Acceso restringido": se muestra la página de acceso restringido."""
 
 

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block titulo %}Confirmar compra{% endblock %}
+{% block contenido %}
+<p class="migas"><a href="{{ url_for('comprador.carrito') }}">← Volver al carrito</a></p>
+<h1>Confirmar compra</h1>
+
+<div class="dos-columnas compra">
+    <form method="post" action="{{ url_for('comprador.compra') }}" class="tarjeta" data-un-envio novalidate autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <fieldset class="grupo">
+            <legend>Dirección de envío *</legend>
+            {% if direcciones %}
+                {% for d in direcciones %}
+                    <label class="opcion">
+                        <input type="radio" name="id_direccion" value="{{ d.id_direccion }}" {% if elegida == d.id_direccion|string %}checked{% endif %} required>
+                        <span>{{ d.texto }}</span>
+                    </label>
+                {% endfor %}
+            {% else %}
+                <p class="vacio">No tienes direcciones registradas</p>
+            {% endif %}
+            <a href="{{ url_for('comprador.direcciones', volver='compra') }}">Registrar otra dirección</a>
+        </fieldset>
+
+        <fieldset class="grupo">
+            <legend>Pago simulado</legend>
+            <p class="nota">No se guarda el número completo de la tarjeta ni el CVV.</p>
+            <label class="campo"><span>Número de tarjeta *</span>
+                <input type="text" name="numero_tarjeta" inputmode="numeric" maxlength="19" autocomplete="off" placeholder="16 dígitos" required></label>
+            <label class="campo campo-cantidad"><span>CVV *</span>
+                <input type="password" name="cvv" inputmode="numeric" maxlength="3" autocomplete="off" required></label>
+        </fieldset>
+
+        <button type="submit" class="btn btn-primario btn-bloque">Pagar {{ carrito.total|moneda }}</button>
+    </form>
+
+    <section class="tarjeta">
+        <h2>Resumen</h2>
+        <table class="tabla">
+            <thead><tr><th scope="col">Producto</th><th scope="col">Cant.</th><th scope="col">Subtotal</th></tr></thead>
+            <tbody>
+                {% for item in carrito.items %}
+                    <tr>
+                        <td>{{ item.nombre }}{% if item.atributos %}<div class="producto-meta">{% for n, v in item.atributos.items() %}{{ n }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</div>{% endif %}</td>
+                        <td>{{ item.cantidad }}</td>
+                        <td>{{ item.subtotal|moneda }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="carrito-total"><span>Total</span><strong>{{ carrito.total|moneda }}</strong></div>
+    </section>
+</div>
+{% endblock %}

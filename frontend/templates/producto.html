@@ -32,6 +32,33 @@
             </dd>
         </dl>
 
+        {# 5.1: solo Comprador o visitante (al visitante lo manda al login). #}
+        {% if not usuario or usuario.rol == "Comprador" %}
+            {% if producto.disponible %}
+            <form method="post" action="{{ url_for('comprador.agregar') }}" class="agregar" data-un-envio novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="id_producto" value="{{ producto.id_producto }}">
+                {% if producto.tiene_variantes %}
+                <label class="campo">
+                    <span>Variante *</span>
+                    <select name="id_variante" required>
+                        {% for v in producto.variantes if v.disponible %}
+                            <option value="{{ v.id_variante }}">
+                                {% if v.atributos %}{% for n, val in v.atributos.items() %}{{ n }}: {{ val }}{% if not loop.last %} · {% endif %}{% endfor %}{% else %}Estándar{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+                {% endif %}
+                <label class="campo campo-cantidad">
+                    <span>Cantidad *</span>
+                    <input type="number" name="cantidad" value="1" min="1" step="1" inputmode="numeric" required>
+                </label>
+                <button type="submit" class="btn btn-primario">Agregar al carrito</button>
+            </form>
+            {% endif %}
+        {% endif %}
+
         {% if producto.descripcion %}
             <h2>Descripción</h2>
             <p>{{ producto.descripcion }}</p>

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block titulo %}Carrito{% endblock %}
+{% block contenido %}
+<h1>Mi carrito</h1>
+
+{% if error %}
+    <div class="alerta alerta-error" role="alert">{{ error }}</div>
+{% elif not carrito.items %}
+    <section class="tarjeta centrado">
+        <p class="vacio">{{ msg_vacio }}</p>
+        <a class="btn btn-primario" href="{{ url_for('catalogo.inicio') }}">Ir al catálogo</a>
+    </section>
+{% else %}
+    <section class="tarjeta seccion">
+        <div class="tabla-desplazable">
+        <table class="tabla tabla-carrito">
+            <thead>
+                <tr>
+                    <th scope="col"><span class="solo-lector">Seleccionar</span></th>
+                    <th scope="col">Producto</th>
+                    <th scope="col">Precio</th>
+                    <th scope="col">Cantidad</th>
+                    <th scope="col">Subtotal</th>
+                    <th scope="col"><span class="solo-lector">Quitar</span></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for item in carrito.items %}
+                <tr {% if avisos.get(item.id_variante) %}class="renglon-aviso"{% endif %}>
+                    <td>
+                        <input type="checkbox" name="variantes" value="{{ item.id_variante }}" form="form-quitar-varios"
+                               aria-label="Seleccionar {{ item.nombre }}">
+                    </td>
+                    <td>
+                        <div class="producto-carrito">
+                            {% if item.url_imagen %}
+                                <img src="{{ item.url_imagen }}" alt="" loading="lazy" referrerpolicy="no-referrer">
+                            {% else %}
+                                <div class="sin-imagen" aria-hidden="true"></div>
+                            {% endif %}
+                            <div>
+                                <a href="{{ url_for('catalogo.detalle', id_producto=item.id_producto) }}">{{ item.nombre }}</a>
+                                {% if item.atributos %}
+                                    <div class="producto-meta">{% for n, v in item.atributos.items() %}{{ n }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</div>
+                                {% endif %}
+                                {% if avisos.get(item.id_variante) %}
+                                    <div class="aviso">{{ avisos[item.id_variante] }}{% if item.disponible %} (disponibles: {{ item.stock }}){% endif %}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ item.precio|moneda }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('comprador.cambiar_cantidad', id_variante=item.id_variante) }}" class="form-cantidad" data-un-envio novalidate>
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="number" name="cantidad" value="{{ item.cantidad }}" min="0" step="1" inputmode="numeric"
+                                   aria-label="Cantidad de {{ item.nombre }}" required>
+                            <button type="submit" class="btn btn-secundario btn-chico">Actualizar</button>
+                        </form>
+                    </td>
+                    <td>{{ item.subtotal|moneda }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('comprador.quitar') }}" data-un-envio data-confirmar="¿Quitar {{ item.nombre }} del carrito?">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="variantes" value="{{ item.id_variante }}">
+                            <button type="submit" class="btn btn-secundario btn-chico">Quitar</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+
+        <div class="carrito-pie">
+            <form method="post" action="{{ url_for('comprador.quitar') }}" id="form-quitar-varios" data-un-envio data-confirmar="¿Quitar los productos seleccionados?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-secundario">Quitar seleccionados</button>
+            </form>
+            <div class="carrito-total">
+                <span>Total</span>
+                <strong>{{ carrito.total|moneda }}</strong>
+            </div>
+        </div>
+        <p class="nota">Poner la cantidad en 0 quita el producto del carrito.</p>
+    </section>
+
+    <div class="acciones-derecha">
+        <a class="btn btn-secundario" href="{{ url_for('catalogo.inicio') }}">Seguir comprando</a>
+        {% if carrito.puede_comprar %}
+            <a class="btn btn-primario" href="{{ url_for('comprador.compra') }}">Continuar con la compra</a>
+        {% else %}
+            <span class="aviso">Corrige los productos marcados para poder comprar.</span>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

@@ -13,6 +13,10 @@
             <a class="marca" href="{{ url_for('catalogo.inicio') }}">SMAVIB</a>
             <nav class="menu" aria-label="Principal">
                 {% if usuario %}
+                    {% if usuario.rol == "Comprador" %}
+                        <a class="enlace-menu" href="{{ url_for('comprador.carrito') }}">Carrito</a>
+                        <a class="enlace-menu" href="{{ url_for('comprador.direcciones') }}">Mis direcciones</a>
+                    {% endif %}
                     <span class="saludo">{{ usuario.nombre }} · <span class="etiqueta-rol">{{ usuario.rol }}</span></span>
                     <form method="post" action="{{ url_for('auth.logout') }}" class="en-linea">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -167,3 +167,34 @@ h2 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; }
 .tabla { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
 .tabla th, .tabla td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--borde); }
 .tabla th { color: var(--texto-suave); font-weight: 600; }
+
+/* --- Carrito, direcciones y compra (5.x, 9.x, 6.1) --- */
+.enlace-menu { color: var(--texto); text-decoration: none; font-weight: 600; font-size: 0.95rem; padding: 0.4rem 0.5rem; border-radius: 6px; }
+.enlace-menu:hover { background: var(--fondo); }
+.btn-chico { padding: 0.3rem 0.65rem; font-size: 0.85rem; }
+.solo-lector { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.tabla-desplazable { overflow-x: auto; }
+.tabla-carrito td { vertical-align: middle; }
+.producto-carrito { display: flex; align-items: center; gap: 0.75rem; min-width: 220px; }
+.producto-carrito img, .producto-carrito .sin-imagen { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; background: var(--fondo); flex: none; }
+.form-cantidad { display: flex; gap: 0.4rem; align-items: center; margin: 0; }
+.form-cantidad input { width: 4.5rem; padding: 0.35rem 0.5rem; border: 1px solid var(--borde); border-radius: 6px; font: inherit; }
+.renglon-aviso { background: var(--error-fondo); }
+.aviso { color: var(--error-texto); font-size: 0.85rem; font-weight: 600; }
+.carrito-pie { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+.carrito-total { display: flex; gap: 1rem; align-items: baseline; justify-content: flex-end; font-size: 1.1rem; margin-top: 0.75rem; }
+.carrito-total strong { font-size: 1.35rem; }
+.acciones-derecha { display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
+.agregar { display: flex; flex-wrap: wrap; gap: 0 1rem; align-items: end; margin: 0 0 1rem; }
+.agregar .btn { margin-bottom: 1rem; }
+.campo-cantidad { max-width: 9rem; }
+.lista-direcciones { list-style: none; margin: 0; padding: 0; }
+.lista-direcciones li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--borde); }
+.lista-direcciones form { margin: 0; flex: none; }
+.grupo { border: 0; padding: 0; margin: 0 0 1.25rem; }
+.grupo legend { font-weight: 700; margin-bottom: 0.5rem; padding: 0; }
+.opcion { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.6rem 0.75rem; border: 1px solid var(--borde); border-radius: 6px; margin-bottom: 0.5rem; cursor: pointer; }
+.opcion:has(input:checked) { border-color: var(--primario); background: #eef3fe; }
+.opcion input { margin-top: 0.3rem; }
+.numero-orden { font-size: 1.15rem; }
+.compra { align-items: start; }
