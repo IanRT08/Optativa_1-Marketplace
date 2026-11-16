@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block titulo %}SMAVIB{% endblock %} · SMAVIB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+    <header class="barra">
+        <div class="barra-contenido">
+            <a class="marca" href="{{ url_for('inicio') }}">SMAVIB</a>
+            <nav class="menu" aria-label="Principal">
+                {% if usuario %}
+                    <span class="saludo">{{ usuario.nombre }} · <span class="etiqueta-rol">{{ usuario.rol }}</span></span>
+                    <form method="post" action="{{ url_for('auth.logout') }}" class="en-linea">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-secundario">Cerrar sesión</button>
+                    </form>
+                {% else %}
+                    <a class="btn btn-secundario" href="{{ url_for('auth.login') }}">Iniciar sesión</a>
+                    <a class="btn btn-primario" href="{{ url_for('auth.registro') }}">Crear cuenta</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="contenido">
+        {% with mensajes = get_flashed_messages(with_categories=true) %}
+            {% for categoria, mensaje in mensajes %}
+                <div class="alerta alerta-{{ 'exito' if categoria == 'exito' else 'error' }}" role="alert">{{ mensaje }}</div>
+            {% endfor %}
+        {% endwith %}
+        {% block contenido %}{% endblock %}
+    </main>
+</body>
+</html>

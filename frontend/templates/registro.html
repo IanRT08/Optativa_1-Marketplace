@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block titulo %}Crear cuenta{% endblock %}
+{% block contenido %}
+<section class="tarjeta tarjeta-angosta">
+    <h1>Crear cuenta</h1>
+    <p class="nota">Los campos con * son obligatorios. La contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un carácter especial.</p>
+    <form method="post" action="{{ url_for('auth.registro') }}" data-un-envio novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="fila-doble">
+            <label class="campo">
+                <span>Nombre *</span>
+                <input type="text" name="nombre" value="{{ previo.nombre }}" maxlength="80" autocomplete="given-name" required autofocus>
+            </label>
+            <label class="campo">
+                <span>Apellido *</span>
+                <input type="text" name="apellido" value="{{ previo.apellido }}" maxlength="80" autocomplete="family-name" required>
+            </label>
+        </div>
+        <label class="campo">
+            <span>Correo electrónico *</span>
+            <input type="email" name="email" value="{{ previo.email }}" maxlength="150" autocomplete="email" required>
+        </label>
+        <label class="campo">
+            <span>Contraseña *</span>
+            <input type="password" name="password" autocomplete="new-password" required>
+        </label>
+        <label class="campo">
+            <span>Confirmar contraseña *</span>
+            <input type="password" name="confirmar_password" autocomplete="new-password" required>
+        </label>
+        <button type="submit" class="btn btn-primario btn-bloque">Crear cuenta</button>
+    </form>
+    <p class="pie-formulario">¿Ya tienes cuenta? <a href="{{ url_for('auth.login') }}">Iniciar sesión</a></p>
+</section>
+{% endblock %}

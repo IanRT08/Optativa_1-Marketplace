@@ -1,0 +1,14 @@
+# Entorno virtual y cachés de Python
+venv/
+__pycache__/
+*.pyc
+
+# Secretos y sesiones del servidor (nunca a Git)
+.env
+flask_session/
+
+# Archivos locales de trabajo
+.claude/
+settings.local.json
+.contexto_proyecto/
+.impeccable/
