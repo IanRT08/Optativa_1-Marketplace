@@ -64,7 +64,7 @@ WHERE email = '<correo del administrador>';
 Pasos en el [README](../README.md#ejecutar-la-interfaz-web): copiar `frontend/.env.example` a `frontend/.env` y llenar `API_BASE_URL` (paso 4.3) y `SECRET_KEY`, luego ejecutar `python app.py`.
 
 **En Vercel** (el repositorio de GitHub conectado a un proyecto de Vercel):
-1. *Settings* → *General* → **Root Directory = `frontend`**. Vercel detecta Flask por `app.py` (expone `app`) e instala `requirements.txt`.
+1. *Settings* → *General* → **Root Directory = `frontend`**. Vercel detecta Flask por `app.py` (expone `app`), instala `requirements.txt` y usa Python 3.14 por `frontend/.python-version` (sin ese archivo usaría 3.12).
 2. *Storage* → **Create Database** → **Upstash Redis** (plan gratuito, región `us-east-1`) → **Connect to project**. Vercel agrega la variable de conexión; la app lee `REDIS_URL` (`rediss://…`). Sin Redis la app no arranca en Vercel, porque el disco es de solo lectura y no se comparte entre instancias.
 3. *Settings* → *Environment Variables*: `API_BASE_URL` y `SECRET_KEY` (la misma regla de 32 caracteres o más). `COOKIE_SECURE` se queda vacío, porque Vercel sirve por HTTPS.
 4. Cada push a `main` despliega. El CI de GitHub ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) corre las pruebas de `frontend/tests` y compila las Lambdas.
