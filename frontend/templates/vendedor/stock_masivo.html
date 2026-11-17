@@ -1,22 +1,17 @@
 {% extends "base.html" %}
+{% import "macros.html" as ui %}
 {% block titulo %}Stock masivo{% endblock %}
 {% block contenido %}
-<section class="tarjeta tarjeta-angosta">
+<div class="formulario-angosto">
     <h1>Actualizar stock masivo</h1>
-    <p class="nota">Suma la cantidad al stock de todas las variantes de tus productos de la categoría elegida, en una sola operación. Los campos con * son obligatorios.</p>
+    <p class="nota">Suma la cantidad al stock de todas las variantes de tus productos de la categoría elegida, en una sola operación.</p>
     <form method="post" action="{{ url_for('vendedor.stock_masivo') }}" data-un-envio novalidate
           data-confirmar="¿Sumar esta cantidad a todas las variantes de tus productos de la categoría?">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <label class="campo"><span>Categoría *</span>
-            <select name="id_categoria" required>
-                <option value="">Selecciona</option>
-                {% for c in categorias %}
-                    <option value="{{ c.id_categoria }}" {% if previo.id_categoria == c.id_categoria|string %}selected{% endif %}>{{ c.etiqueta }}</option>
-                {% endfor %}
-            </select></label>
-        <label class="campo campo-cantidad"><span>Cantidad a agregar *</span>
-            <input type="number" name="cantidad" value="{{ previo.cantidad }}" min="1" step="1" inputmode="numeric" required></label>
-        <button type="submit" class="btn btn-primario btn-bloque">Actualizar stock</button>
+        {{ ui.csrf() }}
+        {{ ui.selector("id_categoria", "Categoría", categorias, previo.id_categoria, obligatorio=True, vacio="Selecciona una categoría", valor="id_categoria", texto="etiqueta") }}
+        {{ ui.campo("cantidad", "Cantidad a agregar", previo.cantidad, "number", obligatorio=True, clase="campo-corto",
+                    attrs={"min": 1, "step": 1, "inputmode": "numeric"}) }}
+        {{ ui.boton("Actualizar stock", "primario", "boxes") }}
     </form>
-</section>
+</div>
 {% endblock %}

@@ -1,46 +1,44 @@
 {% extends "base.html" %}
+{% import "macros.html" as ui %}
 {% block titulo %}Variantes · {{ producto.nombre }}{% endblock %}
 {% block contenido %}
-<p class="migas"><a href="{{ url_for('vendedor.productos') }}">← Mis productos</a></p>
+{{ ui.volver(url_for('vendedor.productos'), "Mis productos") }}
 <h1>Variantes de {{ producto.nombre }}</h1>
 
 <div class="dos-columnas">
-    <section class="tarjeta">
-        <h2>Variantes registradas</h2>
-        <table class="tabla">
-            <thead><tr><th scope="col">Presentación</th><th scope="col">SKU</th><th scope="col">Stock</th></tr></thead>
-            <tbody>
-                {% for v in producto.variantes %}
-                    <tr>
-                        <td>{% if v.atributos %}{% for n, val in v.atributos.items() %}{{ n }}: {{ val }}{% if not loop.last %} · {% endif %}{% endfor %}{% else %}Estándar{% endif %}</td>
-                        <td>{{ v.sku }}</td>
-                        <td>{{ v.stock if v.stock is not none else "—" }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <section aria-labelledby="titulo-registradas">
+        <h2 id="titulo-registradas">Variantes registradas</h2>
+        <div class="tabla-contenedor">
+            <table class="tabla">
+                <thead><tr><th scope="col">Presentación</th><th scope="col">SKU</th><th scope="col" class="num">Stock</th></tr></thead>
+                <tbody>
+                    {% for v in producto.variantes %}
+                        <tr>
+                            <td>{{ ui.atributos(v.atributos) if v.atributos else "Estándar" }}</td>
+                            <td>{{ v.sku }}</td>
+                            <td class="num">{{ v.stock if v.stock is not none else "—" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         <p class="nota">El stock del producto es la suma de todas sus variantes, incluida la estándar. El de la estándar se cambia en Editar.</p>
     </section>
 
-    <section class="tarjeta">
-        <h2>Registrar variante</h2>
+    <section class="panel" aria-labelledby="titulo-registrar">
+        <h2 id="titulo-registrar">Registrar variante</h2>
         <form method="post" action="{{ url_for('vendedor.variantes', id_producto=producto.id_producto) }}" data-un-envio novalidate>
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <p class="nota">Elige al menos un valor (uno por atributo). Los campos con * son obligatorios.</p>
+            {{ ui.csrf() }}
+            <p class="nota">Elige al menos un valor, uno por atributo.</p>
             {% for a in atributos if a.valores %}
-                <label class="campo"><span>{{ a.nombre }}</span>
-                    <select name="valores">
-                        <option value="">—</option>
-                        {% for id_valor, valor in a.valores %}
-                            <option value="{{ id_valor }}" {% if id_valor|string in elegidos %}selected{% endif %}>{{ valor }}</option>
-                        {% endfor %}
-                    </select></label>
+                {%- set elegido = (a.valores|map(attribute=0)|map("string")|select("in", elegidos)|first) or "" -%}
+                {{ ui.selector("valores", a.nombre, a.valores, elegido, vacio="Sin elegir", valor=0, texto=1, id="valor-" ~ loop.index) }}
             {% else %}
-                <p class="vacio">No hay atributos registrados</p>
+                {{ ui.vacio("No hay atributos registrados") }}
             {% endfor %}
-            <label class="campo campo-cantidad"><span>Stock de la variante *</span>
-                <input type="number" name="stock" value="{{ stock }}" min="0" step="1" inputmode="numeric" required></label>
-            <button type="submit" class="btn btn-primario">Registrar variante</button>
+            {{ ui.campo("stock", "Stock de la variante", stock, "number", obligatorio=True, clase="campo-corto",
+                        attrs={"min": 0, "step": 1, "inputmode": "numeric"}) }}
+            {{ ui.boton("Registrar variante", "primario", "plus") }}
         </form>
     </section>
 </div>

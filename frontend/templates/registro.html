@@ -1,35 +1,24 @@
 {% extends "base.html" %}
+{% import "macros.html" as ui %}
 {% block titulo %}Crear cuenta{% endblock %}
 {% block contenido %}
-<section class="tarjeta tarjeta-angosta">
+<div class="formulario">
     <h1>Crear cuenta</h1>
-    <p class="nota">Los campos con * son obligatorios. La contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un carácter especial.</p>
     <form method="post" action="{{ url_for('auth.registro') }}" data-un-envio novalidate>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="fila-doble">
-            <label class="campo">
-                <span>Nombre *</span>
-                <input type="text" name="nombre" value="{{ previo.nombre }}" maxlength="80" autocomplete="given-name" required autofocus>
-            </label>
-            <label class="campo">
-                <span>Apellido *</span>
-                <input type="text" name="apellido" value="{{ previo.apellido }}" maxlength="80" autocomplete="family-name" required>
-            </label>
+        {{ ui.csrf() }}
+        <div class="filas filas-2">
+            {{ ui.campo("nombre", "Nombre", previo.nombre, obligatorio=True, attrs={"maxlength": 80, "autocomplete": "given-name", "autofocus": True}) }}
+            {{ ui.campo("apellido", "Apellido", previo.apellido, obligatorio=True, attrs={"maxlength": 80, "autocomplete": "family-name"}) }}
         </div>
-        <label class="campo">
-            <span>Correo electrónico *</span>
-            <input type="email" name="email" value="{{ previo.email }}" maxlength="150" autocomplete="email" required>
-        </label>
-        <label class="campo">
-            <span>Contraseña *</span>
-            <input type="password" name="password" autocomplete="new-password" required>
-        </label>
-        <label class="campo">
-            <span>Confirmar contraseña *</span>
-            <input type="password" name="confirmar_password" autocomplete="new-password" required>
-        </label>
-        <button type="submit" class="btn btn-primario btn-bloque">Crear cuenta</button>
+        {{ ui.campo("email", "Correo electrónico", previo.email, "email", obligatorio=True, attrs={"maxlength": 150, "autocomplete": "email"}) }}
+        <div class="filas filas-2">
+            {{ ui.campo("password", "Contraseña", tipo="password", obligatorio=True,
+                        ayuda="Mínimo 8 caracteres, una mayúscula, un número y un carácter especial.",
+                        attrs={"autocomplete": "new-password"}) }}
+            {{ ui.campo("confirmar_password", "Confirmar contraseña", tipo="password", obligatorio=True, attrs={"autocomplete": "new-password"}) }}
+        </div>
+        {{ ui.boton("Crear cuenta", "primario", "user-plus") }}
     </form>
-    <p class="pie-formulario">¿Ya tienes cuenta? <a href="{{ url_for('auth.login') }}">Iniciar sesión</a></p>
-</section>
+    <p class="nota">¿Ya tienes cuenta? <a href="{{ url_for('auth.login') }}">Iniciar sesión</a></p>
+</div>
 {% endblock %}

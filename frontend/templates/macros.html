@@ -1,0 +1,164 @@
+{#- Componentes de la interfaz (guía de diseño §5: todo sale de aquí).
+    Uso en cada plantilla: {% import "macros.html" as ui %}
+    attrs: diccionario de atributos extra. Nunca pasar False como valor
+    (xmlattr lo escribiría y el atributo booleano quedaría activo); omitirlo. -#}
+
+{% macro icono(nombre, clase="") -%}
+<svg class="icono {{ clase }}" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='icons/iconos.svg') }}#{{ nombre }}"></use></svg>
+{%- endmacro %}
+
+{% macro csrf() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{#- Botones: primario (uno por vista o sección), secundario, terciario, peligro
+    y peligro-secundario. Sobre la cabecera: primario-oscuro y secundario-oscuro. -#}
+{% macro boton(texto, variante="primario", icono_nombre=None, tipo="submit", bloque=False, attrs={}) -%}
+<button type="{{ tipo }}" class="btn btn-{{ variante }}{% if bloque %} btn-bloque{% endif %}"{{ attrs|xmlattr }}>
+    {%- if icono_nombre %}{{ icono(icono_nombre) }}{% endif %}<span class="btn-texto">{{ texto }}</span></button>
+{%- endmacro %}
+
+{% macro enlace_boton(href, texto, variante="secundario", icono_nombre=None, attrs={}) -%}
+<a class="btn btn-{{ variante }}" href="{{ href }}"{{ attrs|xmlattr }}>
+    {%- if icono_nombre %}{{ icono(icono_nombre) }}{% endif %}<span class="btn-texto">{{ texto }}</span></a>
+{%- endmacro %}
+
+{% macro volver(href, texto) -%}
+<p class="volver"><a href="{{ href }}">{{ icono("arrow-left") }}<span>{{ texto }}</span></a></p>
+{%- endmacro %}
+
+{#- Campos: etiqueta siempre visible encima; "Obligatorio" en texto. -#}
+{% macro _etiqueta(id, etiqueta, obligatorio) -%}
+<label for="{{ id }}">{{ etiqueta }}{% if obligatorio %} <span class="obligatorio">Obligatorio</span>{% endif %}</label>
+{%- endmacro %}
+
+{% macro _ayuda_error(id, ayuda, error) -%}
+{% if ayuda %}<p class="campo-ayuda" id="{{ id }}-ayuda">{{ ayuda }}</p>{% endif %}
+{% if error %}<p class="campo-error" id="{{ id }}-error" role="alert">{{ icono("circle-alert") }}<span>{{ error }}</span></p>{% endif %}
+{%- endmacro %}
+
+{% macro _describe(id, ayuda, error) -%}
+{%- set ids = [] -%}
+{%- if ayuda %}{% set _ = ids.append(id ~ "-ayuda") %}{% endif -%}
+{%- if error %}{% set _ = ids.append(id ~ "-error") %}{% endif -%}
+{%- if ids %} aria-describedby="{{ ids|join(' ') }}"{% endif -%}
+{%- if error %} aria-invalid="true"{% endif -%}
+{%- endmacro %}
+
+{% macro campo(nombre, etiqueta, valor="", tipo="text", obligatorio=False, ayuda=None, error=None, id=None, clase="", attrs={}) -%}
+{%- set id = id or "c-" ~ nombre -%}
+<div class="campo {{ clase }}">
+    {{ _etiqueta(id, etiqueta, obligatorio) }}
+    <input id="{{ id }}" name="{{ nombre }}" type="{{ tipo }}"{% if tipo != "password" and valor is not none %} value="{{ valor }}"{% endif %}{% if obligatorio %} required{% endif %}{{ _describe(id, ayuda, error) }}{{ attrs|xmlattr }}>
+    {{ _ayuda_error(id, ayuda, error) }}
+</div>
+{%- endmacro %}
+
+{% macro area(nombre, etiqueta, valor="", obligatorio=False, filas=4, ayuda=None, error=None, id=None, attrs={}) -%}
+{%- set id = id or "c-" ~ nombre -%}
+<div class="campo">
+    {{ _etiqueta(id, etiqueta, obligatorio) }}
+    <textarea id="{{ id }}" name="{{ nombre }}" rows="{{ filas }}"{% if obligatorio %} required{% endif %}{{ _describe(id, ayuda, error) }}{{ attrs|xmlattr }}>{{ valor or "" }}</textarea>
+    {{ _ayuda_error(id, ayuda, error) }}
+</div>
+{%- endmacro %}
+
+{#- opciones: lista de objetos, tuplas o textos. valor/texto: atributo o índice
+    de cada opción (None = la opción misma). vacio: texto de la opción sin valor. -#}
+{% macro selector(nombre, etiqueta, opciones, seleccionado="", obligatorio=False, vacio=None, valor=None, texto=None, ayuda=None, error=None, id=None, clase="", attrs={}) -%}
+{%- set id = id or "c-" ~ nombre -%}
+<div class="campo {{ clase }}">
+    {{ _etiqueta(id, etiqueta, obligatorio) }}
+    <select id="{{ id }}" name="{{ nombre }}"{% if obligatorio %} required{% endif %}{{ _describe(id, ayuda, error) }}{{ attrs|xmlattr }}>
+        {% if vacio is not none %}<option value="">{{ vacio }}</option>{% endif %}
+        {% for o in opciones %}
+            {%- set v = o if valor is none else o[valor] -%}
+            {%- set t = o if texto is none else o[texto] -%}
+            <option value="{{ v }}"{% if v|string == seleccionado|string %} selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+    </select>
+    {{ _ayuda_error(id, ayuda, error) }}
+</div>
+{%- endmacro %}
+
+{% macro casilla(nombre, etiqueta, marcado=False, valor="1", id=None) -%}
+{%- set id = id or "c-" ~ nombre -%}
+<div class="casilla">
+    <input type="checkbox" id="{{ id }}" name="{{ nombre }}" value="{{ valor }}"{% if marcado %} checked{% endif %}>
+    <label for="{{ id }}">{{ etiqueta }}</label>
+</div>
+{%- endmacro %}
+
+{#- Mensajes: icono + texto; el error con role=alert, los demás con role=status.
+    No desaparecen solos. -#}
+{% macro mensaje(tipo, texto) -%}
+{%- set iconos = {"exito": "circle-check", "error": "circle-alert", "aviso": "triangle-alert", "info": "info"} -%}
+<div class="alerta alerta-{{ tipo }}" role="{{ 'alert' if tipo == 'error' else 'status' }}">
+    {{ icono(iconos.get(tipo, "info")) }}<p>{{ texto }}</p>
+</div>
+{%- endmacro %}
+
+{#- Estado con icono + texto (nunca solo color). -#}
+{% macro insignia(estado) -%}
+{%- set mapa = {
+    "Pendiente": ("acento", "clock"), "Enviado": ("info", "truck"),
+    "Entregado": ("exito", "package-check"), "Cancelado": ("peligro", "circle-x"),
+    "Devuelto": ("neutra", "undo-2"), "Activo": ("exito", "check"),
+    "Inactivo": ("neutra", "ban"), "Disponible": ("exito", "check"),
+    "Agotado": ("peligro", "ban"), "No suma": ("neutra", "ban")} -%}
+{%- set tono, icono_nombre = mapa.get(estado, ("neutra", "info")) -%}
+<span class="insignia insignia-{{ tono }}">{{ icono(icono_nombre) }}<span>{{ estado }}</span></span>
+{%- endmacro %}
+
+{#- Estado vacío: el mensaje de la API y la acción siguiente. -#}
+{% macro vacio(texto, href=None, accion=None, icono_accion=None) -%}
+<div class="vacio">
+    <p>{{ texto }}</p>
+    {% if href %}{{ enlace_boton(href, accion, "secundario", icono_accion) }}{% endif %}
+</div>
+{%- endmacro %}
+
+{#- Paginación por cursor: la API solo avanza. -#}
+{% macro paginacion(primera=None, siguiente=None, texto_siguiente="Página siguiente") -%}
+{% if primera or siguiente %}
+<nav class="paginacion" aria-label="Páginas">
+    {% if primera %}{{ enlace_boton(primera, "Primera página", "secundario", "chevrons-left") }}{% endif %}
+    {% if siguiente %}<a class="btn btn-secundario" href="{{ siguiente }}"><span class="btn-texto">{{ texto_siguiente }}</span>{{ icono("chevron-right") }}</a>{% endif %}
+</nav>
+{% endif %}
+{%- endmacro %}
+
+{% macro atributos(mapa) -%}
+{% for n, v in mapa.items() %}{{ n }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}
+{%- endmacro %}
+
+{% macro imagen(url, alt, clase="") -%}
+{% if url %}<img class="{{ clase }}" src="{{ url }}" alt="{{ alt }}" loading="lazy" referrerpolicy="no-referrer">
+{%- else %}<div class="sin-imagen {{ clase }}">{{ icono("image-off") }}<span>Sin imagen</span></div>{% endif %}
+{%- endmacro %}
+
+{#- Tarjeta de producto (4.1): imagen 4:3, nombre en 2 líneas, precio destacado. -#}
+{% macro tarjeta_producto(p) -%}
+<li class="tarjeta-producto">
+    <a href="{{ url_for('catalogo.detalle', id_producto=p.id_producto) }}">
+        {{ imagen(p.url_imagen, p.nombre, "tarjeta-producto-imagen") }}
+        <div class="tarjeta-producto-cuerpo">
+            <span class="tarjeta-producto-nombre">{{ p.nombre }}</span>
+            <span class="tarjeta-producto-meta">{{ p.marca }} · {{ p.categoria }}</span>
+            <span class="tarjeta-producto-precio">{{ p.precio|moneda }}</span>
+        </div>
+    </a>
+</li>
+{%- endmacro %}
+
+{#- Miniatura + nombre + atributos, para tablas de carrito y pedidos. -#}
+{% macro producto_renglon(nombre, url_imagen, mapa_atributos, href=None, extra=None) -%}
+<div class="producto-renglon">
+    {{ imagen(url_imagen, "", "miniatura") }}
+    <div>
+        {% if href %}<a href="{{ href }}">{{ nombre }}</a>{% else %}<span>{{ nombre }}</span>{% endif %}
+        {% if mapa_atributos %}<p class="meta">{{ atributos(mapa_atributos) }}</p>{% endif %}
+        {% if extra %}{{ extra }}{% endif %}
+    </div>
+</div>
+{%- endmacro %}

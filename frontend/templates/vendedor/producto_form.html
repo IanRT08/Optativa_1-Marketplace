@@ -1,91 +1,69 @@
 {% extends "base.html" %}
+{% import "macros.html" as ui %}
 {% block titulo %}{{ titulo }}{% endblock %}
 {% block contenido %}
-<p class="migas"><a href="{{ url_for('vendedor.productos') }}">← Mis productos</a></p>
+{{ ui.volver(url_for('vendedor.productos'), "Mis productos") }}
 <h1>{{ titulo }}</h1>
 
-<form method="post" action="{{ accion }}" class="tarjeta formulario-producto" data-un-envio novalidate>
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <p class="nota">Los campos con * son obligatorios.</p>
+<form method="post" action="{{ accion }}" class="formulario" data-un-envio novalidate>
+    {{ ui.csrf() }}
 
-    <label class="campo"><span>Nombre *</span>
-        <input type="text" name="nombre" value="{{ valores.nombre }}" maxlength="200" required></label>
-    <label class="campo"><span>Descripción *</span>
-        <textarea name="descripcion" rows="4" maxlength="1000" required>{{ valores.descripcion }}</textarea></label>
+    {{ ui.campo("nombre", "Nombre", valores.nombre, obligatorio=True, attrs={"maxlength": 200}) }}
+    {{ ui.area("descripcion", "Descripción", valores.descripcion, obligatorio=True, attrs={"maxlength": 1000}) }}
 
-    <div class="fila-triple">
-        <label class="campo"><span>Precio *</span>
-            <input type="text" name="precio" value="{{ valores.precio }}" inputmode="decimal" maxlength="12" placeholder="0.00" required></label>
-        <label class="campo"><span>{{ "Stock (presentación estándar) *" if id_producto else "Stock inicial *" }}</span>
-            <input type="number" name="stock" value="{{ valores.stock }}" min="0" step="1" inputmode="numeric" required></label>
-    </div>
-    {% if id_producto %}
-        <p class="nota">El stock de las demás variantes se administra en <a href="{{ url_for('vendedor.variantes', id_producto=id_producto) }}">Variantes</a>.</p>
-    {% endif %}
-
-    <div class="fila-doble">
-        <label class="campo"><span>Marca *</span>
-            <select name="id_marca" required>
-                <option value="">Selecciona</option>
-                {% for m in marcas %}
-                    <option value="{{ m.id_marca }}" {% if valores.id_marca == m.id_marca|string %}selected{% endif %}>{{ m.nombre }}</option>
-                {% endfor %}
-            </select></label>
-        <label class="campo"><span>Categoría *</span>
-            <select name="id_categoria" required>
-                <option value="">Selecciona</option>
-                {% for c in categorias %}
-                    <option value="{{ c.id_categoria }}" {% if valores.id_categoria == c.id_categoria|string %}selected{% endif %}>{{ c.etiqueta }}</option>
-                {% endfor %}
-            </select></label>
+    <div class="filas filas-2">
+        {{ ui.campo("precio", "Precio", valores.precio, obligatorio=True, ayuda="Hasta 2 decimales, sin signo de pesos.",
+                    attrs={"inputmode": "decimal", "maxlength": 12}) }}
+        {{ ui.campo("stock", "Stock de la presentación estándar" if id_producto else "Stock inicial", valores.stock, "number", obligatorio=True,
+                    ayuda=("Las demás variantes se administran en Variantes." if id_producto else None),
+                    attrs={"min": 0, "step": 1, "inputmode": "numeric"}) }}
     </div>
 
-    <label class="campo"><span>URL de imagen *</span>
-        <input type="url" name="url_imagen" value="{{ valores.url_imagen }}" maxlength="500" placeholder="https://" required></label>
+    <div class="filas filas-2">
+        {{ ui.selector("id_marca", "Marca", marcas, valores.id_marca, obligatorio=True, vacio="Selecciona una marca", valor="id_marca", texto="nombre") }}
+        {{ ui.selector("id_categoria", "Categoría", categorias, valores.id_categoria, obligatorio=True, vacio="Selecciona una categoría", valor="id_categoria", texto="etiqueta") }}
+    </div>
+
+    {{ ui.campo("url_imagen", "URL de imagen", valores.url_imagen, "url", obligatorio=True, ayuda="Dirección http o https de la imagen.",
+                attrs={"maxlength": 500}) }}
 
     <fieldset class="grupo">
-        <legend>Especificaciones (opcional)</legend>
+        <legend>Especificaciones <span class="obligatorio">Opcional</span></legend>
         <p class="nota">Hasta 20, por ejemplo Material: Aluminio. Deja vacíos los renglones que no uses.</p>
+        <div class="filas filas-2-siempre encabezado-renglones" aria-hidden="true"><span>Nombre</span><span>Valor</span></div>
         {% for nombre, valor in especificaciones %}
-            <div class="fila-doble">
-                <label class="campo"><span class="solo-lector">Nombre de la especificación {{ loop.index }}</span>
-                    <input type="text" name="espec_nombre" value="{{ nombre }}" maxlength="50" placeholder="Nombre"></label>
-                <label class="campo"><span class="solo-lector">Valor de la especificación {{ loop.index }}</span>
-                    <input type="text" name="espec_valor" value="{{ valor }}" maxlength="200" placeholder="Valor"></label>
+            <div class="filas filas-2-siempre">
+                <div class="campo">
+                    <label class="solo-lector" for="espec-nombre-{{ loop.index }}">Nombre de la especificación {{ loop.index }}</label>
+                    <input id="espec-nombre-{{ loop.index }}" type="text" name="espec_nombre" value="{{ nombre }}" maxlength="50">
+                </div>
+                <div class="campo">
+                    <label class="solo-lector" for="espec-valor-{{ loop.index }}">Valor de la especificación {{ loop.index }}</label>
+                    <input id="espec-valor-{{ loop.index }}" type="text" name="espec_valor" value="{{ valor }}" maxlength="200">
+                </div>
             </div>
         {% endfor %}
     </fieldset>
 
     <fieldset class="grupo">
-        <legend>Logística de envío (opcional)</legend>
-        <label class="opcion-simple">
-            <input type="checkbox" name="con_logistica" value="1" {% if valores.con_logistica %}checked{% endif %}>
-            <span>Incluir datos de envío</span>
-        </label>
-        <div class="fila-triple">
-            <label class="campo"><span>Alto (cm)</span>
-                <input type="text" name="log_alto" value="{{ valores.log_alto }}" inputmode="decimal" maxlength="7"></label>
-            <label class="campo"><span>Ancho (cm)</span>
-                <input type="text" name="log_ancho" value="{{ valores.log_ancho }}" inputmode="decimal" maxlength="7"></label>
-            <label class="campo"><span>Profundidad (cm)</span>
-                <input type="text" name="log_profundidad" value="{{ valores.log_profundidad }}" inputmode="decimal" maxlength="7"></label>
+        <legend>Logística de envío <span class="obligatorio">Opcional</span></legend>
+        {{ ui.casilla("con_logistica", "Incluir datos de envío", valores.con_logistica) }}
+        <div class="filas filas-3">
+            {{ ui.campo("log_alto", "Alto (cm)", valores.log_alto, attrs={"inputmode": "decimal", "maxlength": 7}) }}
+            {{ ui.campo("log_ancho", "Ancho (cm)", valores.log_ancho, attrs={"inputmode": "decimal", "maxlength": 7}) }}
+            {{ ui.campo("log_profundidad", "Profundidad (cm)", valores.log_profundidad, attrs={"inputmode": "decimal", "maxlength": 7}) }}
         </div>
-        <div class="fila-triple">
-            <label class="campo"><span>Peso (kg)</span>
-                <input type="text" name="log_peso_kg" value="{{ valores.log_peso_kg }}" inputmode="decimal" maxlength="7"></label>
-            <label class="campo"><span>Tipo de empaque</span>
-                <input type="text" name="log_tipo_empaque" value="{{ valores.log_tipo_empaque }}" maxlength="100"></label>
+        <div class="filas filas-2">
+            {{ ui.campo("log_peso_kg", "Peso (kg)", valores.log_peso_kg, attrs={"inputmode": "decimal", "maxlength": 7}) }}
+            {{ ui.campo("log_tipo_empaque", "Tipo de empaque", valores.log_tipo_empaque, attrs={"maxlength": 100}) }}
         </div>
-        <label class="opcion-simple">
-            <input type="checkbox" name="log_requiere_fragil" value="1" {% if valores.log_requiere_fragil %}checked{% endif %}>
-            <span>Requiere manejo frágil</span>
-        </label>
+        {{ ui.casilla("log_requiere_fragil", "Requiere manejo frágil", valores.log_requiere_fragil) }}
         {% if id_producto %}<p class="nota">Si quitas la marca de "Incluir datos de envío", se borran del catálogo.</p>{% endif %}
     </fieldset>
 
-    <div class="acciones-derecha">
-        <a class="btn btn-secundario" href="{{ url_for('vendedor.productos') }}">Cancelar</a>
-        <button type="submit" class="btn btn-primario">{{ "Guardar cambios" if id_producto else "Registrar producto" }}</button>
+    <div class="acciones">
+        {{ ui.boton("Guardar cambios" if id_producto else "Registrar producto", "primario", "check") }}
+        {{ ui.enlace_boton(url_for('vendedor.productos'), "Cancelar", "secundario") }}
     </div>
 </form>
 {% endblock %}

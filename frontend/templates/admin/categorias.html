@@ -1,45 +1,48 @@
 {% extends "base.html" %}
+{% import "macros.html" as ui %}
 {% block titulo %}Categorías{% endblock %}
 {% block contenido %}
 <h1>Categorías</h1>
 <div class="dos-columnas">
-    <section class="tarjeta">
+    <section aria-labelledby="titulo-lista">
+        <h2 id="titulo-lista" class="solo-lector">Lista de categorías</h2>
         {% if error %}
-            <div class="alerta alerta-error" role="alert">{{ error }}</div>
+            {{ ui.mensaje("error", error) }}
         {% elif not categorias %}
-            <p class="vacio">{{ mensaje_lista or "No se encontraron registros" }}</p>
+            {{ ui.vacio(mensaje_lista or "No se encontraron registros") }}
         {% else %}
-            <table class="tabla">
-                <thead><tr><th scope="col">Categoría</th><th scope="col">Categoría padre</th><th scope="col"><span class="solo-lector">Acciones</span></th></tr></thead>
-                <tbody>
-                {% for c in categorias %}
-                    <tr>
-                        <td>{{ c.nombre }}{% if c.descripcion %}<div class="producto-meta">{{ c.descripcion }}</div>{% endif %}</td>
-                        <td>{{ c.categoria_padre or "—" }}</td>
-                        <td>
-                            <div class="acciones-renglon">
-                                <a class="btn btn-secundario btn-chico" href="{{ url_for('admin.categoria_editar', id_categoria=c.id_categoria) }}">Editar</a>
-                                <form method="post" action="{{ url_for('admin.categoria_eliminar', id_categoria=c.id_categoria) }}" data-un-envio
-                                      data-confirmar="¿Eliminar la categoría {{ c.nombre }}?">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-secundario btn-chico">Eliminar</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+            <div class="tabla-contenedor">
+                <table class="tabla tabla-apilada">
+                    <thead><tr><th scope="col">Categoría</th><th scope="col">Categoría padre</th><th scope="col" class="acciones-col">Acciones</th></tr></thead>
+                    <tbody>
+                    {% for c in categorias %}
+                        <tr>
+                            <td>{{ c.nombre }}{% if c.descripcion %}<p class="meta">{{ c.descripcion }}</p>{% endif %}</td>
+                            <td data-etiqueta="Categoría padre">{{ c.categoria_padre or "—" }}</td>
+                            <td>
+                                <div class="acciones-renglon">
+                                    {{ ui.enlace_boton(url_for('admin.categoria_editar', id_categoria=c.id_categoria), "Editar", "secundario", "pencil", attrs={"aria-label": "Editar " ~ c.nombre}) }}
+                                    <form method="post" action="{{ url_for('admin.categoria_eliminar', id_categoria=c.id_categoria) }}" data-un-envio
+                                          data-confirmar="¿Eliminar la categoría {{ c.nombre }}? No se puede deshacer.">
+                                        {{ ui.csrf() }}
+                                        {{ ui.boton("Eliminar", "peligro-secundario", "trash-2", attrs={"aria-label": "Eliminar " ~ c.nombre}) }}
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% endif %}
     </section>
 
-    <section class="tarjeta">
-        <h2>Crear categoría</h2>
-        <p class="nota">Los campos con * son obligatorios.</p>
+    <section class="panel" aria-labelledby="titulo-crear">
+        <h2 id="titulo-crear">Crear categoría</h2>
         <form method="post" action="{{ url_for('admin.categorias') }}" data-un-envio novalidate>
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {{ ui.csrf() }}
             {% include "admin/_campos_categoria.html" %}
-            <button type="submit" class="btn btn-primario">Crear categoría</button>
+            {{ ui.boton("Crear categoría", "primario", "plus") }}
         </form>
     </section>
 </div>

@@ -1,10 +1,9 @@
 {% extends "reporte_ventas.html" %}
+{% import "macros.html" as ui %}
 {% block filtros_extra %}
-    <label class="campo"><span>Vendedor *</span>
-        <select name="id_vendedor" required>
-            <option value="">Selecciona</option>
-            {% for v in vendedores %}
-                <option value="{{ v.id_usuario }}" {% if fechas.id_vendedor == v.id_usuario|string %}selected{% endif %}>{{ v.nombre_completo }}{% if v.estado != "Activo" %} ({{ v.estado }}){% endif %}</option>
-            {% endfor %}
-        </select></label>
+    {%- set opciones = [] -%}
+    {%- for v in vendedores -%}
+        {%- set _ = opciones.append((v.id_usuario, v.nombre_completo ~ ("" if v.estado == "Activo" else " (" ~ v.estado ~ ")"))) -%}
+    {%- endfor -%}
+    {{ ui.selector("id_vendedor", "Vendedor", opciones, fechas.id_vendedor, obligatorio=True, vacio="Selecciona un vendedor", valor=0, texto=1) }}
 {% endblock %}

@@ -12,3 +12,6 @@ flask_session/
 settings.local.json
 .contexto_proyecto/
 .impeccable/
+
+# Herramientas solo de desarrollo (API simulada y guía de componentes)
+frontend/_dev/

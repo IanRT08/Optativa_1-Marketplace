@@ -1,53 +1,87 @@
+{% import "macros.html" as ui %}
+{#- Menú por rol: (endpoint, texto, icono, endpoints que lo marcan como actual) -#}
+{%- set menus = {
+    "Comprador": [
+        ("catalogo.inicio", "Catálogo", "store", ["catalogo.inicio", "catalogo.detalle"]),
+        ("comprador.carrito", "Carrito", "shopping-cart", ["comprador.carrito", "comprador.compra", "comprador.compra_realizada"]),
+        ("comprador.pedidos", "Mis pedidos", "package", ["comprador.pedidos", "comprador.pedido"]),
+        ("comprador.historial", "Historial de compras", "history", ["comprador.historial"]),
+        ("comprador.direcciones", "Mis direcciones", "map-pin", ["comprador.direcciones"])],
+    "Vendedor": [
+        ("vendedor.productos", "Mis productos", "package", ["vendedor.productos", "vendedor.nuevo", "vendedor.editar", "vendedor.variantes"]),
+        ("vendedor.stock_masivo", "Stock masivo", "boxes", ["vendedor.stock_masivo"]),
+        ("vendedor.ventas", "Mis ventas", "chart-column", ["vendedor.ventas"]),
+        ("catalogo.inicio", "Catálogo", "store", ["catalogo.inicio", "catalogo.detalle"])],
+    "Administrador": [
+        ("admin.pedidos", "Pedidos", "receipt", ["admin.pedidos", "admin.pedido"]),
+        ("admin.usuarios", "Usuarios", "users", ["admin.usuarios", "admin.usuario_nuevo", "admin.usuario_editar"]),
+        ("admin.categorias", "Categorías", "tags", ["admin.categorias", "admin.categoria_editar"]),
+        ("admin.ventas", "Ventas", "chart-column", ["admin.ventas"]),
+        ("catalogo.inicio", "Catálogo", "store", ["catalogo.inicio", "catalogo.detalle"])],
+} -%}
+{%- set enlaces = menus.get(usuario.rol, []) if usuario else [("catalogo.inicio", "Catálogo", "store", ["catalogo.inicio", "catalogo.detalle"])] -%}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block titulo %}SMAVIB{% endblock %} · SMAVIB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
-    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </head>
 <body>
-    <header class="barra">
-        <div class="barra-contenido">
+    <a class="saltar" href="#contenido">Saltar al contenido</a>
+
+    <header class="cabecera">
+        <div class="cabecera-contenido">
             <a class="marca" href="{{ url_for('catalogo.inicio') }}">SMAVIB</a>
-            <nav class="menu" aria-label="Principal">
-                {% if usuario %}
-                    {% if usuario.rol == "Comprador" %}
-                        <a class="enlace-menu" href="{{ url_for('comprador.carrito') }}">Carrito</a>
-                        <a class="enlace-menu" href="{{ url_for('comprador.pedidos') }}">Mis pedidos</a>
-                        <a class="enlace-menu" href="{{ url_for('comprador.historial') }}">Historial de compras</a>
-                        <a class="enlace-menu" href="{{ url_for('comprador.direcciones') }}">Mis direcciones</a>
-                    {% elif usuario.rol == "Vendedor" %}
-                        <a class="enlace-menu" href="{{ url_for('vendedor.productos') }}">Mis productos</a>
-                        <a class="enlace-menu" href="{{ url_for('vendedor.stock_masivo') }}">Stock masivo</a>
-                        <a class="enlace-menu" href="{{ url_for('vendedor.ventas') }}">Mis ventas</a>
-                    {% elif usuario.rol == "Administrador" %}
-                        <a class="enlace-menu" href="{{ url_for('admin.pedidos') }}">Pedidos</a>
-                        <a class="enlace-menu" href="{{ url_for('admin.usuarios') }}">Usuarios</a>
-                        <a class="enlace-menu" href="{{ url_for('admin.categorias') }}">Categorías</a>
-                        <a class="enlace-menu" href="{{ url_for('admin.ventas') }}">Ventas</a>
+            <button type="button" class="btn-menu" aria-expanded="false" aria-controls="menu-principal" hidden>
+                {{ ui.icono("menu") }}<span>Menú</span>
+            </button>
+
+            <div class="cabecera-menu" id="menu-principal">
+                <nav class="menu" aria-label="Principal">
+                    <ul>
+                        {% for endpoint, texto, icono_nombre, activos in enlaces %}
+                            <li><a class="menu-enlace" href="{{ url_for(endpoint) }}"{% if request.endpoint in activos %} aria-current="page"{% endif %}>{{ ui.icono(icono_nombre) }}<span>{{ texto }}</span></a></li>
+                        {% endfor %}
+                    </ul>
+                </nav>
+
+                <div class="cabecera-usuario">
+                    {% if usuario %}
+                        <p class="usuario">{{ usuario.nombre }} <span class="rol">{{ usuario.rol }}</span></p>
+                        <form method="post" action="{{ url_for('auth.logout') }}">
+                            {{ ui.csrf() }}
+                            {{ ui.boton("Cerrar sesión", "secundario-oscuro", "log-out") }}
+                        </form>
+                    {% else %}
+                        {{ ui.enlace_boton(url_for('auth.login'), "Iniciar sesión", "secundario-oscuro", "log-in") }}
+                        {{ ui.enlace_boton(url_for('auth.registro'), "Crear cuenta", "primario-oscuro", "user-plus") }}
                     {% endif %}
-                    <span class="saludo">{{ usuario.nombre }} · <span class="etiqueta-rol">{{ usuario.rol }}</span></span>
-                    <form method="post" action="{{ url_for('auth.logout') }}" class="en-linea">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-secundario">Cerrar sesión</button>
-                    </form>
-                {% else %}
-                    <a class="btn btn-secundario" href="{{ url_for('auth.login') }}">Iniciar sesión</a>
-                    <a class="btn btn-primario" href="{{ url_for('auth.registro') }}">Crear cuenta</a>
-                {% endif %}
-            </nav>
+                </div>
+            </div>
         </div>
     </header>
 
-    <main class="contenido">
+    <main id="contenido" class="contenido" tabindex="-1">
         {% with mensajes = get_flashed_messages(with_categories=true) %}
-            {% for categoria, mensaje in mensajes %}
-                <div class="alerta alerta-{{ 'exito' if categoria == 'exito' else 'error' }}" role="alert">{{ mensaje }}</div>
-            {% endfor %}
+            {% if mensajes %}
+                <div class="mensajes">
+                    {% for categoria, texto in mensajes %}
+                        {{ ui.mensaje(categoria if categoria in ("exito", "aviso", "info") else "error", texto) }}
+                    {% endfor %}
+                </div>
+            {% endif %}
         {% endwith %}
         {% block contenido %}{% endblock %}
     </main>
+
+    <footer class="pie">
+        <div class="pie-contenido">
+            <p>SMAVIB · Sistema de Marketplace en AWS</p>
+        </div>
+    </footer>
 </body>
 </html>

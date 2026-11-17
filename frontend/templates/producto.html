@@ -1,127 +1,107 @@
 {% extends "base.html" %}
+{% import "macros.html" as ui %}
 {% block titulo %}{{ producto.nombre }}{% endblock %}
-{% block contenido %}
-<p class="migas"><a href="{{ url_for('catalogo.inicio') }}">← Volver al catálogo</a></p>
 
-<article class="tarjeta detalle">
+{% macro disponibilidad(stock, disponible) -%}
+    {% if stock is not none and stock > 0 %}{{ stock }} {{ "unidad" if stock == 1 else "unidades" }}
+    {% elif disponible and stock is none %}{{ ui.insignia("Disponible") }}
+    {% else %}{{ ui.insignia("Agotado") }}{% endif %}
+{%- endmacro %}
+
+{% block contenido %}
+{{ ui.volver(url_for('catalogo.inicio'), "Volver al catálogo") }}
+
+<article class="detalle">
     <div class="detalle-imagen">
         {% if producto.url_imagen %}
             <img src="{{ producto.url_imagen }}" alt="{{ producto.nombre }}" referrerpolicy="no-referrer">
         {% else %}
-            <div class="sin-imagen" aria-hidden="true">Sin imagen</div>
+            {{ ui.imagen(None, producto.nombre) }}
         {% endif %}
     </div>
 
     <div class="detalle-info">
         <h1>{{ producto.nombre }}</h1>
-        <p class="producto-precio grande">{{ producto.precio|moneda }}</p>
+        <p class="precio-grande">{{ producto.precio|moneda }}</p>
 
         <dl class="datos">
             <dt>Marca</dt><dd>{{ producto.marca or "—" }}</dd>
             <dt>Categoría</dt><dd>{{ producto.categoria or "—" }}</dd>
             <dt>Vendedor</dt><dd>{{ producto.vendedor or "—" }}</dd>
-            <dt>Stock disponible</dt>
-            <dd>
-                {% if producto.stock is not none %}
-                    {{ producto.stock }} {{ "unidad" if producto.stock == 1 else "unidades" }}
-                {% elif producto.disponible %}
-                    <span class="insignia insignia-ok">Disponible</span>
-                {% else %}
-                    <span class="insignia insignia-agotado">Agotado</span>
-                {% endif %}
-            </dd>
+            <dt>Disponibilidad</dt><dd>{{ disponibilidad(producto.stock, producto.disponible) }}</dd>
         </dl>
 
         {# 5.1: solo Comprador o visitante (al visitante lo manda al login). #}
-        {% if not usuario or usuario.rol == "Comprador" %}
-            {% if producto.disponible %}
+        {% if (not usuario or usuario.rol == "Comprador") and producto.disponible %}
             <form method="post" action="{{ url_for('comprador.agregar') }}" class="agregar" data-un-envio novalidate>
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {{ ui.csrf() }}
                 <input type="hidden" name="id_producto" value="{{ producto.id_producto }}">
                 {% if producto.tiene_variantes %}
-                <label class="campo">
-                    <span>Variante *</span>
-                    <select name="id_variante" required>
-                        {% for v in producto.variantes if v.disponible %}
-                            <option value="{{ v.id_variante }}">
-                                {% if v.atributos %}{% for n, val in v.atributos.items() %}{{ n }}: {{ val }}{% if not loop.last %} · {% endif %}{% endfor %}{% else %}Estándar{% endif %}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </label>
+                    {% set opciones = [] %}
+                    {% for v in producto.variantes if v.disponible %}
+                        {% set _ = opciones.append((v.id_variante, ui.atributos(v.atributos) if v.atributos else "Estándar")) %}
+                    {% endfor %}
+                    {{ ui.selector("id_variante", "Variante", opciones, obligatorio=True, valor=0, texto=1) }}
                 {% endif %}
-                <label class="campo campo-cantidad">
-                    <span>Cantidad *</span>
-                    <input type="number" name="cantidad" value="1" min="1" step="1" inputmode="numeric" required>
-                </label>
-                <button type="submit" class="btn btn-primario">Agregar al carrito</button>
+                {{ ui.campo("cantidad", "Cantidad", 1, "number", obligatorio=True, clase="campo-corto",
+                            attrs={"min": 1, "step": 1, "inputmode": "numeric"}) }}
+                {{ ui.boton("Agregar al carrito", "primario", "shopping-cart") }}
             </form>
-            {% endif %}
         {% endif %}
 
         {% if producto.descripcion %}
             <h2>Descripción</h2>
-            <p>{{ producto.descripcion }}</p>
+            <p class="texto-largo">{{ producto.descripcion }}</p>
         {% endif %}
         {% if producto.detalles %}
             <dl class="datos">
-                {% for clave, valor in producto.detalles.items() %}
-                    <dt>{{ clave }}</dt><dd>{{ valor }}</dd>
-                {% endfor %}
+                {% for clave, valor in producto.detalles.items() %}<dt>{{ clave }}</dt><dd>{{ valor }}</dd>{% endfor %}
             </dl>
         {% endif %}
     </div>
 </article>
 
 {% if producto.tiene_variantes %}
-<section class="tarjeta seccion">
-    <h2>Variantes</h2>
-    <table class="tabla">
-        <thead><tr><th>Presentación</th><th>SKU</th><th>Stock</th></tr></thead>
-        <tbody>
-            {% for v in producto.variantes %}
-                <tr>
-                    <td>
-                        {% if v.atributos %}
-                            {% for nombre, valor in v.atributos.items() %}{{ nombre }}: {{ valor }}{% if not loop.last %} · {% endif %}{% endfor %}
-                        {% else %}Estándar{% endif %}
-                    </td>
-                    <td>{{ v.sku }}</td>
-                    <td>
-                        {% if v.stock is not none %}{{ v.stock }}
-                        {% elif v.disponible %}<span class="insignia insignia-ok">Disponible</span>
-                        {% else %}<span class="insignia insignia-agotado">Agotado</span>{% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<section aria-labelledby="titulo-variantes">
+    <h2 id="titulo-variantes">Variantes</h2>
+    <div class="tabla-contenedor">
+        <table class="tabla">
+            <thead><tr><th scope="col">Presentación</th><th scope="col">SKU</th><th scope="col" class="num">Disponibilidad</th></tr></thead>
+            <tbody>
+                {% for v in producto.variantes %}
+                    <tr>
+                        <td>{{ ui.atributos(v.atributos) if v.atributos else "Estándar" }}</td>
+                        <td>{{ v.sku }}</td>
+                        <td class="num">{{ disponibilidad(v.stock, v.disponible) }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% endif %}
 
 {% if producto.especificaciones or producto.logistica %}
-<section class="tarjeta seccion dos-columnas">
+<div class="dos-columnas">
     {% if producto.especificaciones %}
-    <div>
-        <h2>Especificaciones</h2>
+    <section aria-labelledby="titulo-especificaciones">
+        <h2 id="titulo-especificaciones">Especificaciones</h2>
         <dl class="datos">
-            {% for clave, valor in producto.especificaciones.items() %}
-                <dt>{{ clave }}</dt><dd>{{ valor }}</dd>
-            {% endfor %}
+            {% for clave, valor in producto.especificaciones.items() %}<dt>{{ clave }}</dt><dd>{{ valor }}</dd>{% endfor %}
         </dl>
-    </div>
+    </section>
     {% endif %}
     {% if producto.logistica %}
-    <div>
-        <h2>Envío</h2>
+    <section aria-labelledby="titulo-envio">
+        <h2 id="titulo-envio">Envío</h2>
         <dl class="datos">
-            <dt>Medidas (cm)</dt><dd>{{ producto.logistica.alto }} × {{ producto.logistica.ancho }} × {{ producto.logistica.profundidad }}</dd>
+            <dt>Medidas</dt><dd>{{ producto.logistica.alto }} × {{ producto.logistica.ancho }} × {{ producto.logistica.profundidad }} cm</dd>
             <dt>Peso</dt><dd>{{ producto.logistica.peso_kg }} kg</dd>
             <dt>Frágil</dt><dd>{{ "Sí" if producto.logistica.requiere_fragil else "No" }}</dd>
             {% if producto.logistica.tipo_empaque %}<dt>Empaque</dt><dd>{{ producto.logistica.tipo_empaque }}</dd>{% endif %}
         </dl>
-    </div>
+    </section>
     {% endif %}
-</section>
+</div>
 {% endif %}
 {% endblock %}

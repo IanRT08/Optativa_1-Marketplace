@@ -1,21 +1,15 @@
 {% extends "base.html" %}
+{% import "macros.html" as ui %}
 {% block titulo %}Iniciar sesión{% endblock %}
 {% block contenido %}
-<section class="tarjeta tarjeta-angosta">
+<div class="formulario-angosto">
     <h1>Iniciar sesión</h1>
-    <p class="nota">Los campos con * son obligatorios.</p>
     <form method="post" action="{{ url_for('auth.login') }}" data-un-envio novalidate>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <label class="campo">
-            <span>Correo electrónico *</span>
-            <input type="email" name="email" value="{{ email }}" maxlength="150" autocomplete="username" required autofocus>
-        </label>
-        <label class="campo">
-            <span>Contraseña *</span>
-            <input type="password" name="password" autocomplete="current-password" required>
-        </label>
-        <button type="submit" class="btn btn-primario btn-bloque">Iniciar sesión</button>
+        {{ ui.csrf() }}
+        {{ ui.campo("email", "Correo electrónico", email, "email", obligatorio=True, attrs={"maxlength": 150, "autocomplete": "username", "autofocus": True}) }}
+        {{ ui.campo("password", "Contraseña", tipo="password", obligatorio=True, attrs={"autocomplete": "current-password"}) }}
+        {{ ui.boton("Iniciar sesión", "primario", "log-in", bloque=True) }}
     </form>
-    <p class="pie-formulario">¿No tienes cuenta? <a href="{{ url_for('auth.registro') }}">Crear cuenta</a></p>
-</section>
+    <p class="nota">¿No tienes cuenta? <a href="{{ url_for('auth.registro') }}">Crear cuenta</a></p>
+</div>
 {% endblock %}

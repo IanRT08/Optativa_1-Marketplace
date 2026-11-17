@@ -1,68 +1,61 @@
 {% extends "base.html" %}
+{% import "macros.html" as ui %}
 {% block titulo %}Usuarios{% endblock %}
 {% block contenido %}
 <div class="encabezado-pagina">
     <h1>Usuarios</h1>
-    <a class="btn btn-primario" href="{{ url_for('admin.usuario_nuevo') }}">Crear usuario</a>
+    {{ ui.enlace_boton(url_for('admin.usuario_nuevo'), "Crear usuario", "primario", "user-plus") }}
 </div>
 
-<form method="get" action="{{ url_for('admin.usuarios') }}" class="tarjeta filtros filtros-fechas">
-    <label class="campo"><span>Rol</span>
-        <select name="rol">
-            <option value="">Todos</option>
-            {% for r in roles %}<option value="{{ r }}" {% if filtro.rol == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
-        </select></label>
-    <label class="campo"><span>Estado</span>
-        <select name="estado">
-            <option value="">Todos</option>
-            {% for e in estados %}<option value="{{ e }}" {% if filtro.estado == e %}selected{% endif %}>{{ e }}</option>{% endfor %}
-        </select></label>
-    <div class="filtros-acciones">
-        <button type="submit" class="btn btn-primario">Buscar</button>
-        <a class="btn btn-secundario" href="{{ url_for('admin.usuarios') }}">Limpiar</a>
+<form method="get" action="{{ url_for('admin.usuarios') }}" class="panel filtros-linea" data-un-envio>
+    {{ ui.selector("rol", "Rol", roles, filtro.rol, vacio="Todos") }}
+    {{ ui.selector("estado", "Estado", estados, filtro.estado, vacio="Todos") }}
+    <div class="acciones">
+        {{ ui.boton("Buscar", "secundario", "search") }}
+        {% if filtro.rol or filtro.estado %}{{ ui.enlace_boton(url_for('admin.usuarios'), "Quitar filtros", "terciario") }}{% endif %}
     </div>
 </form>
 
-{% if error %}
-    <div class="alerta alerta-error" role="alert">{{ error }}</div>
-{% elif pagina and not pagina.usuarios %}
-    <p class="vacio">{{ pagina.mensaje }}</p>
-{% elif pagina %}
-    <section class="tarjeta">
-        <div class="tabla-desplazable">
-        <table class="tabla">
-            <thead><tr><th scope="col">Nombre</th><th scope="col">Correo</th><th scope="col">Rol</th><th scope="col">Estado</th><th scope="col">Registro</th><th scope="col"><span class="solo-lector">Acciones</span></th></tr></thead>
-            <tbody>
-            {% for u in pagina.usuarios %}
-                <tr>
-                    <td>{{ u.nombre_completo }}{% if u.id_usuario == id_propio %} <span class="producto-meta">(tú)</span>{% endif %}</td>
-                    <td>{{ u.email }}</td>
-                    <td>{{ u.rol }}</td>
-                    <td><span class="insignia {{ 'insignia-ok' if u.estado == 'Activo' else 'insignia-agotado' }}">{{ u.estado }}</span></td>
-                    <td>{{ u.fecha_registro|fecha }}</td>
-                    <td>
-                        <div class="acciones-renglon">
-                            <a class="btn btn-secundario btn-chico" href="{{ url_for('admin.usuario_editar', id_usuario=u.id_usuario) }}">Editar</a>
-                            {# 1.6: no sobre la propia cuenta (regla de Ian) ni sobre una ya inactiva #}
-                            {% if u.id_usuario != id_propio and u.estado == 'Activo' %}
-                            <form method="post" action="{{ url_for('admin.usuario_desactivar', id_usuario=u.id_usuario) }}" data-un-envio
-                                  data-confirmar="¿Eliminar a {{ u.nombre_completo }}? Su cuenta quedará Inactiva.">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="volver" value="{{ request.full_path }}">
-                                <button type="submit" class="btn btn-secundario btn-chico">Eliminar</button>
-                            </form>
-                            {% endif %}
-                        </div>
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+<section class="seccion-resultados" aria-labelledby="titulo-lista">
+    <h2 id="titulo-lista" class="solo-lector">Lista de usuarios</h2>
+    {% if error %}
+        {{ ui.mensaje("error", error) }}
+    {% elif pagina and not pagina.usuarios %}
+        {{ ui.vacio(pagina.mensaje, url_for('admin.usuarios') if (filtro.rol or filtro.estado) else None, "Quitar filtros") }}
+    {% elif pagina %}
+        <div class="tabla-contenedor">
+            <table class="tabla tabla-apilada">
+                <thead><tr><th scope="col">Nombre</th><th scope="col">Correo</th><th scope="col">Rol</th><th scope="col">Estado</th><th scope="col">Registro</th><th scope="col" class="acciones-col">Acciones</th></tr></thead>
+                <tbody>
+                {% for u in pagina.usuarios %}
+                    <tr>
+                        <td>{{ u.nombre_completo }}{% if u.id_usuario == id_propio %} <span class="meta">(tú)</span>{% endif %}</td>
+                        <td data-etiqueta="Correo">{{ u.email }}</td>
+                        <td data-etiqueta="Rol">{{ u.rol }}</td>
+                        <td data-etiqueta="Estado">{{ ui.insignia(u.estado) }}</td>
+                        <td data-etiqueta="Registro">{{ u.fecha_registro|fecha }}</td>
+                        <td>
+                            <div class="acciones-renglon">
+                                {{ ui.enlace_boton(url_for('admin.usuario_editar', id_usuario=u.id_usuario), "Editar", "secundario", "pencil", attrs={"aria-label": "Editar a " ~ u.nombre_completo}) }}
+                                {# 1.6: no sobre la propia cuenta (regla de Ian) ni sobre una ya inactiva #}
+                                {% if u.id_usuario != id_propio and u.estado == 'Activo' %}
+                                <form method="post" action="{{ url_for('admin.usuario_desactivar', id_usuario=u.id_usuario) }}" data-un-envio
+                                      data-confirmar="¿Eliminar a {{ u.nombre_completo }}? Su cuenta quedará Inactiva.">
+                                    {{ ui.csrf() }}
+                                    <input type="hidden" name="volver" value="{{ request.full_path }}">
+                                    {{ ui.boton("Eliminar", "peligro-secundario", "trash-2", attrs={"aria-label": "Eliminar a " ~ u.nombre_completo}) }}
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </section>
-    <nav class="paginacion" aria-label="Páginas">
-        {% if filtro.cursor %}<a class="btn btn-secundario" href="{{ url_for('admin.usuarios', **filtro.filtros()) }}">Primera página</a>{% endif %}
-        {% if pagina.siguiente_cursor %}<a class="btn btn-primario" href="{{ url_for('admin.usuarios', cursor=pagina.siguiente_cursor, **filtro.filtros()) }}">Página siguiente</a>{% endif %}
-    </nav>
-{% endif %}
+        {{ ui.paginacion(
+            url_for('admin.usuarios', **filtro.filtros()) if filtro.cursor else None,
+            url_for('admin.usuarios', cursor=pagina.siguiente_cursor, **filtro.filtros()) if pagina.siguiente_cursor else None) }}
+    {% endif %}
+</section>
 {% endblock %}

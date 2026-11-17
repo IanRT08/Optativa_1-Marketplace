@@ -1,26 +1,25 @@
 {% extends "reporte_ventas.html" %}
+{% import "macros.html" as ui %}
 {% block resultado %}
 {% if reporte and not reporte.pedidos %}
-    <p class="vacio">{{ reporte.mensaje }}</p>
+    {{ ui.vacio(reporte.mensaje) }}
 {% elif reporte %}
-    <section class="tarjeta">
-        <div class="tabla-desplazable">
-        <table class="tabla">
-            <thead><tr><th scope="col">Orden</th><th scope="col">Fecha</th><th scope="col">Estado</th><th scope="col">Total</th></tr></thead>
+    <div class="tabla-contenedor">
+        <table class="tabla tabla-apilada">
+            <thead><tr><th scope="col">Orden</th><th scope="col">Fecha</th><th scope="col">Estado</th><th scope="col" class="num">Total</th></tr></thead>
             <tbody>
                 {% for p in reporte.pedidos %}
                     <tr>
                         <td><a href="{{ url_for('comprador.pedido', id_pedido=p.id_pedido) }}">#{{ p.id_pedido }}</a></td>
-                        <td>{{ p.fecha|fecha }}</td>
-                        <td><span class="insignia insignia-{{ p.estado|lower }}">{{ p.estado }}</span></td>
-                        <td>{{ p.total|moneda }}{% if not p.suma_al_total %} <span class="producto-meta">(no suma)</span>{% endif %}</td>
+                        <td data-etiqueta="Fecha">{{ p.fecha|fecha }}</td>
+                        <td data-etiqueta="Estado">{{ ui.insignia(p.estado) }}</td>
+                        <td class="num" data-etiqueta="Total"><span>{{ p.total|moneda }}{% if not p.suma_al_total %}<span class="meta bloque">No suma al total</span>{% endif %}</span></td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-        </div>
-        <div class="carrito-total"><span>Total comprado</span><strong>{{ reporte.total_comprado|moneda }}</strong></div>
-        <p class="nota">Los pedidos Cancelados y Devueltos no se suman.</p>
-    </section>
+    </div>
+    <div class="total"><span>Total comprado</span><strong>{{ reporte.total_comprado|moneda }}</strong></div>
+    <p class="nota">Los pedidos Cancelados y Devueltos no se suman.</p>
 {% endif %}
 {% endblock %}

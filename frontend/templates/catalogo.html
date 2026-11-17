@@ -1,70 +1,51 @@
 {% extends "base.html" %}
+{% import "macros.html" as ui %}
 {% block titulo %}Catálogo{% endblock %}
 {% block contenido %}
 <h1>Catálogo</h1>
 
-<form method="get" action="{{ url_for('catalogo.inicio') }}" class="tarjeta filtros" role="search">
-    <label class="campo campo-ancho">
-        <span>Palabra clave</span>
-        <input type="search" name="q" value="{{ busqueda.q }}" maxlength="100" placeholder="Nombre del producto">
-    </label>
-    <label class="campo">
-        <span>Categoría</span>
-        <select name="id_categoria">
-            <option value="">Todas</option>
-            {% for c in categorias %}
-                <option value="{{ c.id_categoria }}" {% if busqueda.id_categoria == c.id_categoria|string %}selected{% endif %}>{{ c.etiqueta }}</option>
-            {% endfor %}
-        </select>
-    </label>
-    <label class="campo">
-        <span>Precio mínimo</span>
-        <input type="text" name="precio_min" value="{{ busqueda.precio_min }}" inputmode="decimal" maxlength="12" placeholder="0.00">
-    </label>
-    <label class="campo">
-        <span>Precio máximo</span>
-        <input type="text" name="precio_max" value="{{ busqueda.precio_max }}" inputmode="decimal" maxlength="12" placeholder="0.00">
-    </label>
-    <div class="filtros-acciones">
-        <button type="submit" class="btn btn-primario">Buscar</button>
-        <a class="btn btn-secundario" href="{{ url_for('catalogo.inicio') }}">Limpiar</a>
-    </div>
-</form>
+<div class="catalogo">
+    <aside class="panel filtros" aria-labelledby="titulo-filtros">
+        <h2 id="titulo-filtros">Filtrar</h2>
+        <form method="get" action="{{ url_for('catalogo.inicio') }}" role="search" data-un-envio>
+            {{ ui.campo("q", "Palabra clave", busqueda.q, "search", attrs={"maxlength": 100}) }}
+            {% set extra_activo = busqueda.id_categoria or busqueda.precio_min or busqueda.precio_max %}
+            <button type="button" class="btn btn-terciario btn-mas-filtros" data-alterna="filtros-extra"
+                    aria-controls="filtros-extra" aria-expanded="{{ 'true' if extra_activo else 'false' }}" hidden>
+                {{ ui.icono("chevron-right") }}<span>Más filtros</span>
+            </button>
+            <div id="filtros-extra" class="filtros-extra{% if extra_activo %} abierto{% endif %}">
+                {{ ui.selector("id_categoria", "Categoría", categorias, busqueda.id_categoria, vacio="Todas", valor="id_categoria", texto="etiqueta") }}
+                <div class="filas filas-2-siempre">
+                    {{ ui.campo("precio_min", "Precio mínimo", busqueda.precio_min, attrs={"inputmode": "decimal", "maxlength": 12}) }}
+                    {{ ui.campo("precio_max", "Precio máximo", busqueda.precio_max, attrs={"inputmode": "decimal", "maxlength": 12}) }}
+                </div>
+            </div>
+            <div class="acciones">
+                {{ ui.boton("Buscar productos", "primario", "search") }}
+                {% if busqueda.filtros() %}{{ ui.enlace_boton(url_for('catalogo.inicio'), "Quitar filtros", "terciario") }}{% endif %}
+            </div>
+        </form>
+    </aside>
 
-{% if error %}
-    <div class="alerta alerta-error" role="alert">{{ error }}</div>
-{% elif pagina and not pagina.productos %}
-    <p class="vacio">{{ msg_sin_productos }}</p>
-    {% if pagina.siguiente_cursor %}
-        <nav class="paginacion"><a class="btn btn-secundario" href="{{ url_for('catalogo.inicio', cursor=pagina.siguiente_cursor, **busqueda.filtros()) }}">Seguir buscando</a></nav>
-    {% endif %}
-{% elif pagina %}
-    <ul class="rejilla-productos">
-        {% for p in pagina.productos %}
-            <li class="tarjeta-producto">
-                <a href="{{ url_for('catalogo.detalle', id_producto=p.id_producto) }}">
-                    {% if p.url_imagen %}
-                        <img src="{{ p.url_imagen }}" alt="{{ p.nombre }}" loading="lazy" referrerpolicy="no-referrer">
-                    {% else %}
-                        <div class="sin-imagen" aria-hidden="true">Sin imagen</div>
-                    {% endif %}
-                    <div class="tarjeta-producto-cuerpo">
-                        <span class="producto-nombre">{{ p.nombre }}</span>
-                        <span class="producto-meta">{{ p.marca }} · {{ p.categoria }}</span>
-                        <span class="producto-precio">{{ p.precio|moneda }}</span>
-                    </div>
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
-
-    <nav class="paginacion" aria-label="Páginas">
-        {% if not es_primera_pagina %}
-            <a class="btn btn-secundario" href="{{ url_for('catalogo.inicio', **busqueda.filtros()) }}">Primera página</a>
+    <section aria-labelledby="titulo-resultados">
+        <h2 id="titulo-resultados" class="solo-lector">Productos</h2>
+        {% if error %}
+            {{ ui.mensaje("error", error) }}
+        {% elif pagina and not pagina.productos %}
+            {% if pagina.siguiente_cursor %}
+                {{ ui.vacio(msg_sin_productos, url_for('catalogo.inicio', cursor=pagina.siguiente_cursor, **busqueda.filtros()), "Seguir buscando", "search") }}
+            {% else %}
+                {{ ui.vacio(msg_sin_productos, url_for('catalogo.inicio') if busqueda.filtros() else None, "Quitar filtros") }}
+            {% endif %}
+        {% elif pagina %}
+            <ul class="rejilla-productos">
+                {% for p in pagina.productos %}{{ ui.tarjeta_producto(p) }}{% endfor %}
+            </ul>
+            {{ ui.paginacion(
+                url_for('catalogo.inicio', **busqueda.filtros()) if not es_primera_pagina else None,
+                url_for('catalogo.inicio', cursor=pagina.siguiente_cursor, **busqueda.filtros()) if pagina.siguiente_cursor else None) }}
         {% endif %}
-        {% if pagina.siguiente_cursor %}
-            <a class="btn btn-primario" href="{{ url_for('catalogo.inicio', cursor=pagina.siguiente_cursor, **busqueda.filtros()) }}">Página siguiente</a>
-        {% endif %}
-    </nav>
-{% endif %}
+    </section>
+</div>
 {% endblock %}

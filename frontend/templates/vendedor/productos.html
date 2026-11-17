@@ -1,99 +1,85 @@
 {% extends "base.html" %}
+{% import "macros.html" as ui %}
 {% block titulo %}Mis productos{% endblock %}
 {% block contenido %}
 <div class="encabezado-pagina">
     <h1>Mis productos</h1>
-    <a class="btn btn-primario" href="{{ url_for('vendedor.nuevo') }}">Registrar producto</a>
+    {{ ui.enlace_boton(url_for('vendedor.nuevo'), "Registrar producto", "primario", "plus") }}
 </div>
 
-<form method="get" action="{{ url_for('vendedor.productos') }}" class="tarjeta filtros" role="search">
-    <label class="campo campo-ancho">
-        <span>Palabra clave</span>
-        <input type="search" name="q" value="{{ filtro.q }}" maxlength="200" placeholder="Nombre del producto">
-    </label>
-    <label class="campo">
-        <span>Categoría</span>
-        <select name="id_categoria">
-            <option value="">Todas</option>
-            {% for c in categorias %}
-                <option value="{{ c.id_categoria }}" {% if filtro.id_categoria == c.id_categoria|string %}selected{% endif %}>{{ c.etiqueta }}</option>
-            {% endfor %}
-        </select>
-    </label>
-    <label class="campo">
-        <span>Estado</span>
-        <select name="estado">
-            <option value="">Todos</option>
-            {% for e in estados %}
-                <option value="{{ e }}" {% if filtro.estado == e %}selected{% endif %}>{{ e }}</option>
-            {% endfor %}
-        </select>
-    </label>
-    <div class="filtros-acciones">
-        <button type="submit" class="btn btn-primario">Buscar</button>
-        <a class="btn btn-secundario" href="{{ url_for('vendedor.productos') }}">Limpiar</a>
+<form method="get" action="{{ url_for('vendedor.productos') }}" class="panel filtros-linea" role="search" data-un-envio>
+    {{ ui.campo("q", "Palabra clave", filtro.q, "search", attrs={"maxlength": 200}) }}
+    {{ ui.selector("id_categoria", "Categoría", categorias, filtro.id_categoria, vacio="Todas", valor="id_categoria", texto="etiqueta") }}
+    {{ ui.selector("estado", "Estado", estados, filtro.estado, vacio="Todos") }}
+    <div class="acciones">
+        {{ ui.boton("Buscar", "secundario", "search") }}
+        {% if filtro.filtros() %}{{ ui.enlace_boton(url_for('vendedor.productos'), "Quitar filtros", "terciario") }}{% endif %}
     </div>
 </form>
 
-{% if error %}
-    <div class="alerta alerta-error" role="alert">{{ error }}</div>
-{% elif pagina and not pagina.productos %}
-    <p class="vacio">{{ pagina.mensaje }}</p>
-{% elif pagina %}
-    <section class="tarjeta">
-        <div class="tabla-desplazable">
-        <table class="tabla">
-            <thead>
-                <tr>
-                    <th scope="col">Producto</th>
-                    <th scope="col">Categoría</th>
-                    <th scope="col">Precio</th>
-                    <th scope="col">Stock</th>
-                    <th scope="col">Variantes</th>
-                    <th scope="col">Estado</th>
-                    <th scope="col"><span class="solo-lector">Acciones</span></th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for p in pagina.productos %}
-                <tr>
-                    <td>
-                        {% if p.activo %}<a href="{{ url_for('catalogo.detalle', id_producto=p.id_producto) }}">{{ p.nombre }}</a>{% else %}{{ p.nombre }}{% endif %}
-                        <div class="producto-meta">{{ p.marca }} · #{{ p.id_producto }}</div>
-                    </td>
-                    <td>{{ p.categoria }}</td>
-                    <td>{{ p.precio|moneda }}</td>
-                    <td>{{ p.stock }}</td>
-                    <td>{{ p.variantes }}</td>
-                    <td><span class="insignia {{ 'insignia-ok' if p.activo else 'insignia-agotado' }}">{{ p.estado }}</span></td>
-                    <td>
-                        <div class="acciones-renglon">
-                            {% if p.activo %}
-                                <a class="btn btn-secundario btn-chico" href="{{ url_for('vendedor.editar', id_producto=p.id_producto) }}">Editar</a>
-                                <a class="btn btn-secundario btn-chico" href="{{ url_for('vendedor.variantes', id_producto=p.id_producto) }}">Variantes</a>
-                            {% endif %}
-                            <form method="post" action="{{ url_for('vendedor.estado', id_producto=p.id_producto) }}" data-un-envio
-                                  data-confirmar="{{ '¿Desactivar ' ~ p.nombre ~ '? Dejará de mostrarse en el catálogo.' if p.activo else '¿Activar ' ~ p.nombre ~ '?' }}">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="estado" value="{{ 'Inactivo' if p.activo else 'Activo' }}">
-                                <input type="hidden" name="volver" value="{{ request.full_path }}">
-                                <button type="submit" class="btn btn-secundario btn-chico">{{ 'Desactivar' if p.activo else 'Activar' }}</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+<section class="seccion-resultados" aria-labelledby="titulo-lista">
+    <h2 id="titulo-lista" class="solo-lector">Productos</h2>
+    {% if error %}
+        {{ ui.mensaje("error", error) }}
+    {% elif pagina and not pagina.productos %}
+        {% if filtro.filtros() %}
+            {{ ui.vacio(pagina.mensaje, url_for('vendedor.productos'), "Quitar filtros") }}
+        {% else %}
+            {{ ui.vacio(pagina.mensaje, url_for('vendedor.nuevo'), "Registrar producto", "plus") }}
+        {% endif %}
+    {% elif pagina %}
+        <div class="tabla-contenedor">
+            <table class="tabla tabla-apilada">
+                <thead>
+                    <tr>
+                        <th scope="col">Producto</th>
+                        <th scope="col">Categoría</th>
+                        <th scope="col" class="num">Precio</th>
+                        <th scope="col" class="num">Stock</th>
+                        <th scope="col" class="num">Variantes</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col" class="acciones-col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for p in pagina.productos %}
+                    <tr>
+                        <td>
+                            {% if p.activo %}<a href="{{ url_for('catalogo.detalle', id_producto=p.id_producto) }}">{{ p.nombre }}</a>{% else %}{{ p.nombre }}{% endif %}
+                            <p class="meta">{{ p.marca }} · #{{ p.id_producto }}</p>
+                        </td>
+                        <td data-etiqueta="Categoría">{{ p.categoria }}</td>
+                        <td class="num" data-etiqueta="Precio">{{ p.precio|moneda }}</td>
+                        <td class="num" data-etiqueta="Stock">{{ p.stock }}</td>
+                        <td class="num" data-etiqueta="Variantes">{{ p.variantes }}</td>
+                        <td data-etiqueta="Estado">{{ ui.insignia(p.estado) }}</td>
+                        <td>
+                            <div class="acciones-renglon">
+                                {% if p.activo %}
+                                    {{ ui.enlace_boton(url_for('vendedor.editar', id_producto=p.id_producto), "Editar", "secundario", "pencil", attrs={"aria-label": "Editar " ~ p.nombre}) }}
+                                    {{ ui.enlace_boton(url_for('vendedor.variantes', id_producto=p.id_producto), "Variantes", "secundario", "layers", attrs={"aria-label": "Variantes de " ~ p.nombre}) }}
+                                {% endif %}
+                                <form method="post" action="{{ url_for('vendedor.estado', id_producto=p.id_producto) }}" data-un-envio
+                                      data-confirmar="{{ '¿Desactivar ' ~ p.nombre ~ '? Dejará de mostrarse en el catálogo.' if p.activo else '¿Activar ' ~ p.nombre ~ '?' }}">
+                                    {{ ui.csrf() }}
+                                    <input type="hidden" name="estado" value="{{ 'Inactivo' if p.activo else 'Activo' }}">
+                                    <input type="hidden" name="volver" value="{{ request.full_path }}">
+                                    {% if p.activo %}
+                                        {{ ui.boton("Desactivar", "peligro-secundario", "power", attrs={"aria-label": "Desactivar " ~ p.nombre}) }}
+                                    {% else %}
+                                        {{ ui.boton("Activar", "secundario", "power", attrs={"aria-label": "Activar " ~ p.nombre}) }}
+                                    {% endif %}
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </section>
-    <nav class="paginacion" aria-label="Páginas">
-        {% if filtro.cursor %}
-            <a class="btn btn-secundario" href="{{ url_for('vendedor.productos', **filtro.filtros()) }}">Primera página</a>
-        {% endif %}
-        {% if pagina.siguiente_cursor %}
-            <a class="btn btn-primario" href="{{ url_for('vendedor.productos', cursor=pagina.siguiente_cursor, **filtro.filtros()) }}">Página siguiente</a>
-        {% endif %}
-    </nav>
-{% endif %}
+        {{ ui.paginacion(
+            url_for('vendedor.productos', **filtro.filtros()) if filtro.cursor else None,
+            url_for('vendedor.productos', cursor=pagina.siguiente_cursor, **filtro.filtros()) if pagina.siguiente_cursor else None) }}
+    {% endif %}
+</section>
 {% endblock %}

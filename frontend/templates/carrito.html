@@ -1,97 +1,78 @@
 {% extends "base.html" %}
+{% import "macros.html" as ui %}
 {% block titulo %}Carrito{% endblock %}
 {% block contenido %}
 <h1>Mi carrito</h1>
 
 {% if error %}
-    <div class="alerta alerta-error" role="alert">{{ error }}</div>
+    {{ ui.mensaje("error", error) }}
 {% elif not carrito.items %}
-    <section class="tarjeta centrado">
-        <p class="vacio">{{ msg_vacio }}</p>
-        <a class="btn btn-primario" href="{{ url_for('catalogo.inicio') }}">Ir al catálogo</a>
-    </section>
+    {{ ui.vacio(msg_vacio, url_for('catalogo.inicio'), "Ir al catálogo", "store") }}
 {% else %}
-    <section class="tarjeta seccion">
-        <div class="tabla-desplazable">
-        <table class="tabla tabla-carrito">
+    <div class="tabla-contenedor">
+        <table class="tabla tabla-apilada">
             <thead>
                 <tr>
                     <th scope="col"><span class="solo-lector">Seleccionar</span></th>
                     <th scope="col">Producto</th>
-                    <th scope="col">Precio</th>
+                    <th scope="col" class="num">Precio</th>
                     <th scope="col">Cantidad</th>
-                    <th scope="col">Subtotal</th>
-                    <th scope="col"><span class="solo-lector">Quitar</span></th>
+                    <th scope="col" class="num">Subtotal</th>
+                    <th scope="col" class="acciones-col"><span class="solo-lector">Acciones</span></th>
                 </tr>
             </thead>
             <tbody>
             {% for item in carrito.items %}
-                <tr {% if avisos.get(item.id_variante) %}class="renglon-aviso"{% endif %}>
-                    <td>
-                        <input type="checkbox" name="variantes" value="{{ item.id_variante }}" form="form-quitar-varios"
-                               aria-label="Seleccionar {{ item.nombre }}">
-                    </td>
-                    <td>
-                        <div class="producto-carrito">
-                            {% if item.url_imagen %}
-                                <img src="{{ item.url_imagen }}" alt="" loading="lazy" referrerpolicy="no-referrer">
-                            {% else %}
-                                <div class="sin-imagen" aria-hidden="true"></div>
-                            {% endif %}
-                            <div>
-                                <a href="{{ url_for('catalogo.detalle', id_producto=item.id_producto) }}">{{ item.nombre }}</a>
-                                {% if item.atributos %}
-                                    <div class="producto-meta">{% for n, v in item.atributos.items() %}{{ n }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</div>
-                                {% endif %}
-                                {% if avisos.get(item.id_variante) %}
-                                    <div class="aviso">{{ avisos[item.id_variante] }}{% if item.disponible %} (disponibles: {{ item.stock }}){% endif %}</div>
-                                {% endif %}
-                            </div>
+                {% set aviso = avisos.get(item.id_variante) %}
+                <tr{% if aviso %} class="renglon-aviso"{% endif %}>
+                    <td class="celda-seleccion">
+                        <div class="casilla">
+                            <input type="checkbox" name="variantes" value="{{ item.id_variante }}" form="form-quitar-varios"
+                                   id="sel-{{ item.id_variante }}" aria-label="Seleccionar {{ item.nombre }}">
                         </div>
                     </td>
-                    <td>{{ item.precio|moneda }}</td>
-                    <td>
-                        <form method="post" action="{{ url_for('comprador.cambiar_cantidad', id_variante=item.id_variante) }}" class="form-cantidad" data-un-envio novalidate>
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <td class="celda-producto">
+                        {% set extra %}{% if aviso %}<p class="aviso-renglon">{{ ui.icono("triangle-alert") }}<span>{{ aviso }}{% if item.disponible %} (disponibles: {{ item.stock }}){% endif %}</span></p>{% endif %}{% endset %}
+                        {{ ui.producto_renglon(item.nombre, item.url_imagen, item.atributos, url_for('catalogo.detalle', id_producto=item.id_producto), extra) }}
+                    </td>
+                    <td class="num" data-etiqueta="Precio">{{ item.precio|moneda }}</td>
+                    <td data-etiqueta="Cantidad">
+                        <form method="post" action="{{ url_for('comprador.cambiar_cantidad', id_variante=item.id_variante) }}" class="cantidad" data-un-envio novalidate>
+                            {{ ui.csrf() }}
                             <input type="number" name="cantidad" value="{{ item.cantidad }}" min="0" step="1" inputmode="numeric"
                                    aria-label="Cantidad de {{ item.nombre }}" required>
-                            <button type="submit" class="btn btn-secundario btn-chico">Actualizar</button>
+                            {{ ui.boton("Actualizar", "secundario") }}
                         </form>
                     </td>
-                    <td>{{ item.subtotal|moneda }}</td>
-                    <td>
+                    <td class="num" data-etiqueta="Subtotal">{{ item.subtotal|moneda }}</td>
+                    <td class="acciones-col">
                         <form method="post" action="{{ url_for('comprador.quitar') }}" data-un-envio data-confirmar="¿Quitar {{ item.nombre }} del carrito?">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            {{ ui.csrf() }}
                             <input type="hidden" name="variantes" value="{{ item.id_variante }}">
-                            <button type="submit" class="btn btn-secundario btn-chico">Quitar</button>
+                            {{ ui.boton("Quitar", "peligro-secundario", "trash-2", attrs={"aria-label": "Quitar " ~ item.nombre}) }}
                         </form>
                     </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
-        </div>
+    </div>
+    <p class="nota">Poner la cantidad en 0 quita el producto del carrito.</p>
 
-        <div class="carrito-pie">
-            <form method="post" action="{{ url_for('comprador.quitar') }}" id="form-quitar-varios" data-un-envio data-confirmar="¿Quitar los productos seleccionados?">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-secundario">Quitar seleccionados</button>
-            </form>
-            <div class="carrito-total">
-                <span>Total</span>
-                <strong>{{ carrito.total|moneda }}</strong>
-            </div>
+    <div class="dos-columnas">
+        <form method="post" action="{{ url_for('comprador.quitar') }}" id="form-quitar-varios" data-un-envio data-confirmar="¿Quitar los productos seleccionados?">
+            {{ ui.csrf() }}
+            {{ ui.boton("Quitar seleccionados", "peligro-secundario", "trash-2") }}
+        </form>
+        <div class="panel">
+            <div class="total"><span>Total</span><strong>{{ carrito.total|moneda }}</strong></div>
+            {% if carrito.puede_comprar %}
+                <div class="acciones">{{ ui.enlace_boton(url_for('comprador.compra'), "Continuar con la compra", "primario", "credit-card") }}</div>
+            {% else %}
+                <p class="aviso-renglon">{{ ui.icono("triangle-alert") }}<span>Corrige los productos marcados para poder comprar.</span></p>
+            {% endif %}
+            {{ ui.enlace_boton(url_for('catalogo.inicio'), "Seguir comprando", "terciario") }}
         </div>
-        <p class="nota">Poner la cantidad en 0 quita el producto del carrito.</p>
-    </section>
-
-    <div class="acciones-derecha">
-        <a class="btn btn-secundario" href="{{ url_for('catalogo.inicio') }}">Seguir comprando</a>
-        {% if carrito.puede_comprar %}
-            <a class="btn btn-primario" href="{{ url_for('comprador.compra') }}">Continuar con la compra</a>
-        {% else %}
-            <span class="aviso">Corrige los productos marcados para poder comprar.</span>
-        {% endif %}
     </div>
 {% endif %}
 {% endblock %}
