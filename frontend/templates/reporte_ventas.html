@@ -16,7 +16,8 @@
 
 {% if error %}
     <div class="alerta alerta-error" role="alert">{{ error }}</div>
-{% elif reporte and not reporte.productos %}
+{% else %}{% block resultado %}
+{% if reporte and not reporte.productos %}
     <p class="vacio">{{ reporte.mensaje }}</p>
 {% elif reporte %}
     <section class="tarjeta">
@@ -33,4 +34,5 @@
         <p class="nota">Los pedidos Cancelados y Devueltos no se suman.</p>
     </section>
 {% endif %}
+{% endblock %}{% endif %}
 {% endblock %}

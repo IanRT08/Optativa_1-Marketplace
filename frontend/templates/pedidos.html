@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block titulo %}Mis pedidos{% endblock %}
+{% block contenido %}
+<h1>Mis pedidos</h1>
+
+<form method="get" action="{{ url_for('comprador.pedidos') }}" class="tarjeta filtros filtros-fechas">
+    <label class="campo"><span>Estado</span>
+        <select name="estado">
+            <option value="" {% if not filtro.estado %}selected{% endif %}>Todos</option>
+            {% for e in estados %}<option value="{{ e }}" {% if filtro.estado == e %}selected{% endif %}>{{ e }}</option>{% endfor %}
+        </select></label>
+    <label class="campo"><span>Fecha</span>
+        <input type="date" name="fecha" value="{{ filtro.fecha }}"></label>
+    <div class="filtros-acciones">
+        <button type="submit" class="btn btn-primario">Buscar</button>
+        {% if filtro.estado or filtro.fecha %}<a class="btn btn-secundario" href="{{ url_for('comprador.pedidos') }}">Quitar filtros</a>{% endif %}
+    </div>
+</form>
+
+{% if error %}
+    <div class="alerta alerta-error" role="alert">{{ error }}</div>
+{% elif pagina and not pagina.pedidos %}
+    <p class="vacio">{{ pagina.mensaje }}</p>
+{% elif pagina %}
+    <section class="tarjeta">
+        <div class="tabla-desplazable">
+        <table class="tabla">
+            <thead><tr><th scope="col">Orden</th><th scope="col">Fecha</th><th scope="col">Total</th><th scope="col">Estado</th></tr></thead>
+            <tbody>
+            {% for p in pagina.pedidos %}
+                <tr>
+                    <td><a href="{{ url_for('comprador.pedido', id_pedido=p.id_pedido) }}">#{{ p.id_pedido }}</a></td>
+                    <td>{{ p.fecha|fecha }}</td>
+                    <td>{{ p.total|moneda }}</td>
+                    <td><span class="insignia insignia-{{ p.estado|lower }}">{{ p.estado }}</span></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </section>
+    <nav class="paginacion" aria-label="Páginas">
+        {% if filtro.cursor %}<a class="btn btn-secundario" href="{{ url_for('comprador.pedidos', **filtro.filtros()) }}">Primera página</a>{% endif %}
+        {% if pagina.siguiente_cursor %}<a class="btn btn-primario" href="{{ url_for('comprador.pedidos', cursor=pagina.siguiente_cursor, **filtro.filtros()) }}">Página siguiente</a>{% endif %}
+    </nav>
+{% endif %}
+{% endblock %}

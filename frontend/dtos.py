@@ -1043,6 +1043,49 @@ class ReporteVentasDTO:
 
 
 # =============================================================================
+# DFR 7.4 Historial de compras (Comprador) -> GET /historial/compras
+# (sp_HistorialVentas 'Comprador'; las fechas usan FiltroFechasDTO)
+# =============================================================================
+@dataclass(frozen=True)
+class CompraHistorialDTO:
+    id_pedido: int
+    fecha: str
+    estado: str
+    total: float
+    suma_al_total: bool   # False si Cancelado o Devuelto (DFR 7.4)
+
+    @classmethod
+    def from_api(cls, d):
+        suma = d.get("suma_al_total")
+        if not isinstance(suma, bool):
+            raise ErrorRespuesta("suma_al_total")
+        return cls(id_pedido=_entero(d, "id_pedido"), fecha=_cadena(d, "fecha", obligatorio=False),
+                   estado=_cadena(d, "estado"), total=_numero(d, "total"), suma_al_total=suma)
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class HistorialComprasDTO:
+    mensaje: str
+    pedidos: list
+    total_comprado: float
+
+    @classmethod
+    def from_api(cls, datos):
+        filas = datos.get("pedidos")
+        if not isinstance(filas, list):
+            raise ErrorRespuesta("pedidos")
+        return cls(mensaje=_cadena(datos, "mensaje", obligatorio=False),
+                   pedidos=[CompraHistorialDTO.from_api(f) for f in filas if isinstance(f, dict)],
+                   total_comprado=_numero(datos, "total_comprado"))
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
 # DFR 1.3 a 1.6 Usuarios (Administrador) -> /admin/usuarios
 # =============================================================================
 def _nombre_apellido(nombre, apellido):

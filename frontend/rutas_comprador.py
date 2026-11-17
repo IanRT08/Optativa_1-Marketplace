@@ -1,4 +1,5 @@
-"""Pantallas del Comprador: carrito (5.1-5.4), direcciones (9.1-9.3) y compra (6.1).
+"""Pantallas del Comprador: carrito (5.1-5.4), direcciones (9.1-9.3), compra (6.1),
+pedidos (7.1, 7.2) e historial de compras (7.4).
 
 Todas exigen sesión de Comprador (decorador) y la API lo vuelve a revisar.
 Los formularios que cambian datos son POST con CSRF; las llamadas que la
@@ -8,6 +9,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, s
 
 import api
 from constantes import (
+    ESTADOS_PEDIDO,
     MSG_CARRITO_VACIO,
     MSG_COMPRA_REALIZADA,
     MSG_ERROR_INTERNO,
@@ -25,6 +27,11 @@ from dtos import (
     DireccionFormDTO,
     ErrorRespuesta,
     ErrorValidacion,
+    FiltroFechasDTO,
+    FiltroPedidosDTO,
+    HistorialComprasDTO,
+    PaginaPedidosDTO,
+    PedidoDetalleDTO,
     QuitarCarritoDTO,
 )
 from seguridad import hay_sesion, recordar_destino, rol_requerido
@@ -244,3 +251,63 @@ def compra_realizada():
         return redirect(url_for("comprador.carrito"))
     return render_template("compra_realizada.html", mensaje=MSG_COMPRA_REALIZADA,
                            id_pedido=ultima["id_pedido"], total=ultima["total"])
+
+
+# =============================================================================
+# 7.1 Consultar mis pedidos
+# =============================================================================
+@bp.route("/pedidos")
+@rol_requerido(ROL_COMPRADOR)
+def pedidos():
+    # Filtros opcionales (DFR 7.1): sin estado por defecto, abre con todos.
+    # La Lambda toma el comprador del token: solo devuelve sus pedidos.
+    filtro = FiltroPedidosDTO.from_form(request.args)
+    pagina, error = None, None
+    try:
+        pagina = PaginaPedidosDTO.from_api(api.llamar("GET", "/pedidos", params=filtro.to_dict()))
+    except api.ApiError as exc:
+        error = exc.mensaje
+    except ErrorRespuesta:
+        error = MSG_ERROR_INTERNO
+    return render_template("pedidos.html", filtro=filtro, pagina=pagina, error=error,
+                           estados=ESTADOS_PEDIDO)
+
+
+# =============================================================================
+# 7.2 Consultar detalle de pedido
+# =============================================================================
+@bp.route("/pedidos/<int:id_pedido>")
+@rol_requerido(ROL_COMPRADOR)
+def pedido(id_pedido):
+    # Pedido de otro comprador: la Lambda responde 403 "Acceso restringido"
+    # (DFR 7.2) y api.py lo muestra en la página de acceso restringido.
+    try:
+        detalle = PedidoDetalleDTO.from_api(api.llamar("GET", f"/pedidos/{id_pedido}"))
+    except api.ApiError as exc:
+        return render_template("error.html", mensaje=exc.mensaje), exc.status if exc.status in (400, 404) else 500
+    except ErrorRespuesta:
+        return render_template("error.html", mensaje=MSG_ERROR_INTERNO), 500
+    return render_template("pedido_detalle.html", pedido=detalle, es_admin=False,
+                           volver=url_for("comprador.pedidos"))
+
+
+# =============================================================================
+# 7.4 Consultar historial de compras (sp_HistorialVentas 'Comprador')
+# =============================================================================
+@bp.route("/historial")
+@rol_requerido(ROL_COMPRADOR)
+def historial():
+    fechas = {c: request.args.get(c, "").strip() for c in ("fecha_inicio", "fecha_fin")}
+    reporte, error = None, None
+    if any(fechas.values()):   # la primera vez solo se muestra el formulario
+        try:
+            dto = FiltroFechasDTO.from_form(request.args)
+            reporte = HistorialComprasDTO.from_api(
+                api.llamar("GET", "/historial/compras", params=dto.to_dict()))
+        except (ErrorValidacion, api.ApiError) as exc:
+            error = _mensaje(exc)
+        except ErrorRespuesta:
+            error = MSG_ERROR_INTERNO
+    return render_template("historial_compras.html", titulo="Historial de compras",
+                           accion=url_for("comprador.historial"), fechas=fechas,
+                           reporte=reporte, error=error)

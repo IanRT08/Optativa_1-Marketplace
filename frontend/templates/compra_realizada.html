@@ -3,8 +3,9 @@
 {% block contenido %}
 <section class="tarjeta tarjeta-angosta centrado">
     <h1>{{ mensaje }}</h1>
-    <p class="numero-orden">Número de orden: <strong>{{ id_pedido }}</strong></p>
+    <p class="numero-orden">Número de orden: <a href="{{ url_for('comprador.pedido', id_pedido=id_pedido) }}"><strong>{{ id_pedido }}</strong></a></p>
     <p>Total pagado: <strong>{{ total|moneda }}</strong></p>
     <a class="btn btn-primario" href="{{ url_for('catalogo.inicio') }}">Seguir comprando</a>
+    <a class="btn btn-secundario" href="{{ url_for('comprador.pedidos') }}">Ver mis pedidos</a>
 </section>
 {% endblock %}
