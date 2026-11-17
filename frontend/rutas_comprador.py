@@ -34,6 +34,7 @@ from dtos import (
     PedidoDetalleDTO,
     QuitarCarritoDTO,
 )
+from errores_campo import asignar, avisar
 from seguridad import hay_sesion, recordar_destino, rol_requerido
 
 bp = Blueprint("comprador", __name__)
@@ -73,7 +74,7 @@ def agregar():
     try:
         dto = AgregarCarritoDTO.from_form(request.form)
     except ErrorValidacion as exc:
-        flash(_mensaje(exc), "error")
+        avisar(exc, "agregar", request.form, redirige=True)
         # Con id_producto válido se vuelve al producto; si no, al catálogo.
         producto = request.form.get("id_producto", "")
         if producto.isascii() and producto.isdigit():
@@ -92,7 +93,7 @@ def agregar():
         datos = api.llamar("POST", "/carrito/items", json=dto.to_dict())
         flash(datos.get("mensaje") or "Producto agregado al carrito", "exito")
     except api.ApiError as exc:
-        flash(exc.mensaje, "error")
+        avisar(exc, "agregar", request.form, redirige=True)
     return redirect(detalle)
 
 
@@ -126,7 +127,7 @@ def cambiar_cantidad(id_variante):
             datos = api.llamar("PUT", f"/carrito/items/{id_variante}", json=dto.to_dict())
         flash(datos.get("mensaje") or "Carrito actualizado correctamente", "exito")
     except (ErrorValidacion, api.ApiError) as exc:
-        flash(_mensaje(exc), "error")
+        avisar(exc, "cantidad_carrito", request.form, sufijo=id_variante, redirige=True)
     return redirect(url_for("comprador.carrito"))
 
 
@@ -163,7 +164,7 @@ def direcciones():
                 return redirect(url_for(_VOLVER_DESDE_DIRECCIONES[volver]))
             return redirect(url_for("comprador.direcciones"))
         except (ErrorValidacion, api.ApiError) as exc:
-            flash(_mensaje(exc), "error")
+            avisar(exc, "direccion", request.form)
             previo = {c: request.form.get(c, "").strip() for c in
                       ("calle", "numero", "colonia", "ciudad", "estado", "codigo_postal")}
 
@@ -208,7 +209,7 @@ def compra():
             session["ultima_compra"] = {"id_pedido": respuesta.id_pedido, "total": respuesta.total}
             return redirect(url_for("comprador.compra_realizada"))
         except (ErrorValidacion, api.ApiError) as exc:
-            flash(_mensaje(exc), "error")
+            avisar(exc, "compra", request.form)
         except ErrorRespuesta:
             flash(MSG_ERROR_INTERNO, "error")
         # Se vuelve a mostrar el formulario sin los datos de la tarjeta.
@@ -266,7 +267,7 @@ def pedidos():
     try:
         pagina = PaginaPedidosDTO.from_api(api.llamar("GET", "/pedidos", params=filtro.to_dict()))
     except api.ApiError as exc:
-        error = exc.mensaje
+        error = None if asignar(exc.mensaje, "filtro_pedidos", request.args) else exc.mensaje
     except ErrorRespuesta:
         error = MSG_ERROR_INTERNO
     return render_template("pedidos.html", filtro=filtro, pagina=pagina, error=error,
@@ -305,7 +306,7 @@ def historial():
             reporte = HistorialComprasDTO.from_api(
                 api.llamar("GET", "/historial/compras", params=dto.to_dict()))
         except (ErrorValidacion, api.ApiError) as exc:
-            error = _mensaje(exc)
+            error = None if asignar(_mensaje(exc), "reporte", request.args) else _mensaje(exc)
         except ErrorRespuesta:
             error = MSG_ERROR_INTERNO
     return render_template("historial_compras.html", titulo="Historial de compras",

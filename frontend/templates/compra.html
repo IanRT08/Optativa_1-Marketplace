@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "macros.html" as ui %}
+{% import "macros.html" as ui with context %}
 {% block titulo %}Confirmar compra{% endblock %}
 {% block contenido %}
 {{ ui.volver(url_for('comprador.carrito'), "Volver al carrito") }}
@@ -10,6 +10,7 @@
         {{ ui.csrf() }}
         <fieldset class="grupo">
             <legend>Dirección de envío <span class="obligatorio">Obligatorio</span></legend>
+            {{ ui.error_grupo("id_direccion") }}
             {% for d in direcciones %}
                 <label class="opcion">
                     <input type="radio" name="id_direccion" value="{{ d.id_direccion }}" {% if elegida == d.id_direccion|string %}checked{% endif %} required>

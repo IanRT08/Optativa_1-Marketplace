@@ -23,6 +23,7 @@ from dtos import (
     valores_form_desde_post,
     valores_form_producto,
 )
+from errores_campo import asignar, avisar
 from seguridad import rol_requerido, ruta_interna
 
 bp = Blueprint("vendedor", __name__, url_prefix="/vendedor")
@@ -63,7 +64,7 @@ def productos():
         pagina = PaginaMisProductosDTO.from_api(
             api.llamar("GET", "/vendedor/productos", params=filtro.to_dict()))
     except api.ApiError as exc:
-        error = exc.mensaje
+        error = None if asignar(exc.mensaje, "filtro_productos", request.args) else exc.mensaje
     except ErrorRespuesta:
         error = MSG_ERROR_INTERNO
     return render_template("vendedor/productos.html", filtro=filtro, pagina=pagina, error=error,
@@ -84,7 +85,7 @@ def nuevo():
             flash(datos.get("mensaje") or "Producto registrado correctamente", "exito")
             return redirect(url_for("vendedor.productos"))
         except (ErrorValidacion, api.ApiError) as exc:
-            flash(_mensaje(exc), "error")
+            avisar(exc, "producto", request.form)
         return _form_producto("Registrar producto", accion, valores_form_desde_post(request.form))
     return _form_producto("Registrar producto", accion, {"con_logistica": False})
 
@@ -103,7 +104,7 @@ def editar(id_producto):
             flash(datos.get("mensaje") or "Producto actualizado correctamente", "exito")
             return redirect(url_for("vendedor.productos"))
         except (ErrorValidacion, api.ApiError) as exc:
-            flash(_mensaje(exc), "error")
+            avisar(exc, "producto", request.form)
         return _form_producto("Editar producto", accion, valores_form_desde_post(request.form), id_producto)
 
     try:
@@ -156,7 +157,7 @@ def variantes(id_producto):
             flash(datos.get("mensaje") or "Variante registrada correctamente", "exito")
             return redirect(url_for("vendedor.variantes", id_producto=id_producto))
         except (ErrorValidacion, api.ApiError) as exc:
-            flash(_mensaje(exc), "error")
+            avisar(exc, "variante", request.form)
 
     try:
         detalle = _detalle(id_producto)
@@ -185,7 +186,7 @@ def stock_masivo():
             flash(datos.get("mensaje") or "Stock actualizado correctamente", "exito")
             return redirect(url_for("vendedor.stock_masivo"))
         except (ErrorValidacion, api.ApiError) as exc:
-            flash(_mensaje(exc), "error")
+            avisar(exc, "stock_masivo", request.form)
     return render_template("vendedor/stock_masivo.html", categorias=catalogos.categorias(), previo=previo)
 
 
@@ -203,7 +204,7 @@ def ventas():
             reporte = ReporteVentasDTO.from_api(
                 api.llamar("GET", "/vendedor/ventas", params=dto.to_dict()))
         except (ErrorValidacion, api.ApiError) as exc:
-            error = _mensaje(exc)
+            error = None if asignar(_mensaje(exc), "reporte", request.args) else _mensaje(exc)
         except ErrorRespuesta:
             error = MSG_ERROR_INTERNO
     return render_template("reporte_ventas.html", titulo="Mis ventas", accion=url_for("vendedor.ventas"),

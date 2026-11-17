@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "macros.html" as ui %}
+{% import "macros.html" as ui with context %}
 {% block titulo %}{{ producto.nombre }}{% endblock %}
 
 {% macro disponibilidad(stock, disponible) -%}
@@ -41,9 +41,9 @@
                     {% for v in producto.variantes if v.disponible %}
                         {% set _ = opciones.append((v.id_variante, ui.atributos(v.atributos) if v.atributos else "Estándar")) %}
                     {% endfor %}
-                    {{ ui.selector("id_variante", "Variante", opciones, obligatorio=True, valor=0, texto=1) }}
+                    {{ ui.selector("id_variante", "Variante", opciones, previos.get("id_variante", ""), obligatorio=True, valor=0, texto=1) }}
                 {% endif %}
-                {{ ui.campo("cantidad", "Cantidad", 1, "number", obligatorio=True, clase="campo-corto",
+                {{ ui.campo("cantidad", "Cantidad", previos.get("cantidad", 1), "number", obligatorio=True, clase="campo-corto",
                             attrs={"min": 1, "step": 1, "inputmode": "numeric"}) }}
                 {{ ui.boton("Agregar al carrito", "primario", "shopping-cart") }}
             </form>

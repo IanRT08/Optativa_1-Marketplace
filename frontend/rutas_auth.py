@@ -11,6 +11,7 @@ from dtos import (
     RegistroRespuestaDTO,
     SesionDTO,
 )
+from errores_campo import avisar
 from seguridad import (
     cerrar_sesion,
     destino_por_rol,
@@ -48,7 +49,7 @@ def login():
             recordar_destino(volver_a)
             return redirect(tomar_destino() or destino_por_rol())
         except (ErrorValidacion, api.ApiError) as exc:
-            flash(getattr(exc, "mensaje", str(exc)), "error")
+            avisar(exc, "login", request.form)
     # La contraseña nunca se devuelve al formulario.
     return render_template("login.html", email=email)
 
@@ -66,7 +67,7 @@ def registro():
             datos = api.llamar("POST", "/usuarios/registro", json=dto.to_dict(), token=None)
             RegistroRespuestaDTO.from_api(datos)
         except (ErrorValidacion, api.ApiError) as exc:
-            flash(getattr(exc, "mensaje", str(exc)), "error")
+            avisar(exc, "registro", request.form)
             return render_template("registro.html", previo=previo)
         except ErrorRespuesta:
             flash(MSG_ERROR_INTERNO, "error")

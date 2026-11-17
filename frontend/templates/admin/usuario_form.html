@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "macros.html" as ui %}
+{% import "macros.html" as ui with context %}
 {% block titulo %}{{ "Crear usuario" if nuevo else "Editar usuario" }}{% endblock %}
 {% block contenido %}
 {{ ui.volver(url_for('admin.usuarios'), "Usuarios") }}

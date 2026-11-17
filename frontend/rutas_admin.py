@@ -36,6 +36,7 @@ from dtos import (
     ReporteVentasDTO,
     UsuarioNuevoDTO,
 )
+from errores_campo import asignar, avisar
 from seguridad import rol_requerido, ruta_interna
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -68,7 +69,7 @@ def usuarios():
     try:
         pagina = PaginaUsuariosDTO.from_api(api.llamar("GET", "/admin/usuarios", params=filtro.to_dict()))
     except api.ApiError as exc:
-        error = exc.mensaje
+        error = None if asignar(exc.mensaje, "filtro_usuarios", request.args) else exc.mensaje
     except ErrorRespuesta:
         error = MSG_ERROR_INTERNO
     return render_template("admin/usuarios.html", filtro=filtro, pagina=pagina, error=error,
@@ -87,7 +88,7 @@ def usuario_nuevo():
             flash(datos.get("mensaje") or "Usuario creado exitosamente", "exito")
             return redirect(url_for("admin.usuarios"))
         except (ErrorValidacion, api.ApiError) as exc:
-            flash(_mensaje(exc), "error")
+            avisar(exc, "usuario_nuevo", request.form)
     return render_template("admin/usuario_form.html", nuevo=True, valores=previo, roles=ROLES,
                            estados=ESTADOS_USUARIO, es_propio=False, id_usuario=None)
 
@@ -115,7 +116,7 @@ def usuario_editar(id_usuario):
                 session["nombre"], session["apellido"] = dto.nombre, dto.apellido
             return redirect(url_for("admin.usuarios"))
         except (ErrorValidacion, api.ApiError) as exc:
-            flash(_mensaje(exc), "error")
+            avisar(exc, "usuario_editar", request.form)
     else:
         try:
             usuario = _buscar_usuario(id_usuario)
@@ -169,7 +170,7 @@ def categorias():
             flash(datos.get("mensaje") or "Categoría creada correctamente", "exito")
             return redirect(url_for("admin.categorias"))
         except (ErrorValidacion, api.ApiError) as exc:
-            flash(_mensaje(exc), "error")
+            avisar(exc, "categoria", request.form)
     lista, mensaje_lista, error = [], None, None
     try:
         lista, mensaje_lista = _lista_categorias()
@@ -205,7 +206,7 @@ def categoria_editar(id_categoria):
             flash(datos.get("mensaje") or "Categoría actualizada correctamente", "exito")
             return redirect(url_for("admin.categorias"))
         except (ErrorValidacion, api.ApiError) as exc:
-            flash(_mensaje(exc), "error")
+            avisar(exc, "categoria", request.form)
     # Se ofrece toda la lista como padre (incluida ella misma): la Lambda
     # responde los mensajes del DFR 2.3 si la elección no es válida.
     return render_template("admin/categoria_form.html", categoria=actual, valores=valores, categorias=lista)
@@ -235,7 +236,7 @@ def pedidos():
     try:
         pagina = PaginaPedidosDTO.from_api(api.llamar("GET", "/admin/pedidos", params=filtro.to_dict()))
     except api.ApiError as exc:
-        error = exc.mensaje
+        error = None if asignar(exc.mensaje, "filtro_pedidos", request.args) else exc.mensaje
     except ErrorRespuesta:
         error = MSG_ERROR_INTERNO
     return render_template("admin/pedidos.html", filtro=filtro, pagina=pagina, error=error,
@@ -264,7 +265,7 @@ def pedido_estado(id_pedido):
         datos = api.llamar("PATCH", f"/admin/pedidos/{id_pedido}/estado", json=dto.to_dict())
         flash(datos.get("mensaje") or "Estado del pedido actualizado correctamente", "exito")
     except (ErrorValidacion, api.ApiError) as exc:
-        flash(_mensaje(exc), "error")
+        avisar(exc, "estado_pedido", request.form, redirige=True)
     return redirect(url_for("admin.pedido", id_pedido=id_pedido))
 
 
@@ -298,7 +299,7 @@ def ventas():
             dto = FiltroVentasAdminDTO.from_form(request.args)
             reporte = ReporteVentasDTO.from_api(api.llamar("GET", "/admin/ventas", params=dto.to_dict()))
         except (ErrorValidacion, api.ApiError) as exc:
-            error = _mensaje(exc)
+            error = None if asignar(_mensaje(exc), "reporte", request.args) else _mensaje(exc)
         except ErrorRespuesta:
             error = MSG_ERROR_INTERNO
     return render_template("admin/ventas.html", titulo="Ventas por vendedor", accion=url_for("admin.ventas"),

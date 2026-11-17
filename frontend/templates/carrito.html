@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "macros.html" as ui %}
+{% import "macros.html" as ui with context %}
 {% block titulo %}Carrito{% endblock %}
 {% block contenido %}
 <h1>Mi carrito</h1>
@@ -36,13 +36,15 @@
                         {{ ui.producto_renglon(item.nombre, item.url_imagen, item.atributos, url_for('catalogo.detalle', id_producto=item.id_producto), extra) }}
                     </td>
                     <td class="num" data-etiqueta="Precio">{{ item.precio|moneda }}</td>
-                    <td data-etiqueta="Cantidad">
+                    {% set clave = "cantidad-" ~ item.id_variante %}
+                    <td data-etiqueta="Cantidad" class="celda-cantidad">
                         <form method="post" action="{{ url_for('comprador.cambiar_cantidad', id_variante=item.id_variante) }}" class="cantidad" data-un-envio novalidate>
                             {{ ui.csrf() }}
-                            <input type="number" name="cantidad" value="{{ item.cantidad }}" min="0" step="1" inputmode="numeric"
-                                   aria-label="Cantidad de {{ item.nombre }}" required>
+                            <input type="number" name="cantidad" value="{{ previos.get(clave, item.cantidad) }}" min="0" step="1" inputmode="numeric"
+                                   aria-label="Cantidad de {{ item.nombre }}" required{% if errores.get(clave) %} aria-invalid="true" aria-describedby="error-{{ clave }}"{% endif %}>
                             {{ ui.boton("Actualizar", "secundario") }}
                         </form>
+                        {{ ui.error_grupo(clave) }}
                     </td>
                     <td class="num" data-etiqueta="Subtotal">{{ item.subtotal|moneda }}</td>
                     <td class="acciones-col">

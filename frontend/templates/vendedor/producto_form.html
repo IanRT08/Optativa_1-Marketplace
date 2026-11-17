@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "macros.html" as ui %}
+{% import "macros.html" as ui with context %}
 {% block titulo %}{{ titulo }}{% endblock %}
 {% block contenido %}
 {{ ui.volver(url_for('vendedor.productos'), "Mis productos") }}
@@ -30,6 +30,7 @@
     <fieldset class="grupo">
         <legend>Especificaciones <span class="obligatorio">Opcional</span></legend>
         <p class="nota">Hasta 20, por ejemplo Material: Aluminio. Deja vacíos los renglones que no uses.</p>
+        {{ ui.error_grupo("especificaciones") }}
         <div class="filas filas-2-siempre encabezado-renglones" aria-hidden="true"><span>Nombre</span><span>Valor</span></div>
         {% for nombre, valor in especificaciones %}
             <div class="filas filas-2-siempre">
@@ -47,6 +48,7 @@
 
     <fieldset class="grupo">
         <legend>Logística de envío <span class="obligatorio">Opcional</span></legend>
+        {{ ui.error_grupo("logistica") }}
         {{ ui.casilla("con_logistica", "Incluir datos de envío", valores.con_logistica) }}
         <div class="filas filas-3">
             {{ ui.campo("log_alto", "Alto (cm)", valores.log_alto, attrs={"inputmode": "decimal", "maxlength": 7}) }}

@@ -9,6 +9,7 @@ from flask_session import Session
 from flask_wtf.csrf import CSRFError, CSRFProtect
 
 import api
+import errores_campo
 from config import Config
 from constantes import MSG_ACCESO_RESTRINGIDO, MSG_ERROR_INTERNO, MSG_SESION_INVALIDA
 from rutas_admin import bp as admin_bp
@@ -43,6 +44,9 @@ def crear_app():
             return datetime.fromisoformat(valor).strftime("%d/%m/%Y %H:%M")
         except (TypeError, ValueError):
             return valor or ""
+
+    # Errores debajo de cada campo y lo que escribió el usuario (errores_campo.py)
+    app.context_processor(errores_campo.para_plantilla)
 
     @app.context_processor
     def usuario_actual():

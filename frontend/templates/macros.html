@@ -1,5 +1,5 @@
 {#- Componentes de la interfaz (guía de diseño §5: todo sale de aquí).
-    Uso en cada plantilla: {% import "macros.html" as ui %}
+    Uso en cada plantilla: {% import "macros.html" as ui with context %}
     attrs: diccionario de atributos extra. Nunca pasar False como valor
     (xmlattr lo escribiría y el atributo booleano quedaría activo); omitirlo. -#}
 
@@ -27,7 +27,16 @@
 <p class="volver"><a href="{{ href }}">{{ icono("arrow-left") }}<span>{{ texto }}</span></a></p>
 {%- endmacro %}
 
-{#- Campos: etiqueta siempre visible encima; "Obligatorio" en texto. -#}
+{#- Campos: etiqueta siempre visible encima; "Obligatorio" en texto.
+    El error de cada campo sale de `errores` (errores_campo.py): por eso las
+    plantillas importan estas macros "with context". -#}
+{% macro _error(clave) -%}{{ errores.get(clave, "") if errores else "" }}{%- endmacro %}
+
+{#- Error de un grupo (fieldset o radios): va bajo su título. -#}
+{% macro error_grupo(clave) -%}
+{%- set texto = _error(clave) -%}
+{% if texto %}<p class="campo-error" id="error-{{ clave }}" role="alert">{{ icono("circle-alert") }}<span>{{ texto }}</span></p>{% endif %}
+{%- endmacro %}
 {% macro _etiqueta(id, etiqueta, obligatorio) -%}
 <label for="{{ id }}">{{ etiqueta }}{% if obligatorio %} <span class="obligatorio">Obligatorio</span>{% endif %}</label>
 {%- endmacro %}
@@ -45,8 +54,9 @@
 {%- if error %} aria-invalid="true"{% endif -%}
 {%- endmacro %}
 
-{% macro campo(nombre, etiqueta, valor="", tipo="text", obligatorio=False, ayuda=None, error=None, id=None, clase="", attrs={}) -%}
+{% macro campo(nombre, etiqueta, valor="", tipo="text", obligatorio=False, ayuda=None, error=None, id=None, clase="", attrs={}, clave=None) -%}
 {%- set id = id or "c-" ~ nombre -%}
+{%- set error = error or _error(clave or nombre) -%}
 <div class="campo {{ clase }}">
     {{ _etiqueta(id, etiqueta, obligatorio) }}
     <input id="{{ id }}" name="{{ nombre }}" type="{{ tipo }}"{% if tipo != "password" and valor is not none %} value="{{ valor }}"{% endif %}{% if obligatorio %} required{% endif %}{{ _describe(id, ayuda, error) }}{{ attrs|xmlattr }}>
@@ -56,6 +66,7 @@
 
 {% macro area(nombre, etiqueta, valor="", obligatorio=False, filas=4, ayuda=None, error=None, id=None, attrs={}) -%}
 {%- set id = id or "c-" ~ nombre -%}
+{%- set error = error or _error(nombre) -%}
 <div class="campo">
     {{ _etiqueta(id, etiqueta, obligatorio) }}
     <textarea id="{{ id }}" name="{{ nombre }}" rows="{{ filas }}"{% if obligatorio %} required{% endif %}{{ _describe(id, ayuda, error) }}{{ attrs|xmlattr }}>{{ valor or "" }}</textarea>
@@ -65,8 +76,9 @@
 
 {#- opciones: lista de objetos, tuplas o textos. valor/texto: atributo o índice
     de cada opción (None = la opción misma). vacio: texto de la opción sin valor. -#}
-{% macro selector(nombre, etiqueta, opciones, seleccionado="", obligatorio=False, vacio=None, valor=None, texto=None, ayuda=None, error=None, id=None, clase="", attrs={}) -%}
+{% macro selector(nombre, etiqueta, opciones, seleccionado="", obligatorio=False, vacio=None, valor=None, texto=None, ayuda=None, error=None, id=None, clase="", attrs={}, sin_error=False) -%}
 {%- set id = id or "c-" ~ nombre -%}
+{%- set error = error or (None if sin_error else _error(nombre)) -%}
 <div class="campo {{ clase }}">
     {{ _etiqueta(id, etiqueta, obligatorio) }}
     <select id="{{ id }}" name="{{ nombre }}"{% if obligatorio %} required{% endif %}{{ _describe(id, ayuda, error) }}{{ attrs|xmlattr }}>

@@ -55,6 +55,20 @@ window.addEventListener("pageshow", function () {
     });
 });
 
+// Al volver con errores, el foco va al primer campo con error (el lector de
+// pantalla lee su etiqueta y el mensaje que tiene debajo).
+document.addEventListener("DOMContentLoaded", function () {
+    var campo = document.querySelector("[aria-invalid='true']");
+    if (!campo) {
+        var error = document.querySelector(".campo-error");
+        var grupo = error && error.closest("fieldset, td, form");
+        campo = grupo && grupo.querySelector("input:not([type=hidden]), select, textarea");
+    }
+    if (campo) {
+        campo.focus();
+    }
+});
+
 // Botones que muestran u ocultan una sección en pantallas chicas: el menú
 // (.btn-menu) y "Más filtros" del catálogo (data-alterna="id").
 // Sin JavaScript todo queda visible.

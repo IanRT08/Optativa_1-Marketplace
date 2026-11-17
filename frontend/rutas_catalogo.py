@@ -10,6 +10,8 @@ import catalogos
 from constantes import BUSQUEDA_MAX_LLAMADAS, MSG_ERROR_INTERNO, MSG_SIN_PRODUCTOS
 from dtos import BusquedaDTO, ErrorRespuesta, PaginaProductosDTO, ProductoDetalleDTO
 
+from errores_campo import asignar
+
 bp = Blueprint("catalogo", __name__)
 
 
@@ -29,7 +31,7 @@ def inicio():
                 break
             params = {**busqueda.filtros(), "cursor": pagina.siguiente_cursor}
     except api.ApiError as exc:
-        error = exc.mensaje
+        error = None if asignar(exc.mensaje, "filtro_catalogo", request.args) else exc.mensaje
     except ErrorRespuesta:
         error = MSG_ERROR_INTERNO
 

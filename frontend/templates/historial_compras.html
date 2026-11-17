@@ -1,5 +1,5 @@
 {% extends "reporte_ventas.html" %}
-{% import "macros.html" as ui %}
+{% import "macros.html" as ui with context %}
 {% block resultado %}
 {% if reporte and not reporte.pedidos %}
     {{ ui.vacio(reporte.mensaje) }}

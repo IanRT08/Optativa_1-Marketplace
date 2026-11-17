@@ -516,3 +516,11 @@ a:hover { color: var(--c-900); text-decoration-thickness: 2px; }
     .tabla-apilada td[data-etiqueta] .meta { margin: 0; }
 }
 .bloque { display: block; }
+
+/* Error de campo en el carrito y en grupos (fieldset) */
+.cantidad input[aria-invalid="true"] { border-color: var(--danger); }
+.grupo > .campo-error { margin: 0 0 var(--s-3); }
+@media (max-width: 639px) {
+    .tabla-apilada td.celda-cantidad { flex-wrap: wrap; }
+    .tabla-apilada td.celda-cantidad .campo-error { flex-basis: 100%; }
+}

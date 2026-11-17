@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "macros.html" as ui %}
+{% import "macros.html" as ui with context %}
 {% block titulo %}Variantes · {{ producto.nombre }}{% endblock %}
 {% block contenido %}
 {{ ui.volver(url_for('vendedor.productos'), "Mis productos") }}
@@ -30,9 +30,10 @@
         <form method="post" action="{{ url_for('vendedor.variantes', id_producto=producto.id_producto) }}" data-un-envio novalidate>
             {{ ui.csrf() }}
             <p class="nota">Elige al menos un valor, uno por atributo.</p>
+            {{ ui.error_grupo("valores") }}
             {% for a in atributos if a.valores %}
                 {%- set elegido = (a.valores|map(attribute=0)|map("string")|select("in", elegidos)|first) or "" -%}
-                {{ ui.selector("valores", a.nombre, a.valores, elegido, vacio="Sin elegir", valor=0, texto=1, id="valor-" ~ loop.index) }}
+                {{ ui.selector("valores", a.nombre, a.valores, elegido, vacio="Sin elegir", valor=0, texto=1, id="valor-" ~ loop.index, sin_error=True) }}
             {% else %}
                 {{ ui.vacio("No hay atributos registrados") }}
             {% endfor %}
