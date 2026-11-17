@@ -15,3 +15,4 @@ settings.local.json
 
 # Herramientas solo de desarrollo (API simulada y guía de componentes)
 frontend/_dev/
+.pytest_cache/

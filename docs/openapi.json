@@ -1,0 +1,4612 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SMAVIB: API del Marketplace",
+    "version": "1.0.0",
+    "description": "API REST de SMAVIB (Amazon API Gateway + AWS Lambda). La lógica transaccional vive en los stored procedures de MySQL (RDS); el catálogo de búsqueda en DynamoDB. Todas las respuestas son JSON: éxito con `mensaje` y datos, error con `error` (texto exacto del DFR). Generado a partir de las fichas de backend/LAMBDAS.md."
+  },
+  "servers": [
+    {
+      "url": "https://{api_id}.execute-api.us-east-1.amazonaws.com",
+      "description": "API Gateway (Learner Lab, us-east-1). En Flask va en la variable API_BASE_URL.",
+      "variables": {
+        "api_id": {
+          "default": "api_id",
+          "description": "Id de la API en API Gateway"
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "2. Categorías"
+    },
+    {
+      "name": "1. Usuarios"
+    },
+    {
+      "name": "Apoyo"
+    },
+    {
+      "name": "9. Direcciones"
+    },
+    {
+      "name": "3. Productos (vendedor)"
+    },
+    {
+      "name": "4. Catálogo"
+    },
+    {
+      "name": "5. Carrito"
+    },
+    {
+      "name": "6. Compra"
+    },
+    {
+      "name": "7. Pedidos"
+    },
+    {
+      "name": "8. Reportes"
+    }
+  ],
+  "paths": {
+    "/categorias": {
+      "get": {
+        "tags": [
+          "2. Categorías"
+        ],
+        "summary": "DFR 2.2 Consultar categorías",
+        "operationId": "consultarCategorias",
+        "description": "Lambda: `lambda-consultarCategorias`. Acceso: Abierta, sin token (decisión 2026-11-13: la usan 3.1 y 4.1).",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Correcto"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "2. Categorías"
+        ],
+        "summary": "DFR 2.1 Crear categoría (Administrador)",
+        "operationId": "crearCategoria",
+        "description": "Lambda: `lambda-crearCategoria`. Acceso: Token JWT con rol **Administrador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Administrador"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "nombre": "Tenis",
+                "descripcion": "Calzado deportivo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Creado. DFR 2.1: datos correctos",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 2.1: datos correctos",
+                    "value": {
+                      "mensaje": "Categoría creada correctamente",
+                      "id_categoria": 12
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). DFR 2.1: falta el nombre (o solo trae espacios); Longitud (mensaje aprobado por Ian); Formato de texto (regla de Ian); Padre inexistente o id no válido (mensaje aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 2.1: falta el nombre (o solo trae espacios)",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Longitud (mensaje aprobado por Ian)",
+                    "value": {
+                      "error": "El nombre no puede superar 100 caracteres y la descripción 255"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Formato de texto (regla de Ian)",
+                    "value": "{\"error\": \"El nombre no puede tener espacios en blanco seguidos\"}` (también \"...más de dos caracteres especiales seguidos\", \"...contener solo números\"; igual con \"La descripción\")"
+                  },
+                  "caso4": {
+                    "summary": "Padre inexistente o id no válido (mensaje aprobado por Ian)",
+                    "value": {
+                      "error": "La categoría padre no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto. DFR 2.1: nombre repetido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 2.1: nombre repetido",
+                    "value": {
+                      "error": "La categoría ya existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Sin token o token vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Sin token o token vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Administrador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Administrador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error inesperado",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/usuarios/registro": {
+      "post": {
+        "tags": [
+          "1. Usuarios"
+        ],
+        "summary": "DFR 1.1 Registro de usuario (Comprador)",
+        "operationId": "registrarUsuario",
+        "description": "Lambda: `lambda-registrarUsuario`. Acceso: Abierta, sin token.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "nombre": "Ana",
+                "apellido": "López",
+                "email": "ana@correo.com",
+                "password": "Segura#2026",
+                "confirmar_password": "Segura#2026"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Creado. Datos correctos. Flask redirige a la pantalla principal",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Datos correctos. Flask redirige a la pantalla principal",
+                    "value": {
+                      "mensaje": "Registro exitoso",
+                      "id_usuario": 15
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta un campo; Nombre o apellido demasiado largo (mensaje aprobado por Ian); Formato de texto inválido (regla de Ian); Correo con formato incorrecto (mensaje aprobado por Ian); Contraseña débil; Confirmación distinta",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta un campo",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Nombre o apellido demasiado largo (mensaje aprobado por Ian)",
+                    "value": {
+                      "error": "El nombre y el apellido no pueden superar 80 caracteres"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Formato de texto inválido (regla de Ian)",
+                    "value": "{\"error\": \"El nombre no puede tener espacios en blanco seguidos\"}` (también: \"...más de dos caracteres especiales seguidos\", \"...contener solo números\"; igual con \"El apellido\")"
+                  },
+                  "caso4": {
+                    "summary": "Correo con formato incorrecto (mensaje aprobado por Ian)",
+                    "value": {
+                      "error": "El formato del correo electrónico no es válido"
+                    }
+                  },
+                  "caso5": {
+                    "summary": "Contraseña débil",
+                    "value": {
+                      "error": "La contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un carácter especial"
+                    }
+                  },
+                  "caso6": {
+                    "summary": "Confirmación distinta",
+                    "value": {
+                      "error": "Las contraseñas no coinciden"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto. Correo existente",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Correo existente",
+                    "value": {
+                      "error": "El correo electrónico ya está registrado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error inesperado",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "1. Usuarios"
+        ],
+        "summary": "DFR 1.2 Inicio de sesión (Comprador, Vendedor, Administrador)",
+        "operationId": "iniciarSesion",
+        "description": "Lambda: `lambda-iniciarSesion`. Acceso: Abierta, sin token. Emite el JWT que usan las demás Lambdas.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "email": "ana@correo.com",
+                "password": "Segura#2026"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Correcto. Credenciales correctas. Flask guarda el token y redirige según el rol",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Credenciales correctas. Flask guarda el token y redirige según el rol",
+                    "value": {
+                      "mensaje": "Sesión iniciada",
+                      "token": "eyJ...",
+                      "expira_en": 7200,
+                      "id_usuario": 15,
+                      "nombre": "Ana",
+                      "apellido": "López",
+                      "rol": "Comprador"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta el correo o la contraseña",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta el correo o la contraseña",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. El correo no existe",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El correo no existe",
+                    "value": {
+                      "error": "Usuario no encontrado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Contraseña que no coincide",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Contraseña que no coincide",
+                    "value": {
+                      "error": "Contraseña incorrecta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. Cuenta Inactiva (se revisa después de la contraseña)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Cuenta Inactiva (se revisa después de la contraseña)",
+                    "value": {
+                      "error": "La cuenta se encuentra inactiva"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error inesperado",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categorias/{id}": {
+      "put": {
+        "tags": [
+          "2. Categorías"
+        ],
+        "summary": "DFR 2.3 Editar categoría (Administrador)",
+        "operationId": "editarCategoria",
+        "description": "Lambda: `lambda-editarCategoria`. Acceso: Token JWT con rol **Administrador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Administrador"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "nombre": "Tenis",
+                "descripcion": "Calzado deportivo",
+                "id_categoria_padre": 3
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 2.3: edición válida",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 2.3: edición válida",
+                    "value": {
+                      "mensaje": "Categoría actualizada correctamente",
+                      "id_categoria": 12
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta el nombre; Longitud; Formato de texto; DFR 2.3; Ciclo (aprobado por Ian); Padre inexistente o id no válido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta el nombre",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Longitud",
+                    "value": {
+                      "error": "El nombre no puede superar 100 caracteres y la descripción 255"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Formato de texto",
+                    "value": "{\"error\": \"El nombre no puede tener espacios en blanco seguidos\"}` (y demás reglas de `validar_texto`)"
+                  },
+                  "caso4": {
+                    "summary": "DFR 2.3",
+                    "value": {
+                      "error": "Una categoría no puede ser su propia categoría padre"
+                    }
+                  },
+                  "caso5": {
+                    "summary": "Ciclo (aprobado por Ian)",
+                    "value": {
+                      "error": "Una categoría no puede tener como padre a una de sus subcategorías"
+                    }
+                  },
+                  "caso6": {
+                    "summary": "Padre inexistente o id no válido",
+                    "value": {
+                      "error": "La categoría padre no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. La categoría a editar no existe (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "La categoría a editar no existe (aprobado por Ian)",
+                    "value": {
+                      "error": "La categoría no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto. DFR 2.3: el nombre ya lo usa otra categoría",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 2.3: el nombre ya lo usa otra categoría",
+                    "value": {
+                      "error": "La categoría ya existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Sin token o rol distinto de Administrador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Sin token o rol distinto de Administrador",
+                    "value": "Sesión inválida / \"Acceso restringido\""
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error inesperado",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "2. Categorías"
+        ],
+        "summary": "DFR 2.4 Eliminar categoría (Administrador)",
+        "operationId": "eliminarCategoria",
+        "description": "Lambda: `lambda-eliminarCategoria`. Acceso: Token JWT con rol **Administrador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Administrador"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 2.4: eliminación válida",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 2.4: eliminación válida",
+                    "value": {
+                      "mensaje": "Categoría eliminada correctamente",
+                      "id_categoria": 12
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto. DFR 2.4: tiene productos (activos o inactivos); DFR 2.4: tiene subcategorías",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 2.4: tiene productos (activos o inactivos)",
+                    "value": {
+                      "error": "No se puede eliminar una categoría con productos asociados"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 2.4: tiene subcategorías",
+                    "value": {
+                      "error": "No se puede eliminar una categoría con subcategorías"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. No existe o el id no es válido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "No existe o el id no es válido",
+                    "value": {
+                      "error": "La categoría no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Sin token o rol distinto de Administrador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Sin token o rol distinto de Administrador",
+                    "value": "Sesión inválida / \"Acceso restringido\""
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error inesperado",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/usuarios": {
+      "post": {
+        "tags": [
+          "1. Usuarios"
+        ],
+        "summary": "DFR 1.3 Crear usuario (Administrador)",
+        "operationId": "crearUsuario",
+        "description": "Lambda: `lambda-crearUsuario`. Acceso: Token JWT con rol **Administrador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Administrador"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "nombre": "Luis",
+                "apellido": "Pérez",
+                "email": "luis@correo.com",
+                "password": "Vende#2026",
+                "rol": "Vendedor"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Creado. DFR 1.3: registro correcto",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 1.3: registro correcto",
+                    "value": {
+                      "mensaje": "Usuario creado exitosamente",
+                      "id_usuario": 20,
+                      "rol": "Vendedor"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta un campo; Longitud; Formato de texto; Formato de correo; DFR 1.3: contraseña débil; Rol distinto de los 3 del sistema (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta un campo",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Longitud",
+                    "value": {
+                      "error": "El nombre y el apellido no pueden superar 80 caracteres"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Formato de texto",
+                    "value": "{\"error\": \"El nombre no puede tener espacios en blanco seguidos\"}` (y demás reglas de `validar_texto`; igual con \"El apellido\")"
+                  },
+                  "caso4": {
+                    "summary": "Formato de correo",
+                    "value": {
+                      "error": "El formato del correo electrónico no es válido"
+                    }
+                  },
+                  "caso5": {
+                    "summary": "DFR 1.3: contraseña débil",
+                    "value": {
+                      "error": "La contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un carácter especial"
+                    }
+                  },
+                  "caso6": {
+                    "summary": "Rol distinto de los 3 del sistema (aprobado por Ian)",
+                    "value": {
+                      "error": "El rol seleccionado no es válido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto. DFR 1.3: correo existente",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 1.3: correo existente",
+                    "value": {
+                      "error": "El correo electrónico ya está registrado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Sin token o token vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Sin token o token vencido",
+                    "value": "Sesión inválida"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. DFR 1.3: el rol no es Administrador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 1.3: el rol no es Administrador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error inesperado",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "1. Usuarios"
+        ],
+        "summary": "DFR 1.4 Consultar usuarios (Administrador)",
+        "operationId": "consultarUsuarios",
+        "description": "Lambda: `lambda-consultarUsuarios`. Acceso: Token JWT con rol **Administrador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Administrador"
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. Hay resultados. `siguiente_cursor` es `null` en la última página; DFR 1.4: sin resultados",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Hay resultados. `siguiente_cursor` es `null` en la última página",
+                    "value": "{\"mensaje\": \"Consulta realizada\", \"usuarios\": [{id_usuario, nombre, apellido, email, rol, estado, fecha_registro}, ...], \"siguiente_cursor\": 60}"
+                  },
+                  "caso2": {
+                    "summary": "DFR 1.4: sin resultados",
+                    "value": {
+                      "mensaje": "No se encontraron registros",
+                      "usuarios": [],
+                      "siguiente_cursor": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Filtro de rol inválido; Filtro de estado inválido (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Filtro de rol inválido",
+                    "value": {
+                      "error": "El rol seleccionado no es válido"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Filtro de estado inválido (aprobado por Ian)",
+                    "value": {
+                      "error": "El estado seleccionado no es válido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Sin token o rol distinto de Administrador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Sin token o rol distinto de Administrador",
+                    "value": "Sesión inválida / \"Acceso restringido\""
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error inesperado",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/usuarios/{id}": {
+      "put": {
+        "tags": [
+          "1. Usuarios"
+        ],
+        "summary": "DFR 1.5 Editar usuario (Administrador)",
+        "operationId": "editarUsuario",
+        "description": "Lambda: `lambda-editarUsuario`. Acceso: Token JWT con rol **Administrador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Administrador"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "nombre": "Luis",
+                "apellido": "Pérez",
+                "rol": "Vendedor",
+                "estado": "Activo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 1.5: edición válida",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 1.5: edición válida",
+                    "value": {
+                      "mensaje": "Usuario actualizado correctamente",
+                      "id_usuario": 20,
+                      "rol": "Vendedor",
+                      "estado": "Activo"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). DFR 1.5: falta un campo obligatorio; Longitud; Formato de texto; Rol o estado fuera del catálogo",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 1.5: falta un campo obligatorio",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Longitud",
+                    "value": {
+                      "error": "El nombre y el apellido no pueden superar 80 caracteres"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Formato de texto",
+                    "value": "{\"error\": \"El nombre no puede tener espacios en blanco seguidos\"}` (y demás reglas de `validar_texto`; igual con \"El apellido\")"
+                  },
+                  "caso4": {
+                    "summary": "Rol o estado fuera del catálogo",
+                    "value": "{\"error\": \"El rol seleccionado no es válido\"}` / `{\"error\": \"El estado seleccionado no es válido\"}"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El administrador intenta cambiar su propio rol o estado (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El administrador intenta cambiar su propio rol o estado (aprobado por Ian)",
+                    "value": {
+                      "error": "No puedes cambiar tu propio rol o estado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. No existe o el id no es válido (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "No existe o el id no es válido (aprobado por Ian)",
+                    "value": {
+                      "error": "El usuario no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Sin token o rol distinto de Administrador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Sin token o rol distinto de Administrador",
+                    "value": "Sesión inválida / \"Acceso restringido\""
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error inesperado",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/usuarios/{id}/desactivar": {
+      "patch": {
+        "tags": [
+          "1. Usuarios"
+        ],
+        "summary": "DFR 1.6 Eliminar usuario (Administrador)",
+        "operationId": "eliminarUsuario",
+        "description": "Lambda: `lambda-eliminarUsuario`. Acceso: Token JWT con rol **Administrador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Administrador"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 1.6: baja lógica válida (también si ya estaba Inactivo)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 1.6: baja lógica válida (también si ya estaba Inactivo)",
+                    "value": {
+                      "mensaje": "Usuario eliminado correctamente",
+                      "id_usuario": 20,
+                      "estado": "Inactivo"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. DFR 1.6: el rol no es Administrador; El administrador intenta desactivarse a sí mismo",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 1.6: el rol no es Administrador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "El administrador intenta desactivarse a sí mismo",
+                    "value": {
+                      "error": "No puedes cambiar tu propio rol o estado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. Id inexistente o no válido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Id inexistente o no válido",
+                    "value": {
+                      "error": "El usuario no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/marcas": {
+      "get": {
+        "tags": [
+          "Apoyo"
+        ],
+        "summary": "A1 Consultar marcas (apoyo, abierta)",
+        "operationId": "consultarMarcas",
+        "description": "Lambda: `lambda-consultarMarcas`. Acceso: **Abierta** (sin token), igual que `GET /categorias`. Solo lee el catálogo público de marcas.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. Hay marcas (ordenadas por nombre); La tabla está vacía",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Hay marcas (ordenadas por nombre)",
+                    "value": "{\"mensaje\": \"Consulta realizada\", \"marcas\": [{\"id_marca\": 3, \"nombre\": \"Adidas\"}, ...]}"
+                  },
+                  "caso2": {
+                    "summary": "La tabla está vacía",
+                    "value": {
+                      "mensaje": "No se encontraron registros",
+                      "marcas": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/atributos": {
+      "get": {
+        "tags": [
+          "Apoyo"
+        ],
+        "summary": "A2 Consultar atributos y valores (apoyo, abierta)",
+        "operationId": "consultarAtributos",
+        "description": "Lambda: `lambda-consultarAtributos`. Acceso: **Abierta** (sin token), igual que `GET /marcas`. Solo lee el catálogo público de atributos.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. Atributos por nombre; valores en el orden en que se cargaron (`id_valor`); Atributo sin valores todavía; No hay atributos",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Atributos por nombre; valores en el orden en que se cargaron (`id_valor`)",
+                    "value": {
+                      "mensaje": "Consulta realizada",
+                      "atributos": [
+                        {
+                          "id_atributo": 2,
+                          "nombre": "Color",
+                          "valores": [
+                            {
+                              "id_valor": 9,
+                              "valor": "Rojo"
+                            }
+                          ]
+                        },
+                        {
+                          "id_atributo": 1,
+                          "nombre": "Talla",
+                          "valores": [
+                            {
+                              "id_valor": 1,
+                              "valor": "CH"
+                            },
+                            {
+                              "id_valor": 2,
+                              "valor": "M"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Atributo sin valores todavía",
+                    "value": {
+                      "mensaje": "Consulta realizada",
+                      "atributos": [
+                        {
+                          "id_atributo": 1,
+                          "nombre": "Talla",
+                          "valores": []
+                        }
+                      ]
+                    }
+                  },
+                  "caso3": {
+                    "summary": "No hay atributos",
+                    "value": {
+                      "mensaje": "No se encontraron registros",
+                      "atributos": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/direcciones": {
+      "post": {
+        "tags": [
+          "9. Direcciones"
+        ],
+        "summary": "DFR 9.1 Registrar dirección de envío (Comprador)",
+        "operationId": "registrarDireccion",
+        "description": "Lambda: `lambda-registrarDireccion`. Acceso: Token JWT con rol **Comprador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Comprador"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "calle": "Av. Juárez",
+                "numero": "120-B",
+                "colonia": "Centro",
+                "ciudad": "Monterrey",
+                "estado": "Nuevo León",
+                "codigo_postal": "64000"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Creado. DFR 9.1: datos correctos",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 9.1: datos correctos",
+                    "value": {
+                      "mensaje": "Dirección registrada correctamente",
+                      "id_direccion": 7
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). DFR 9.1: falta un campo obligatorio; DFR 9.1; Longitud (aprobado por Ian); Regla de textos libres de Ian",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 9.1: falta un campo obligatorio",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 9.1",
+                    "value": {
+                      "error": "El código postal debe tener 5 dígitos"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Longitud (aprobado por Ian)",
+                    "value": {
+                      "error": "La calle no puede superar 150 caracteres, el número 20 y la colonia, la ciudad y el estado 100"
+                    }
+                  },
+                  "caso4": {
+                    "summary": "Regla de textos libres de Ian",
+                    "value": "{\"error\": \"La calle no puede tener espacios en blanco seguidos\"}` (y demás mensajes de `validar_texto`)"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Comprador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Comprador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "9. Direcciones"
+        ],
+        "summary": "DFR 9.2 Consultar mis direcciones (Comprador)",
+        "operationId": "consultarDirecciones",
+        "description": "Lambda: `lambda-consultarDirecciones`. Acceso: Token JWT con rol **Comprador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Comprador"
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 9.2: direcciones activas del comprador; DFR 9.2: sin direcciones activas",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 9.2: direcciones activas del comprador",
+                    "value": "{\"mensaje\": \"Consulta realizada\", \"direcciones\": [{\"id_direccion\": 2, \"calle\": \"Av. Juárez\", \"numero\": \"120-B\", \"colonia\": \"Centro\", \"ciudad\": \"Monterrey\", \"estado\": \"Nuevo León\", \"codigo_postal\": \"64000\"}, ...]}"
+                  },
+                  "caso2": {
+                    "summary": "DFR 9.2: sin direcciones activas",
+                    "value": {
+                      "mensaje": "No tienes direcciones registradas",
+                      "direcciones": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Comprador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Comprador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/direcciones/{id}/desactivar": {
+      "patch": {
+        "tags": [
+          "9. Direcciones"
+        ],
+        "summary": "DFR 9.3 Desactivar dirección (Comprador)",
+        "operationId": "desactivarDireccion",
+        "description": "Lambda: `lambda-desactivarDireccion`. Acceso: Token JWT con rol **Comprador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Comprador"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 9.3: acción válida (también si ya estaba inactiva)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 9.3: acción válida (también si ya estaba inactiva)",
+                    "value": {
+                      "mensaje": "Dirección desactivada correctamente",
+                      "id_direccion": 7
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. DFR 9.3: la dirección es de otro usuario, o el rol no es Comprador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 9.3: la dirección es de otro usuario, o el rol no es Comprador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. Id inexistente o no válido (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Id inexistente o no válido (aprobado por Ian)",
+                    "value": {
+                      "error": "La dirección no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendedor/productos": {
+      "post": {
+        "tags": [
+          "3. Productos (vendedor)"
+        ],
+        "summary": "DFR 3.1 Registrar producto (Vendedor)",
+        "operationId": "crearProducto",
+        "description": "Lambda: `lambda-crearProducto`. Acceso: Token JWT con rol **Vendedor**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Vendedor"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "nombre": "iPhone 18 PRO MAX",
+                "descripcion": "Smartphone de gama alta",
+                "precio": "50000.00",
+                "id_marca": 3,
+                "id_categoria": 5,
+                "url_imagen": "https://placehold.co/600x400",
+                "stock": 75
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Creado. DFR 3.1: datos correctos",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 3.1: datos correctos",
+                    "value": {
+                      "mensaje": "Producto registrado correctamente",
+                      "id_producto": 120,
+                      "sku": "P120-STD"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). DFR 3.1: falta un campo (también un campo vacío dentro de `especificaciones` o `logistica_envio`); DFR 3.1: precio ≤ 0; Letras, signos, más de 2 decimales o fuera de rango (aprobado por Ian); DFR 3.1; Decimales, letras o signos (aprobado por Ian); Mayor a 2,147,483,647 (límite de INT; aprobado por Ian); `especificaciones` fuera de formato (aprobado por Ian); `logistica_envio` fuera de formato (aprobado por Ian); Longitud (aprobado por Ian); No es http/https o tiene espacios (aprobado por Ian); Regla de textos libres de Ian (nombre y descripción); DFR 3.1: deben existir (aprobados por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 3.1: falta un campo (también un campo vacío dentro de `especificaciones` o `logistica_envio`)",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 3.1: precio ≤ 0",
+                    "value": {
+                      "error": "El precio debe ser mayor a cero"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Letras, signos, más de 2 decimales o fuera de rango (aprobado por Ian)",
+                    "value": {
+                      "error": "El precio no es válido"
+                    }
+                  },
+                  "caso4": {
+                    "summary": "DFR 3.1",
+                    "value": {
+                      "error": "El stock no puede ser negativo"
+                    }
+                  },
+                  "caso5": {
+                    "summary": "Decimales, letras o signos (aprobado por Ian)",
+                    "value": {
+                      "error": "El stock debe ser un número entero"
+                    }
+                  },
+                  "caso6": {
+                    "summary": "Mayor a 2,147,483,647 (límite de INT; aprobado por Ian)",
+                    "value": {
+                      "error": "El stock no es válido"
+                    }
+                  },
+                  "caso7": {
+                    "summary": "`especificaciones` fuera de formato (aprobado por Ian)",
+                    "value": {
+                      "error": "Se admiten hasta 20 especificaciones, con nombre de hasta 50 caracteres y valor de texto de hasta 200, sin nombres repetidos"
+                    }
+                  },
+                  "caso8": {
+                    "summary": "`logistica_envio` fuera de formato (aprobado por Ian)",
+                    "value": {
+                      "error": "Las medidas y el peso deben ser mayores a cero y hasta 1000, con máximo 2 decimales; el tipo de empaque admite hasta 100 caracteres"
+                    }
+                  },
+                  "caso9": {
+                    "summary": "Longitud (aprobado por Ian)",
+                    "value": {
+                      "error": "El nombre no puede superar 200 caracteres, la descripción 1000 y la URL de imagen 500"
+                    }
+                  },
+                  "caso10": {
+                    "summary": "No es http/https o tiene espacios (aprobado por Ian)",
+                    "value": {
+                      "error": "La URL de imagen no es válida"
+                    }
+                  },
+                  "caso11": {
+                    "summary": "Regla de textos libres de Ian (nombre y descripción)",
+                    "value": "{\"error\": \"El nombre no puede tener espacios en blanco seguidos\"}` (y demás mensajes de `validar_texto`)"
+                  },
+                  "caso12": {
+                    "summary": "DFR 3.1: deben existir (aprobados por Ian)",
+                    "value": "{\"error\": \"La marca no existe\"}` / `{\"error\": \"La categoría no existe\"}"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Vendedor",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Vendedor",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado o falla de DynamoDB (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado o falla de DynamoDB (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "3. Productos (vendedor)"
+        ],
+        "summary": "DFR 3.2 Consultar mis productos (Vendedor)",
+        "operationId": "consultarMisProductos",
+        "description": "Lambda: `lambda-consultarMisProductos`. Acceso: Token JWT con rol **Vendedor**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Vendedor"
+        ],
+        "parameters": [
+          {
+            "name": "id_categoria",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "activo"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "iphone"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 3.2: productos del vendedor; DFR 3.2: el vendedor no tiene ningún producto; Tiene productos, pero ninguno cumple los filtros (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 3.2: productos del vendedor",
+                    "value": {
+                      "mensaje": "Consulta realizada",
+                      "productos": [
+                        {
+                          "id_producto": 120,
+                          "nombre": "iPhone 18 PRO MAX",
+                          "precio": 50000.0,
+                          "estado": "Activo",
+                          "marca": "Apple",
+                          "id_categoria": 5,
+                          "categoria": "Celulares",
+                          "stock": 75,
+                          "variantes": 1
+                        }
+                      ],
+                      "siguiente_cursor": null
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 3.2: el vendedor no tiene ningún producto",
+                    "value": {
+                      "mensaje": "No tienes productos registrados",
+                      "productos": [],
+                      "siguiente_cursor": null
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Tiene productos, pero ninguno cumple los filtros (aprobado por Ian)",
+                    "value": {
+                      "mensaje": "No se encontraron registros",
+                      "productos": [],
+                      "siguiente_cursor": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). `estado` distinto de Activo/Inactivo; `id_categoria` no válido o inexistente",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "`estado` distinto de Activo/Inactivo",
+                    "value": {
+                      "error": "El estado seleccionado no es válido"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "`id_categoria` no válido o inexistente",
+                    "value": {
+                      "error": "La categoría no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Vendedor",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Vendedor",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendedor/productos/{id}": {
+      "put": {
+        "tags": [
+          "3. Productos (vendedor)"
+        ],
+        "summary": "DFR 3.3 Editar producto (Vendedor)",
+        "operationId": "editarProducto",
+        "description": "Lambda: `lambda-editarProducto`. Acceso: Token JWT con rol **Vendedor**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Vendedor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "nombre": "iPhone 18 PRO MAX",
+                "descripcion": "Smartphone de gama alta",
+                "precio": "48999.90",
+                "id_marca": 3,
+                "id_categoria": 5,
+                "url_imagen": "https://placehold.co/600x400",
+                "stock": 60
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 3.3: edición válida",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 3.3: edición válida",
+                    "value": {
+                      "mensaje": "Producto actualizado correctamente",
+                      "id_producto": 120
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). DFR 3.3: mismas validaciones del registro",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 3.3: mismas validaciones del registro",
+                    "value": "Los mismos mensajes de validación de la 3.1 (\"Debe completar los campos obligatorios\", \"El precio debe ser mayor a cero\", \"El stock no puede ser negativo\", etc.)"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. DFR 3.3: el producto es de otro vendedor, o el rol no es Vendedor",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 3.3: el producto es de otro vendedor, o el rol no es Vendedor",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. Id inexistente o no válido (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Id inexistente o no válido (aprobado por Ian)",
+                    "value": {
+                      "error": "El producto no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto. Producto Inactivo (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Producto Inactivo (aprobado por Ian)",
+                    "value": {
+                      "error": "El producto está inactivo y no se puede editar"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado o falla de DynamoDB (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado o falla de DynamoDB (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendedor/productos/{id}/estado": {
+      "patch": {
+        "tags": [
+          "3. Productos (vendedor)"
+        ],
+        "summary": "DFR 3.4 Activar / desactivar producto (Vendedor)",
+        "operationId": "estadoProducto",
+        "description": "Lambda: `lambda-estadoProducto`. Acceso: Token JWT con rol **Vendedor**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Vendedor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "estado": "Inactivo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 3.4: cambio válido (o ya tenía ese estado)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 3.4: cambio válido (o ya tenía ese estado)",
+                    "value": {
+                      "mensaje": "Estado del producto actualizado correctamente",
+                      "id_producto": 120,
+                      "estado": "Inactivo"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). DFR 3.4: falta `estado`; Distinto de Activo/Inactivo",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 3.4: falta `estado`",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Distinto de Activo/Inactivo",
+                    "value": {
+                      "error": "El estado seleccionado no es válido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. DFR 3.4: producto de otro vendedor, o el rol no es Vendedor",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 3.4: producto de otro vendedor, o el rol no es Vendedor",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. Id inexistente o no válido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Id inexistente o no válido",
+                    "value": {
+                      "error": "El producto no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto. Activar un producto sin ítem en DynamoDB (la 3.1 falló al publicarlo) (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Activar un producto sin ítem en DynamoDB (la 3.1 falló al publicarlo) (aprobado por Ian)",
+                    "value": {
+                      "error": "El producto no se registró completo en el catálogo; regístralo de nuevo"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado o falla de DynamoDB (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado o falla de DynamoDB (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendedor/productos/{id}/variantes": {
+      "post": {
+        "tags": [
+          "3. Productos (vendedor)"
+        ],
+        "summary": "DFR 3.6 Registrar variantes de un producto (Vendedor)",
+        "operationId": "registrarVariante",
+        "description": "Lambda: `lambda-registrarVariante`. Acceso: Token JWT con rol **Vendedor**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Vendedor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "valores": [
+                  11,
+                  10
+                ],
+                "stock": 20
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Creado. DFR 3.6: datos correctos",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 3.6: datos correctos",
+                    "value": {
+                      "mensaje": "Variante registrada correctamente",
+                      "id_variante": 501,
+                      "sku": "P123-M-ROJO"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta `valores` (o va vacío) o `stock`; DFR 3.6; Mismas validaciones de la 3.1; Id de valor inexistente o no válido (aprobado por Ian); P. ej. dos tallas (aprobado por Ian); SKU de más de 60 caracteres o más de 20 valores (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta `valores` (o va vacío) o `stock`",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 3.6",
+                    "value": {
+                      "error": "El stock no puede ser negativo"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Mismas validaciones de la 3.1",
+                    "value": "{\"error\": \"El stock debe ser un número entero\"}` / `{\"error\": \"El stock no es válido\"}"
+                  },
+                  "caso4": {
+                    "summary": "Id de valor inexistente o no válido (aprobado por Ian)",
+                    "value": {
+                      "error": "Uno de los valores seleccionados no existe"
+                    }
+                  },
+                  "caso5": {
+                    "summary": "P. ej. dos tallas (aprobado por Ian)",
+                    "value": {
+                      "error": "No puedes elegir dos valores del mismo atributo"
+                    }
+                  },
+                  "caso6": {
+                    "summary": "SKU de más de 60 caracteres o más de 20 valores (aprobado por Ian)",
+                    "value": {
+                      "error": "La combinación de valores es demasiado larga; elige menos valores o valores más cortos"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. Producto de otro vendedor (aprobado por Ian), o el rol no es Vendedor",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Producto de otro vendedor (aprobado por Ian), o el rol no es Vendedor",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. Id inexistente o no válido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Id inexistente o no válido",
+                    "value": {
+                      "error": "El producto no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto. DFR 3.6: combinación repetida; Producto Inactivo (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 3.6: combinación repetida",
+                    "value": {
+                      "error": "La variante ya existe para este producto"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Producto Inactivo (aprobado por Ian)",
+                    "value": {
+                      "error": "El producto está inactivo y no se puede editar"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado o falla de DynamoDB (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado o falla de DynamoDB (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendedor/stock-masivo": {
+      "post": {
+        "tags": [
+          "3. Productos (vendedor)"
+        ],
+        "summary": "DFR 3.5 Actualizar stock de forma masiva (Vendedor)",
+        "operationId": "actualizarStockMasivo",
+        "description": "Lambda: `lambda-actualizarStockMasivo`. Acceso: Token JWT con rol **Vendedor**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Vendedor"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "id_categoria": 5,
+                "cantidad": 10
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 3.5: proceso correcto",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 3.5: proceso correcto",
+                    "value": {
+                      "mensaje": "Stock actualizado correctamente",
+                      "variantes_actualizadas": 12
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta `id_categoria` o `cantidad`; DFR 3.5 (mensaje del SP); Decimales, letras o signos (aprobado por Ian); Más de 1,000,000 (aprobado por Ian); DFR 3.5 (mensaje del SP); también categoría inexistente o id no válido (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta `id_categoria` o `cantidad`",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 3.5 (mensaje del SP)",
+                    "value": {
+                      "error": "La cantidad debe ser mayor a cero"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Decimales, letras o signos (aprobado por Ian)",
+                    "value": {
+                      "error": "La cantidad debe ser un número entero"
+                    }
+                  },
+                  "caso4": {
+                    "summary": "Más de 1,000,000 (aprobado por Ian)",
+                    "value": {
+                      "error": "La cantidad no es válida"
+                    }
+                  },
+                  "caso5": {
+                    "summary": "DFR 3.5 (mensaje del SP); también categoría inexistente o id no válido (aprobado por Ian)",
+                    "value": {
+                      "error": "No se encontraron productos para actualizar"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Vendedor",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Vendedor",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/productos": {
+      "get": {
+        "tags": [
+          "4. Catálogo"
+        ],
+        "summary": "DFR 4.1 Buscar y filtrar productos (abierta)",
+        "operationId": "consultarProductos",
+        "description": "Lambda: `lambda-consultarProductos`. Acceso: **Abierta** (sin token): catálogo público (aprobado por Ian). Flask distinguirá en pantalla si hay sesión de Comprador.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "iphone"
+          },
+          {
+            "name": "id_categoria",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "precio_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "precio_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "60000"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 4.1 (`siguiente_cursor` es `null` en la última página); DFR 4.1: sin resultados (también con una categoría no válida)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 4.1 (`siguiente_cursor` es `null` en la última página)",
+                    "value": {
+                      "mensaje": "Consulta realizada",
+                      "productos": [
+                        {
+                          "id_producto": 120,
+                          "nombre": "iPhone 18 PRO MAX",
+                          "precio": 50000,
+                          "marca": "Apple",
+                          "categoria": "Celulares",
+                          "id_categoria": 5,
+                          "url_imagen": "https://placehold.co/600x400"
+                        }
+                      ],
+                      "siguiente_cursor": "eyJpIjoi..."
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 4.1: sin resultados (también con una categoría no válida)",
+                    "value": {
+                      "mensaje": "No se encontraron productos",
+                      "productos": [],
+                      "siguiente_cursor": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). DFR 4.1; Precio con letras, signos o más de 2 decimales (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 4.1",
+                    "value": {
+                      "error": "El precio mínimo no puede ser mayor al máximo"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Precio con letras, signos o más de 2 decimales (aprobado por Ian)",
+                    "value": {
+                      "error": "El precio no es válido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/productos/{id}": {
+      "get": {
+        "tags": [
+          "4. Catálogo"
+        ],
+        "summary": "DFR 4.2 Consultar detalle de producto (abierta)",
+        "operationId": "consultarProducto",
+        "description": "Lambda: `lambda-consultarProducto`. Acceso: **Abierta**. El token es **opcional**: con sesión válida (cualquier rol) se muestra el stock exacto; sin sesión, o con token inválido o vencido, solo la disponibilidad (regla de Ian).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 4.2, con sesión (cualquier rol); DFR 4.2, visitante",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 4.2, con sesión (cualquier rol)",
+                    "value": "{\"mensaje\": \"Consulta realizada\", \"producto\": {\"id_producto\": 120, \"nombre\": \"iPhone 18 PRO MAX\", \"descripcion\": \"Smartphone de gama alta\", \"detalles\": {\"Pantalla\": \"6.9 pulgadas\"}, \"precio\": 50000.0, \"marca\": \"Apple\", \"categoria\": \"Celulares\", \"id_categoria\": 5, \"url_imagen\": \"https://placehold.co/600x400\", \"vendedor\": \"Luis Pérez\", \"especificaciones\": {\"Material\": \"Aluminio\"}, \"logistica_envio\": {...}, \"disponible\": true, \"stock\": 95, \"variantes\": [{\"id_variante\": 1, \"sku\": \"P120-STD\", \"atributos\": {}, \"disponible\": true, \"stock\": 75}]}}"
+                  },
+                  "caso2": {
+                    "summary": "DFR 4.2, visitante",
+                    "value": "Igual, **sin** `stock` en el producto ni en las variantes (solo `disponible`)"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. Id inexistente o no válido; DFR 4.2: producto Inactivo (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Id inexistente o no válido",
+                    "value": {
+                      "error": "El producto no existe"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 4.2: producto Inactivo (aprobado por Ian)",
+                    "value": {
+                      "error": "Este producto ya no está disponible"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carrito/items": {
+      "post": {
+        "tags": [
+          "5. Carrito"
+        ],
+        "summary": "DFR 5.1 Agregar producto al carrito (Comprador)",
+        "operationId": "agregarAlCarrito",
+        "description": "Lambda: `lambda-agregarAlCarrito`. Acceso: Token JWT con rol **Comprador**. Sin sesión → 401 y Flask redirige al login (DFR 5.1).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Comprador"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "id_producto": 120,
+                "cantidad": 2
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 5.1: datos correctos (`cantidad_en_carrito` = total de esa variante en el carrito)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 5.1: datos correctos (`cantidad_en_carrito` = total de esa variante en el carrito)",
+                    "value": {
+                      "mensaje": "Producto agregado al carrito",
+                      "id_variante": 11,
+                      "cantidad_en_carrito": 3
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta `id_producto` o `cantidad`; DFR 5.1: cantidad ≤ 0 (texto de 3.5, aprobado por Ian); Decimales, letras o signos (aprobado por Ian); DFR 5.1: carrito + nueva cantidad > stock de la variante; Variante inexistente o de otro producto (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta `id_producto` o `cantidad`",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 5.1: cantidad ≤ 0 (texto de 3.5, aprobado por Ian)",
+                    "value": {
+                      "error": "La cantidad debe ser mayor a cero"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Decimales, letras o signos (aprobado por Ian)",
+                    "value": {
+                      "error": "La cantidad debe ser un número entero"
+                    }
+                  },
+                  "caso4": {
+                    "summary": "DFR 5.1: carrito + nueva cantidad > stock de la variante",
+                    "value": {
+                      "error": "La cantidad solicitada supera el stock disponible"
+                    }
+                  },
+                  "caso5": {
+                    "summary": "Variante inexistente o de otro producto (aprobado por Ian)",
+                    "value": {
+                      "error": "La variante seleccionada no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. DFR 5.1: sin sesión → Flask redirige al login",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 5.1: sin sesión → Flask redirige al login",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Comprador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Comprador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. Id inexistente o no válido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Id inexistente o no válido",
+                    "value": {
+                      "error": "El producto no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto. DFR 5.1: producto Inactivo (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 5.1: producto Inactivo (aprobado por Ian)",
+                    "value": {
+                      "error": "El producto iPhone 18 PRO MAX ya no está disponible"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "5. Carrito"
+        ],
+        "summary": "DFR 5.4 Eliminar producto del carrito (Comprador)",
+        "operationId": "eliminarDelCarrito",
+        "description": "Lambda: `lambda-eliminarDelCarrito`. Acceso: Token JWT con rol **Comprador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Comprador"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "variantes": [
+                  10,
+                  11
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 5.4 (texto exacto)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 5.4 (texto exacto)",
+                    "value": {
+                      "mensaje": "Producto/s eliminado/s del carrito",
+                      "eliminados": 2
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta `variantes` o va vacía; Un id no válido (texto, negativo, etc.)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta `variantes` o va vacía",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Un id no válido (texto, negativo, etc.)",
+                    "value": {
+                      "error": "La variante seleccionada no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Comprador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Comprador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. Ninguno de los ids estaba en su carrito",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Ninguno de los ids estaba en su carrito",
+                    "value": {
+                      "error": "El producto no está en tu carrito"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carrito": {
+      "get": {
+        "tags": [
+          "5. Carrito"
+        ],
+        "summary": "DFR 5.2 Consultar carrito (Comprador)",
+        "operationId": "consultarCarrito",
+        "description": "Lambda: `lambda-consultarCarrito`. Acceso: Token JWT con rol **Comprador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Comprador"
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 5.2; DFR 5.2: carrito vacío (o sin carrito todavía)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 5.2",
+                    "value": {
+                      "mensaje": "Consulta realizada",
+                      "items": [
+                        {
+                          "id_producto": 120,
+                          "nombre": "iPhone 18",
+                          "id_variante": 11,
+                          "sku": "P120-M-ROJO",
+                          "atributos": {
+                            "Color": "Rojo",
+                            "Talla": "M"
+                          },
+                          "precio": 50000.0,
+                          "cantidad": 2,
+                          "subtotal": 100000.0,
+                          "url_imagen": "https://...",
+                          "disponible": true,
+                          "stock": 5,
+                          "stock_suficiente": true
+                        }
+                      ],
+                      "total": 100000.0,
+                      "puede_comprar": true
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 5.2: carrito vacío (o sin carrito todavía)",
+                    "value": {
+                      "mensaje": "Tu carrito está vacío",
+                      "items": [],
+                      "total": 0,
+                      "puede_comprar": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Comprador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Comprador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carrito/items/{id}": {
+      "put": {
+        "tags": [
+          "5. Carrito"
+        ],
+        "summary": "DFR 5.3 Modificar cantidad en el carrito (Comprador)",
+        "operationId": "modificarCantidadCarrito",
+        "description": "Lambda: `lambda-modificarCantidadCarrito`. Acceso: Token JWT con rol **Comprador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Comprador"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "cantidad": 3
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 5.3: modificación válida",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 5.3: modificación válida",
+                    "value": {
+                      "mensaje": "Carrito actualizado correctamente",
+                      "id_variante": 11,
+                      "cantidad": 3,
+                      "subtotal": 301.5
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta `cantidad`; DFR 5.3: cantidad ≤ 0; Decimales, letras o signos; DFR 5.3",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta `cantidad`",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 5.3: cantidad ≤ 0",
+                    "value": {
+                      "error": "La cantidad debe ser mayor a cero"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Decimales, letras o signos",
+                    "value": {
+                      "error": "La cantidad debe ser un número entero"
+                    }
+                  },
+                  "caso4": {
+                    "summary": "DFR 5.3",
+                    "value": {
+                      "error": "La cantidad solicitada supera el stock disponible"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Comprador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Comprador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. La variante no está en el carrito del comprador (ajena, inexistente o id no válido) (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "La variante no está en el carrito del comprador (ajena, inexistente o id no válido) (aprobado por Ian)",
+                    "value": {
+                      "error": "El producto no está en tu carrito"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto. Producto Inactivo: hay que quitarlo con 5.4 (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Producto Inactivo: hay que quitarlo con 5.4 (aprobado por Ian)",
+                    "value": {
+                      "error": "El producto iPhone 18 ya no está disponible"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/compras": {
+      "post": {
+        "tags": [
+          "6. Compra"
+        ],
+        "summary": "DFR 6.1 Confirmar compra (Comprador)",
+        "operationId": "confirmarCompra",
+        "description": "Lambda: `lambda-confirmarCompra`. Acceso: Token JWT con rol **Comprador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Comprador"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "id_direccion": 7,
+                "numero_tarjeta": "4242 4242 4242 4242",
+                "cvv": "123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Creado. DFR 6.1: número de orden",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 6.1: número de orden",
+                    "value": {
+                      "mensaje": "Compra realizada correctamente",
+                      "id_pedido": 345,
+                      "total": 100000.0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). DFR 6.1: falta un campo; DFR 6.1: tarjeta o CVV con formato inválido; DFR 6.1 (mensaje del SP); DFR 6.1 (mensaje del SP; también id no válido); DFR 6.1 (mensaje del SP); DFR 6.1 (mensaje del SP)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 6.1: falta un campo",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 6.1: tarjeta o CVV con formato inválido",
+                    "value": {
+                      "error": "Datos de pago no válidos"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "DFR 6.1 (mensaje del SP)",
+                    "value": {
+                      "error": "Tu carrito está vacío"
+                    }
+                  },
+                  "caso4": {
+                    "summary": "DFR 6.1 (mensaje del SP; también id no válido)",
+                    "value": {
+                      "error": "La dirección de envío no es válida"
+                    }
+                  },
+                  "caso5": {
+                    "summary": "DFR 6.1 (mensaje del SP)",
+                    "value": {
+                      "error": "Stock insuficiente para el producto iPhone 18"
+                    }
+                  },
+                  "caso6": {
+                    "summary": "DFR 6.1 (mensaje del SP)",
+                    "value": {
+                      "error": "El producto iPhone 18 ya no está disponible"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Comprador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Comprador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch, sin datos de la tarjeta)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch, sin datos de la tarjeta)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pedidos": {
+      "get": {
+        "tags": [
+          "7. Pedidos"
+        ],
+        "summary": "DFR 7.1 Consultar mis pedidos (Comprador)",
+        "operationId": "consultarMisPedidos",
+        "description": "Lambda: `lambda-consultarMisPedidos`. Acceso: Token JWT con rol **Comprador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Comprador"
+        ],
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "pendiente"
+          },
+          {
+            "name": "fecha",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-11-14"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 7.1: del más reciente al más antiguo, 20 por página; DFR 7.1: el comprador nunca ha comprado; Tiene pedidos, pero ninguno cumple los filtros",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 7.1: del más reciente al más antiguo, 20 por página",
+                    "value": {
+                      "mensaje": "Consulta realizada",
+                      "pedidos": [
+                        {
+                          "id_pedido": 345,
+                          "fecha": "2026-11-14T19:05:00-06:00",
+                          "total": 100000.0,
+                          "estado": "Pendiente"
+                        }
+                      ],
+                      "siguiente_cursor": null
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 7.1: el comprador nunca ha comprado",
+                    "value": {
+                      "mensaje": "No tienes pedidos registrados",
+                      "pedidos": [],
+                      "siguiente_cursor": null
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Tiene pedidos, pero ninguno cumple los filtros",
+                    "value": {
+                      "mensaje": "No se encontraron registros",
+                      "pedidos": [],
+                      "siguiente_cursor": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Estado fuera de los 5 (aprobado por Ian); Fecha mal escrita (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Estado fuera de los 5 (aprobado por Ian)",
+                    "value": {
+                      "error": "El estado seleccionado no es válido"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Fecha mal escrita (aprobado por Ian)",
+                    "value": {
+                      "error": "La fecha no es válida"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Comprador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Comprador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pedidos/{id}": {
+      "get": {
+        "tags": [
+          "7. Pedidos"
+        ],
+        "summary": "DFR 7.2 Consultar detalle de pedido (Comprador y Administrador)",
+        "operationId": "consultarDetallePedido",
+        "description": "Lambda: `lambda-consultarDetallePedido`. Acceso: Token JWT con rol **Comprador** (solo sus pedidos) o **Administrador** (todos, con datos reducidos).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Administrador",
+          "Comprador"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 7.2, comprador dueño; Administrador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 7.2, comprador dueño",
+                    "value": {
+                      "mensaje": "Consulta realizada",
+                      "pedido": {
+                        "id_pedido": 345,
+                        "fecha": "2026-11-14T19:05:00-06:00",
+                        "estado": "Pendiente",
+                        "total": 100000.0,
+                        "direccion": {
+                          "calle": "Av. Juárez",
+                          "numero": "120-B",
+                          "colonia": "Centro",
+                          "ciudad": "Monterrey",
+                          "estado": "Nuevo León",
+                          "codigo_postal": "64000"
+                        },
+                        "pago": {
+                          "ultimos4": "4242",
+                          "estado": "Aprobado"
+                        },
+                        "productos": [
+                          {
+                            "id_producto": 120,
+                            "nombre": "iPhone 18",
+                            "id_variante": 11,
+                            "sku": "P120-M-ROJO",
+                            "atributos": {
+                              "Color": "Rojo",
+                              "Talla": "M"
+                            },
+                            "cantidad": 2,
+                            "precio_unitario": 50000.0,
+                            "subtotal": 100000.0,
+                            "url_imagen": "https://..."
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Administrador",
+                    "value": "Igual, con `\"comprador\": \"Ana López\"`, `\"direccion\": {\"ciudad\", \"estado\", \"codigo_postal\"}` y **sin** `pago"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. Pedido de otro comprador, o rol Vendedor (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Pedido de otro comprador, o rol Vendedor (aprobado por Ian)",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. Id inexistente o no válido (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Id inexistente o no válido (aprobado por Ian)",
+                    "value": {
+                      "error": "El pedido no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/pedidos": {
+      "get": {
+        "tags": [
+          "Apoyo"
+        ],
+        "summary": "A3 Consultar pedidos (Administrador, apoyo)",
+        "operationId": "consultarPedidosAdmin",
+        "description": "Lambda: `lambda-consultarPedidosAdmin`. Acceso: Token JWT con rol **Administrador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Administrador"
+        ],
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Pendiente"
+          },
+          {
+            "name": "fecha",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. Del más reciente al más antiguo, 20 por página (sin dirección ni pago: eso está en 7.2); Sin resultados",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Del más reciente al más antiguo, 20 por página (sin dirección ni pago: eso está en 7.2)",
+                    "value": {
+                      "mensaje": "Consulta realizada",
+                      "pedidos": [
+                        {
+                          "id_pedido": 345,
+                          "fecha": "2026-11-14T19:05:00-06:00",
+                          "total": 100000.0,
+                          "estado": "Pendiente",
+                          "comprador": "Ana López"
+                        }
+                      ],
+                      "siguiente_cursor": null
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Sin resultados",
+                    "value": {
+                      "mensaje": "No se encontraron registros",
+                      "pedidos": [],
+                      "siguiente_cursor": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Estado fuera de los 5; Fecha mal escrita",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Estado fuera de los 5",
+                    "value": {
+                      "error": "El estado seleccionado no es válido"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Fecha mal escrita",
+                    "value": {
+                      "error": "La fecha no es válida"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Administrador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Administrador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/pedidos/{id}/estado": {
+      "patch": {
+        "tags": [
+          "7. Pedidos"
+        ],
+        "summary": "DFR 7.3 Actualizar estado de pedido (Administrador)",
+        "operationId": "actualizarEstadoPedido",
+        "description": "Lambda: `lambda-actualizarEstadoPedido`. Acceso: Token JWT con rol **Administrador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Administrador"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "estado": "Enviado"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 7.3 (`variantes_repuestas` solo en Cancelado/Devuelto)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 7.3 (`variantes_repuestas` solo en Cancelado/Devuelto)",
+                    "value": {
+                      "mensaje": "Estado del pedido actualizado correctamente",
+                      "id_pedido": 345,
+                      "estado": "Cancelado",
+                      "variantes_repuestas": 2
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta `estado`; DFR 7.3: transición no válida (también \"Pendiente\" como destino); Valor que no es estado (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta `estado`",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 7.3: transición no válida (también \"Pendiente\" como destino)",
+                    "value": {
+                      "error": "El pedido no puede cambiar a ese estado"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Valor que no es estado (aprobado por Ian)",
+                    "value": {
+                      "error": "El estado seleccionado no es válido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. DFR 7.3: el rol no es Administrador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 7.3: el rol no es Administrador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. Id inexistente o no válido (también cuando lo dice el SP; aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Id inexistente o no válido (también cuando lo dice el SP; aprobado por Ian)",
+                    "value": {
+                      "error": "El pedido no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/historial/compras": {
+      "get": {
+        "tags": [
+          "7. Pedidos"
+        ],
+        "summary": "DFR 7.4 Consultar historial de compras (Comprador)",
+        "operationId": "consultarHistorialCompras",
+        "description": "Lambda: `lambda-consultarHistorialCompras`. Acceso: Token JWT con rol **Comprador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Comprador"
+        ],
+        "parameters": [
+          {
+            "name": "fecha_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-11-01"
+          },
+          {
+            "name": "fecha_fin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-11-30"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 7.4; DFR 7.4: sin pedidos en el periodo",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 7.4",
+                    "value": {
+                      "mensaje": "Consulta realizada",
+                      "pedidos": [
+                        {
+                          "id_pedido": 345,
+                          "fecha": "2026-11-14T19:05:00-06:00",
+                          "estado": "Cancelado",
+                          "total": 500.0,
+                          "suma_al_total": false
+                        },
+                        {
+                          "id_pedido": 346,
+                          "fecha": "...",
+                          "estado": "Entregado",
+                          "total": 1200.0,
+                          "suma_al_total": true
+                        }
+                      ],
+                      "total_comprado": 1200.0
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 7.4: sin pedidos en el periodo",
+                    "value": {
+                      "mensaje": "No tienes pedidos registrados",
+                      "pedidos": [],
+                      "total_comprado": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta una fecha; Fecha mal escrita; DFR 7.4 (mensaje del SP)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta una fecha",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Fecha mal escrita",
+                    "value": {
+                      "error": "La fecha no es válida"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "DFR 7.4 (mensaje del SP)",
+                    "value": {
+                      "error": "La fecha inicial no puede ser mayor a la fecha final"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Comprador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Comprador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendedor/ventas": {
+      "get": {
+        "tags": [
+          "8. Reportes"
+        ],
+        "summary": "DFR 8.1 Reporte de ventas del vendedor (Vendedor)",
+        "operationId": "reporteVentasVendedor",
+        "description": "Lambda: `lambda-reporteVentasVendedor`. Acceso: Token JWT con rol **Vendedor**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Vendedor"
+        ],
+        "parameters": [
+          {
+            "name": "fecha_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-11-01"
+          },
+          {
+            "name": "fecha_fin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-11-30"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 8.1; DFR 8.1: sin ventas",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 8.1",
+                    "value": {
+                      "mensaje": "Consulta realizada",
+                      "productos": [
+                        {
+                          "id_producto": 120,
+                          "producto": "iPhone 18",
+                          "unidades_vendidas": 3,
+                          "total_vendido": 150000.0
+                        }
+                      ],
+                      "total_ventas": 150000.0
+                    }
+                  },
+                  "caso2": {
+                    "summary": "DFR 8.1: sin ventas",
+                    "value": {
+                      "mensaje": "No hay ventas en el periodo seleccionado",
+                      "productos": [],
+                      "total_ventas": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta una fecha; Fecha mal escrita; DFR 8.1 (mensaje del SP)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta una fecha",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Fecha mal escrita",
+                    "value": {
+                      "error": "La fecha no es válida"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "DFR 8.1 (mensaje del SP)",
+                    "value": {
+                      "error": "La fecha inicial no puede ser mayor a la fecha final"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. El rol no es Vendedor",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "El rol no es Vendedor",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/ventas": {
+      "get": {
+        "tags": [
+          "8. Reportes"
+        ],
+        "summary": "DFR 8.2 Reporte de ventas por vendedor (Administrador)",
+        "operationId": "reporteVentasAdmin",
+        "description": "Lambda: `lambda-reporteVentasAdmin`. Acceso: Token JWT con rol **Administrador**.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-roles": [
+          "Administrador"
+        ],
+        "parameters": [
+          {
+            "name": "id_vendedor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2"
+          },
+          {
+            "name": "fecha_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-11-01"
+          },
+          {
+            "name": "fecha_fin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-11-30"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Correcto. DFR 8.2; Sin ventas (mismo criterio que 8.1)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 8.2",
+                    "value": {
+                      "mensaje": "Consulta realizada",
+                      "vendedor": "Luis Pérez",
+                      "productos": [
+                        {
+                          "id_producto": 120,
+                          "producto": "iPhone 18",
+                          "unidades_vendidas": 3,
+                          "total_vendido": 150000.0
+                        }
+                      ],
+                      "total_ventas": 150000.0
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Sin ventas (mismo criterio que 8.1)",
+                    "value": {
+                      "mensaje": "No hay ventas en el periodo seleccionado",
+                      "vendedor": "Luis Pérez",
+                      "productos": [],
+                      "total_ventas": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o de negocio (texto exacto del DFR). Falta un dato; Fecha mal escrita; Mensaje del SP",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Falta un dato",
+                    "value": {
+                      "error": "Debe completar los campos obligatorios"
+                    }
+                  },
+                  "caso2": {
+                    "summary": "Fecha mal escrita",
+                    "value": {
+                      "error": "La fecha no es válida"
+                    }
+                  },
+                  "caso3": {
+                    "summary": "Mensaje del SP",
+                    "value": {
+                      "error": "La fecha inicial no puede ser mayor a la fecha final"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o vencido. Token ausente, inválido o vencido",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Token ausente, inválido o vencido",
+                    "value": {
+                      "error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o recurso de otro usuario. DFR 8.2: el rol no es Administrador",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "DFR 8.2: el rol no es Administrador",
+                    "value": {
+                      "error": "Acceso restringido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe. Id inexistente, no válido o que no es Vendedor (aprobado por Ian)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Id inexistente, no válido o que no es Vendedor (aprobado por Ian)",
+                    "value": {
+                      "error": "El vendedor no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno. Error no controlado (queda en CloudWatch)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "caso1": {
+                    "summary": "Error no controlado (queda en CloudWatch)",
+                    "value": {
+                      "error": "Ocurrió un error interno. Intenta más tarde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Token de POST /auth/login (HS256, 2 horas). Cada Lambda lo valida y revisa el rol; la identidad sale del token, nunca del body."
+      }
+    }
+  }
+}

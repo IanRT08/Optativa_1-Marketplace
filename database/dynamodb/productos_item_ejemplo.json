@@ -1,0 +1,33 @@
+{
+  "productoID": { "S": "9003" },
+  "Nombre": { "S": "Audífonos Sonora Modelo 00001" },
+  "NombreBusqueda": { "S": "audifonos sonora modelo 00001" },
+  "Descripcion": { "M": {
+    "Resumen": { "S": "Audífonos de la marca Sonora. Producto de prueba del catálogo SMAVIB." }
+  } },
+  "Especificaciones": { "M": {
+    "Conectividad": { "S": "Bluetooth 5.3" }
+  } },
+  "LogisticaEnvio": { "M": {
+    "DimensionesCm": { "M": { "Alto": { "N": "20" }, "Ancho": { "N": "18" }, "Profundidad": { "N": "9" } } },
+    "PesoKg": { "N": "0.6" },
+    "RequiereFragil": { "BOOL": true },
+    "TipoEmpaque": { "S": "Caja de cartón" }
+  } },
+  "Precio": { "N": "1299.99" },
+  "Marca": { "S": "Sonora" },
+  "Categoria": { "S": "Audio" },
+  "CategoriaID": { "N": "1" },
+  "URLImagen": { "S": "https://placehold.co/600x400?text=Audio" },
+  "Stock": { "N": "37" },
+  "VendedorID": { "N": "9004" },
+  "Estado": { "S": "Activo" },
+  "Variantes": { "L": [
+    { "M": {
+      "IdVariante": { "N": "9003" },
+      "SKU": { "S": "P9003-STD" },
+      "Stock": { "N": "37" },
+      "Atributos": { "M": {} }
+    } }
+  ] }
+}

@@ -1,7 +1,7 @@
 -- =====================================================================
--- 00_vendedores_carga.sql  (SMAVIB)
--- Vendedores dueños de los productos de prueba que crea 01_carga_inicial.sql.
--- Ejecutar en DataGrip ANTES de 01_carga_inicial.sql (base: marketplace).
+-- 03_vendedores_carga.sql  (SMAVIB)
+-- Vendedores dueños de los productos de prueba que crea 04_carga_inicial.sql.
+-- Ejecutar en DataGrip ANTES de 04_carga_inicial.sql (base: marketplace).
 --
 -- Seguridad:
 --   - password_hash = '!' NO es un hash bcrypt válido: estas cuentas no

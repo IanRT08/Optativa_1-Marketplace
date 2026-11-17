@@ -1,5 +1,5 @@
 -- =====================================================================
--- 01_carga_inicial.sql  (SMAVIB)
+-- 04_carga_inicial.sql  (SMAVIB)
 -- Carga de prueba en RDS MySQL:
 --   1. Marcas (27), categorías (12) y valores de atributo (Talla y Color).
 --   2. 17,000 productos Activos con su variante estándar P{id}-STD.
@@ -9,7 +9,7 @@
 -- Cómo ejecutarlo en DataGrip:
 --   - Base marketplace seleccionada. Ejecuta el ARCHIVO COMPLETO de una vez
 --     (no por partes): las variables @ viven en la sesión.
---   - Requisito: 00_vendedores_carga.sql ya ejecutado (o al menos un usuario
+--   - Requisito: 03_vendedores_carga.sql ya ejecutado (o al menos un usuario
 --     con rol Vendedor y estado Activo).
 --
 -- Diseño:
@@ -67,7 +67,7 @@ WHERE NOT EXISTS (SELECT 1 FROM categoria c WHERE c.nombre = t.nombre);
 
 -- ---------------------------------------------------------------------
 -- 3. Valores de atributo (los atributos Talla y Color ya los siembra
---    ScriptBD_SP.sql). Se insertan en orden: A2 los lista por id_valor.
+--    01_tablas.sql). Se insertan en orden: A2 los lista por id_valor.
 -- ---------------------------------------------------------------------
 INSERT INTO valor_atributo (id_atributo, valor)
 SELECT a.id_atributo, t.valor
@@ -214,7 +214,7 @@ COMMIT;
 -- ---------------------------------------------------------------------
 SELECT
     CASE
-        WHEN @vendedores = 0         THEN 'No hay vendedores Activos: ejecuta 00_vendedores_carga.sql'
+        WHEN @vendedores = 0         THEN 'No hay vendedores Activos: ejecuta 03_vendedores_carga.sql'
         WHEN @productos_antes >= 17000 THEN 'La carga ya se había hecho: no se insertaron productos'
         ELSE 'Carga completa'
     END                                   AS resultado,

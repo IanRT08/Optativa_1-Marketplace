@@ -1,0 +1,37 @@
+{
+  "TableName": "Productos",
+  "BillingMode": "PAY_PER_REQUEST",
+  "AttributeDefinitions": [
+    { "AttributeName": "productoID", "AttributeType": "S" },
+    { "AttributeName": "Estado", "AttributeType": "S" },
+    { "AttributeName": "CategoriaID", "AttributeType": "N" },
+    { "AttributeName": "Precio", "AttributeType": "N" }
+  ],
+  "KeySchema": [
+    { "AttributeName": "productoID", "KeyType": "HASH" }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "EstadoPrecio",
+      "KeySchema": [
+        { "AttributeName": "Estado", "KeyType": "HASH" },
+        { "AttributeName": "Precio", "KeyType": "RANGE" }
+      ],
+      "Projection": {
+        "ProjectionType": "INCLUDE",
+        "NonKeyAttributes": ["Nombre", "NombreBusqueda", "Marca", "Categoria", "CategoriaID", "URLImagen"]
+      }
+    },
+    {
+      "IndexName": "CategoriaPrecio",
+      "KeySchema": [
+        { "AttributeName": "CategoriaID", "KeyType": "HASH" },
+        { "AttributeName": "Precio", "KeyType": "RANGE" }
+      ],
+      "Projection": {
+        "ProjectionType": "INCLUDE",
+        "NonKeyAttributes": ["Nombre", "NombreBusqueda", "Marca", "Categoria", "Estado", "URLImagen"]
+      }
+    }
+  ]
+}
