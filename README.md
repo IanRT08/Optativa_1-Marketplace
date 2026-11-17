@@ -66,11 +66,13 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
+En GitHub, el CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) corre estas pruebas y compila las Lambdas en cada push a `main` y en cada pull request.
+
 Para la base de datos, los scripts de `database/` se pueden probar en un MySQL 8.0 local. El orden y la validación están en [database/README.md](database/README.md). Las fichas de [backend/LAMBDAS.md](backend/LAMBDAS.md) incluyen un evento de prueba para la pestaña *Test* de la consola de Lambda.
 
 ## Despliegue en AWS
 
-Paso a paso en [docs/manual_despliegue.md](docs/manual_despliegue.md): RDS, DynamoDB con sus índices, Layers, Lambdas con LabRole y variables de entorno, API Gateway, primer administrador y prueba de humo.
+Paso a paso en [docs/manual_despliegue.md](docs/manual_despliegue.md): RDS, DynamoDB con sus índices, Layers, Lambdas con LabRole y variables de entorno, API Gateway, primer administrador, interfaz en Vercel (con Upstash Redis para la sesión) y prueba de humo.
 
 ## Documentación
 

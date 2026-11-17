@@ -40,11 +40,24 @@ class Config:
             raise RuntimeError("API_BASE_URL debe empezar con https://")
         self.API_BASE_URL = url
 
-        # Flask-Session: la sesión vive en archivos del servidor; la cookie
-        # solo lleva un id firmado. El JWT nunca viaja al navegador.
-        self.SESSION_TYPE = "cachelib"
-        self.SESSION_CACHELIB = FileSystemCache(
-            cache_dir=str(CARPETA / "flask_session"), threshold=500, mode=0o600)
+        # Flask-Session: la sesión vive del lado del servidor; la cookie solo
+        # lleva un id firmado. El JWT nunca viaja al navegador.
+        # Con REDIS_URL (Vercel + Upstash) se guarda en Redis, porque en Vercel
+        # el disco es de solo lectura y no se comparte entre instancias.
+        # Sin REDIS_URL (ejecución local) se guarda en archivos.
+        redis_url = os.environ.get("REDIS_URL", "").strip()
+        if redis_url:
+            if not redis_url.startswith("rediss://"):
+                raise RuntimeError("REDIS_URL debe empezar con rediss:// (conexión cifrada)")
+            import redis
+            self.SESSION_TYPE = "redis"
+            self.SESSION_REDIS = redis.from_url(
+                redis_url, socket_timeout=5, socket_connect_timeout=5,
+                health_check_interval=30)
+        else:
+            self.SESSION_TYPE = "cachelib"
+            self.SESSION_CACHELIB = FileSystemCache(
+                cache_dir=str(CARPETA / "flask_session"), threshold=500, mode=0o600)
         self.SESSION_USE_SIGNER = True
         self.SESSION_PERMANENT = True
         self.PERMANENT_SESSION_LIFETIME = timedelta(hours=SESION_HORAS)

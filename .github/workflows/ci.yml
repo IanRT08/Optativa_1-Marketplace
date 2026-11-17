@@ -1,0 +1,35 @@
+# CI de SMAVIB: corre en cada push a main y en cada pull request.
+# No usa AWS ni secretos: la API se simula en las pruebas.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    name: Pruebas de la interfaz y compilación de las Lambdas
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"   # mismo runtime que las Lambdas
+          cache: pip
+          cache-dependency-path: frontend/requirements*.txt
+
+      - name: Instalar dependencias
+        run: pip install -r frontend/requirements-dev.txt
+
+      - name: Pruebas de Flask (pytest, API simulada)
+        working-directory: frontend
+        run: python -m pytest -q tests
+
+      - name: Compilar las 36 Lambdas y la Layer 2
+        run: python -m compileall -q backend

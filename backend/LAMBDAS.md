@@ -1303,6 +1303,8 @@ Función **nueva**. La Lambda vieja `consultar/{productoID}` no se toca.
 
 Lee de RDS los productos que creó [`database/04_carga_inicial.sql`](../database/04_carga_inicial.sql) y los escribe en DynamoDB con `BatchWriteItem` (DFR, Requerimientos de Eficiencia). **No se conecta a API Gateway**: se invoca a mano desde la consola de Lambda (pestaña *Test*), así que solo la puede ejecutar quien tenga acceso a la cuenta.
 
+> **Estado en AWS (2026-11-17):** se borró de la cuenta después de cargar y verificar los 17,000 ítems (los 2 GSI también tienen 17,000). El código se conserva aquí como evidencia de la ingesta masiva. Si hay que volver a cargar, se crea de nuevo con esta ficha y se borra al terminar. Así ninguna función desplegada sale del rango de 128–256 MB de los lineamientos.
+
 **Ficha de configuración**
 | Campo | Valor |
 |---|---|

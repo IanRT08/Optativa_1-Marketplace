@@ -29,7 +29,7 @@ Toda la infraestructura se configura a mano en la consola de AWS, región `us-ea
    - Rol **LabRole** y handler `lambda_function.lambda_handler`.
    - Pega el contenido de su `lambda_function.py`.
    - Agrega las dos Layers.
-   - Timeout y memoria según la ficha: 128–256 MB; solo `lambda-cargaDynamo` usa más, porque es una herramienta que se ejecuta una sola vez.
+   - Timeout y memoria según la ficha: 128–256 MB. La excepción es `lambda-cargaDynamo` (512 MB): es una herramienta que se ejecuta una sola vez y se borra al terminar la carga (paso 5).
 3. **Red:** las funciones que usan RDS van en la VPC, con las subredes de RDS y `sg-lambdas`. `lambda-consultarProductos` (4.1) va **sin VPC**, porque solo usa DynamoDB.
 4. **Variables de entorno** (sin valores en el código):
 
@@ -39,7 +39,7 @@ Toda la infraestructura se configura a mano en la consola de AWS, región `us-ea
    | `JWT_SECRET` | Firma del JWT; 32 caracteres o más e igual en todas las funciones |
    | `TABLA_PRODUCTOS` | Nombre de la tabla DynamoDB (`Productos`) |
 
-5. **Carga del catálogo:** invoca `lambda-cargaDynamo` una vez desde la pestaña *Test* con `{"desde_id": <primer_id>, "hasta_id": <ultimo_id>}`. Si responde `continuar_desde_id`, vuelve a invocarla desde ese valor. Al final compara los conteos de RDS y DynamoDB (17,000).
+5. **Carga del catálogo:** invoca `lambda-cargaDynamo` una vez desde la pestaña *Test* con `{"desde_id": <primer_id>, "hasta_id": <ultimo_id>}`. Si responde `continuar_desde_id`, vuelve a invocarla desde ese valor. Al final compara los conteos de RDS y DynamoDB (17,000) y **borra la función** de la consola: ya no se necesita.
 
 ## 4. Amazon API Gateway
 
@@ -61,6 +61,12 @@ WHERE email = '<correo del administrador>';
 ## 6. Interfaz web (Flask)
 
 Pasos en el [README](../README.md#ejecutar-la-interfaz-web): copiar `frontend/.env.example` a `frontend/.env` y llenar `API_BASE_URL` (paso 4.3) y `SECRET_KEY`, luego ejecutar `python app.py`.
+
+**En Vercel** (el repositorio de GitHub conectado a un proyecto de Vercel):
+1. *Settings* → *General* → **Root Directory = `frontend`**. Vercel detecta Flask por `app.py` (expone `app`) e instala `requirements.txt`.
+2. *Storage* → **Create Database** → **Upstash Redis** (plan gratuito, región `us-east-1`) → **Connect to project**. Vercel agrega la variable de conexión; la app lee `REDIS_URL` (`rediss://…`). Sin Redis la app no arranca en Vercel, porque el disco es de solo lectura y no se comparte entre instancias.
+3. *Settings* → *Environment Variables*: `API_BASE_URL` y `SECRET_KEY` (la misma regla de 32 caracteres o más). `COOKIE_SECURE` se queda vacío, porque Vercel sirve por HTTPS.
+4. Cada push a `main` despliega. El CI de GitHub ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) corre las pruebas de `frontend/tests` y compila las Lambdas.
 
 ## 7. Prueba de humo
 
