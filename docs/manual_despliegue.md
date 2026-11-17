@@ -6,12 +6,13 @@ Toda la infraestructura se configura a mano en la consola de AWS, región `us-ea
 
 ## 1. Amazon RDS (MySQL 8.0)
 
-1. Crea una instancia MySQL 8.0 **db.t3.micro o db.t4g.micro**, con 20 GB gp2/gp3 como máximo y acceso público desactivado.
+1. Crea una instancia MySQL 8.0 **db.t3.micro o db.t4g.micro**, con 20 GB gp2/gp3 como máximo.
 2. Crea dos grupos de seguridad:
    - `sg-lambdas`: lo usan las Lambdas.
-   - `sg-rds`: entrada **TCP 3306 solo desde `sg-lambdas`**.
-3. Desde DataGrip, MySQL Workbench o el cliente `mysql`, ejecuta los scripts de [`database/`](../database/README.md) en orden: `01_tablas.sql` → `02_stored_procedures.sql` → `03_vendedores_carga.sql` → `04_carga_inicial.sql`. `04` reporta `primer_id` y `ultimo_id`; anótalos para el paso 3.4.
-4. Fuera de horario, **detén la instancia** para no agotar el crédito (lineamientos §1.2).
+   - `sg-rds`: entrada **TCP 3306 desde `sg-lambdas`**. **Nunca** desde `0.0.0.0/0`.
+3. **Acceso desde DataGrip (opcional):** para ejecutar los scripts desde tu equipo, activa el acceso público de la instancia y agrega a `sg-rds` una regla 3306 **solo para tu IP** (en *Edit inbound rules*, origen **My IP**, que crea una regla `/32`). Si tu IP cambia, edita esa regla con **My IP**. Si no usas DataGrip, deja el acceso público desactivado.
+4. Desde DataGrip, MySQL Workbench o el cliente `mysql`, ejecuta los scripts de [`database/`](../database/README.md) en orden: `01_tablas.sql` → `02_stored_procedures.sql` → `03_vendedores_carga.sql` → `04_carga_inicial.sql`. `04` reporta `primer_id` y `ultimo_id`; anótalos para el paso 3.5.
+5. Fuera de horario, **detén la instancia** para no agotar el crédito (lineamientos §1.2).
 
 ## 2. Amazon DynamoDB
 
