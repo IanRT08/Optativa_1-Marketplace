@@ -81,3 +81,4 @@ Paso a paso en [docs/manual_despliegue.md](docs/manual_despliegue.md): RDS, Dyna
 - [API (OpenAPI 3)](docs/openapi.json): se puede abrir en [editor.swagger.io](https://editor.swagger.io)
 - [Base de datos y stored procedures](database/README.md)
 - [Fichas de las Lambdas](backend/LAMBDAS.md)
+- [Pruebas contra AWS y evidencias](docs/pruebas_aws.md)

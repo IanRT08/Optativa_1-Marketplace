@@ -91,4 +91,4 @@ def lambda_handler(event, context):
             raise ErrorNegocio(400, MSG_PADRE_NO_EXISTE)
         raise
 
-    return ok(MSG_CATEGORIA_CREADA, status=201, id_cateoria=id_categoria)
+    return ok(MSG_CATEGORIA_CREADA, status=201, id_categoria=id_categoria)
