@@ -400,6 +400,7 @@ a:hover { color: var(--c-900); text-decoration-thickness: 2px; }
     white-space: nowrap;
 }
 .tabla tbody tr:hover { background: var(--bg-soft); }
+.tabla tbody tr:has(a[data-fila-enlace]) { cursor: pointer; }
 .tabla .num { text-align: right; white-space: nowrap; }
 .tabla .acciones-col { text-align: right; }
 .tabla tfoot th, .tabla tfoot td { border-bottom: 0; font-weight: var(--fw-semibold); }

@@ -5,7 +5,7 @@ a la 4.2 para que la API devuelva el stock exacto (regla de Ian).
 """
 from dataclasses import replace
 
-from flask import Blueprint, abort, g, render_template, request
+from flask import Blueprint, abort, g, render_template, request, session, url_for
 
 import api
 import catalogos
@@ -57,6 +57,13 @@ def inicio():
     except ErrorRespuesta:
         error = MSG_ERROR_INTERNO
 
+    # "Volver al catálogo" en el detalle regresa a esta misma búsqueda y página.
+    # Solo se guardan los filtros que sí se aplicaron (campos de BusquedaDTO).
+    if vigente.to_dict():
+        session["catalogo_volver"] = vigente.to_dict()
+    else:
+        session.pop("catalogo_volver", None)
+
     return render_template(
         "catalogo.html",
         busqueda=busqueda,
@@ -79,4 +86,5 @@ def detalle(id_producto):
         return render_template("error.html", mensaje=exc.mensaje), exc.status if exc.status in (400, 404) else 500
     except ErrorRespuesta:
         abort(500)
-    return render_template("producto.html", producto=producto)
+    volver = url_for("catalogo.inicio", **BusquedaDTO.from_form(session.get("catalogo_volver") or {}).to_dict())
+    return render_template("producto.html", producto=producto, volver=volver)

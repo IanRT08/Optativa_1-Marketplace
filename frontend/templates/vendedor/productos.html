@@ -45,7 +45,7 @@
                 {% for p in pagina.productos %}
                     <tr>
                         <td>
-                            {% if p.activo %}<a href="{{ url_for('catalogo.detalle', id_producto=p.id_producto) }}">{{ p.nombre }}</a>{% else %}{{ p.nombre }}{% endif %}
+                            {% if p.activo %}<a data-fila-enlace href="{{ url_for('catalogo.detalle', id_producto=p.id_producto) }}">{{ p.nombre }}</a>{% else %}{{ p.nombre }}{% endif %}
                             <p class="meta">{{ p.marca }} · #{{ p.id_producto }}</p>
                         </td>
                         <td data-etiqueta="Categoría">{{ p.categoria }}</td>

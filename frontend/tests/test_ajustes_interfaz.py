@@ -74,3 +74,28 @@ def test_recibo_centrado_y_alerta_se_cierra_sola(cliente):
     h = c.get("/compra/realizada").get_data(as_text=True)
     assert '<div class="recibo">' in h and 'class="panel recibo-caja"' in h
     assert re.search(r'class="alerta[^"]*"[^>]*data-autocerrar', h)
+
+
+def test_volver_al_catalogo_conserva_filtros(R, cliente):
+    # Del detalle se regresa a la misma búsqueda (categoría y página), no al catálogo general.
+    from test_errores_campo import PRODUCTO
+    R["/productos"] = {"productos": [], "siguiente_cursor": None}
+    R["/productos/1"] = PRODUCTO
+    c = cliente()
+    c.get("/?q=&id_categoria=7&precio_min=&cursor=abc")
+    h = c.get("/productos/1").get_data(as_text=True)
+    volver = re.search(r'<p class="volver"><a href="([^"]+)"', h).group(1)
+    assert "id_categoria=7" in volver and "cursor=abc" in volver and "precio_min" not in volver
+    c.get("/")   # sin filtros: el regreso vuelve a ser el catálogo general
+    h = c.get("/productos/1").get_data(as_text=True)
+    assert re.search(r'<p class="volver"><a href="/"', h)
+
+
+def test_filas_de_pedidos_abren_el_detalle(R, cliente):
+    # La fila completa abre el pedido: el enlace principal va marcado para app.js.
+    R[("GET", "/pedidos")] = {"pedidos": [{"id_pedido": 5, "fecha": "2026-11-18 11:13", "total": 455.97,
+                                           "estado": "Pendiente"}], "siguiente_cursor": None}
+    h = cliente("Comprador").get("/pedidos").get_data(as_text=True)
+    assert re.search(r'<a data-fila-enlace href="/pedidos/5">', h)
+    js = (PLANTILLAS.parent / "static" / "js" / "app.js").read_text(encoding="utf-8")
+    assert "a[data-fila-enlace]" in js

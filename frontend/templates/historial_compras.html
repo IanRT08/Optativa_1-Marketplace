@@ -10,7 +10,7 @@
             <tbody>
                 {% for p in reporte.pedidos %}
                     <tr>
-                        <td><a href="{{ url_for('comprador.pedido', id_pedido=p.id_pedido) }}">#{{ p.id_pedido }}</a></td>
+                        <td><a data-fila-enlace href="{{ url_for('comprador.pedido', id_pedido=p.id_pedido) }}">#{{ p.id_pedido }}</a></td>
                         <td data-etiqueta="Fecha">{{ p.fecha|fecha }}</td>
                         <td data-etiqueta="Estado">{{ ui.insignia(p.estado) }}</td>
                         <td class="num" data-etiqueta="Total"><span>{{ p.total|moneda }}{% if not p.suma_al_total %}<span class="meta bloque">No suma al total</span>{% endif %}</span></td>

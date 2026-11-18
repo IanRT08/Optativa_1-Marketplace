@@ -117,23 +117,13 @@ Sin sesión (ventana privada).
 | 5.17 | 5.2 | Ver el carrito | "Tu carrito está vacío" | ✅ | [5.17-carritoVacioDespuesDeCompra.png](evidencias/5.17-carritoVacioDespuesDeCompra.png) |
 | 5.18 | 6.1 | Agregar 1 unidad y pagar (**pedido B**, se cancela en 6.5) | "Compra realizada correctamente" | ✅ | [5.18-pedidoBparaCancelar.png](evidencias/5.18-pedidoBparaCancelar.png) |
 
-### 5b. Concurrencia sobre la última unidad (rubro 3, opcional)
-
-Datos: la variante de 3.6, con stock 1, y dos compradores (A y B) en ventanas distintas.
-
-| # | Pasos | Resultado esperado | Resultado | Evidencia |
-|---|---|---|---|---|
-| 5b.1 | A y B agregan la variante (1 unidad) a su carrito | Ambos: "Producto agregado al carrito" | | |
-| 5b.2 | A paga | "Compra realizada correctamente" | | |
-| 5b.3 | B paga | "Stock insuficiente para el producto [nombre]" (el SP bloquea las filas con `FOR UPDATE` y revisa el stock dentro de la transacción) | | |
-
 ## 6. Administrador: pedidos, estados y reportes
 
 | # | Req. | Pasos | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|---|
-| 6.1 | A3 | Pedidos | Abre filtrado en Pendiente; aparecen los pedidos A y B | | |
-| 6.2 | 7.2 | Detalle del pedido A | Comprador, ciudad, estado y CP; **sin datos de pago** | | |
-| 6.3 | 7.3 | Pedido A: Pendiente → Enviado | "Estado del pedido actualizado correctamente" | | |
+| 6.1 | A3 | Pedidos | Abre filtrado en Pendiente; aparecen los pedidos A y B | ✅ | [6.1-pedidosPendientes.png](evidencias/6.1-pedidosPendientes.png) |
+| 6.2 | 7.2 | Detalle del pedido A | Comprador, ciudad, estado y CP; **sin datos de pago** | ✅ | [6.2-detalleDePedido.png](evidencias/6.2-detalleDePedido.png) |
+| 6.3 | 7.3 | Pedido A: Pendiente → Enviado | "Estado del pedido actualizado correctamente" | No aparecen todos los estados, solo 2: Cancelado/Enviado | |
 | 6.4 | 7.3 | Pedido A: Enviado → Entregado | "Estado del pedido actualizado correctamente"; ya no se ofrece Enviado ni Pendiente | | |
 | 6.5 | 7.3 | **SP `sp_CancelarPedido`:** pedido B → Cancelado | "Estado del pedido actualizado correctamente" | | |
 | 6.6 | 3.2 | Como vendedor, revisar el stock del producto | Regresó la unidad del pedido B | | |

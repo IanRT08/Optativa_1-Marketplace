@@ -9,7 +9,7 @@
 {%- endmacro %}
 
 {% block contenido %}
-{{ ui.volver(url_for('catalogo.inicio'), "Volver al catálogo") }}
+{{ ui.volver(volver or url_for('catalogo.inicio'), "Volver al catálogo") }}
 
 <article class="detalle">
     <div class="detalle-imagen">

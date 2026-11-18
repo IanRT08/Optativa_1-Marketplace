@@ -26,7 +26,7 @@
                 <tbody>
                 {% for p in pagina.pedidos %}
                     <tr>
-                        <td><a href="{{ url_for('admin.pedido', id_pedido=p.id_pedido) }}">#{{ p.id_pedido }}</a></td>
+                        <td><a data-fila-enlace href="{{ url_for('admin.pedido', id_pedido=p.id_pedido) }}">#{{ p.id_pedido }}</a></td>
                         <td data-etiqueta="Fecha">{{ p.fecha|fecha }}</td>
                         <td data-etiqueta="Comprador">{{ p.comprador }}</td>
                         <td class="num" data-etiqueta="Total">{{ p.total|moneda }}</td>

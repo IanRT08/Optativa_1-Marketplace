@@ -274,3 +274,28 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
+
+// Filas de tabla que abren su detalle: un clic en cualquier parte de la fila
+// equivale al enlace marcado con data-fila-enlace (Ctrl/Cmd o clic central:
+// pestaña nueva). Los botones, campos y otros enlaces de la fila funcionan
+// igual que antes, y seleccionar texto no navega. Con teclado se sigue usando
+// el enlace, que es el único elemento enfocable.
+function enlaceDeFila(evento) {
+    var fila = evento.target.closest("tbody tr");
+    if (!fila || evento.target.closest("a, button, input, select, textarea, label, summary")) { return null; }
+    if (window.getSelection && String(window.getSelection()).length) { return null; }
+    return fila.querySelector("a[data-fila-enlace]");
+}
+document.addEventListener("click", function (evento) {
+    var enlace = enlaceDeFila(evento);
+    if (!enlace) { return; }
+    if (evento.ctrlKey || evento.metaKey || evento.shiftKey) {
+        window.open(enlace.href, "_blank", "noopener");
+    } else {
+        window.location.assign(enlace.href);
+    }
+});
+document.addEventListener("auxclick", function (evento) {
+    var enlace = evento.button === 1 ? enlaceDeFila(evento) : null;
+    if (enlace) { window.open(enlace.href, "_blank", "noopener"); }
+});
