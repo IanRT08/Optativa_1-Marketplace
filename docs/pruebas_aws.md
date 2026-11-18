@@ -167,9 +167,9 @@ ORDER BY p.id_pedido DESC LIMIT 5;
 
 | # | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|
-| 8.1 | `prefijo` = `$2b$` y `largo` = 60 en todas las cuentas creadas | | |
-| 8.2 | `token` empieza con `tok_`; `ultimos4` = `1111` | | |
-| 8.3 | Pedido A Entregado con pago "Aprobado"; pedido B Cancelado con pago "Reembolsado" | | |
+| 8.1 | `prefijo` = `$2b$` y `largo` = 60 en todas las cuentas creadas | ✅ | [8.1-contrasenaHasheada.png](evidencias/8.1-contrasenaHasheada.png) |
+| 8.2 | `token` empieza con `tok_`; `ultimos4` = últimos 4 de la tarjeta usada (`4567` en los pedidos A, B y C; `4242` en el pedido 4 de las pruebas de humo) | ✅ | [8.2-pagoTokenizado.png](evidencias/8.2-pagoTokenizado.png) |
+| 8.3 | Pedido A Entregado con pago "Aprobado"; pedido B Cancelado con pago "Reembolsado" | ✅ | [8.3-estadosYcancelacion.png](evidencias/8.3-estadosYcancelacion.png) |
 
 ## 9. Interfaz (cookie y token)
 
