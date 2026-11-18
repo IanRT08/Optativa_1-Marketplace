@@ -74,7 +74,7 @@ Sesión: el vendedor creado en 2.1.
 | 3.6 | 3.6 | Variantes: elegir una talla/color, stock `1` | "Variante registrada correctamente" | ✅ | [3.6-varianteRegistrada.png](evidencias/3.6-varianteRegistrada.png) |
 | 3.7 | 3.6 | Repetir la misma combinación | "La variante ya existe para este producto" | ✅ | [3.7-varianteRepetida.png](evidencias/3.7-varianteRepetida.png) |
 | 3.8 | 3.3 | Editar el precio a `459.90` | "Producto actualizado correctamente" | ✅ | [3.8-actualizarProducto.png](evidencias/3.8-actualizarProducto.png) |
-| 3.9 | 3.3 | **Solo sus datos:** abrir `/vendedor/productos/9003/editar` (producto de otro vendedor) y guardar | "Acceso restringido" | ✅ | |
+| 3.9 | 3.3 | **Solo sus datos:** abrir `/vendedor/productos/9003/editar` (producto de otro vendedor) y guardar | "Acceso restringido" | ✅ | [3.9-actualizarProductoOtroVendedor.png](3.9-actualizarProductoOtroVendedor.png)|
 | 3.10 | 3.5 | **SP `sp_ActualizarStockMasivo`:** Stock masivo, categoría `Pruebas SMAVIB`, cantidad `0` | "La cantidad debe ser mayor a cero" (mensaje del SP) | ✅ | [3.10-actualizarStockMasivo0.png](evidencias/3.10-actualizarStockMasivo0.png) |
 | 3.11 | 3.5 | Misma categoría, cantidad `5` | "Stock actualizado correctamente"; en Mis productos el stock subió | ✅ | [3.11-actualizarStockMasivo5.png](evidencias/3.11-actualizarStockMasivo5.png) |
 | 3.12 | 3.4 | Desactivar el producto | "Estado del producto actualizado correctamente" | ✅ | [3.12-desactivarProducto.png](evidencias/3.12-desactivarProducto.png) |
