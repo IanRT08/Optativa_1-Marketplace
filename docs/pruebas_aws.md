@@ -1,35 +1,49 @@
-# Pruebas contra AWS (registro de evidencias)
+# Reporte de pruebas contra AWS
 
-Pruebas de punta a punta de SMAVIB en el navegador, contra la API real de AWS (API Gateway → Lambda → RDS y DynamoDB). Son la evidencia de los rubros 3 ("probados y funcionan correctamente desde la aplicación") y 4 ("protección demostrada") de los lineamientos. Las pruebas automáticas sin AWS están en `frontend/tests/` y corren en el CI.
+Pruebas de punta a punta de SMAVIB contra la API real de AWS (API Gateway → Lambda → RDS y DynamoDB), desde la interfaz desplegada y desde AWS CloudShell. Son la evidencia de los rubros 3 ("probados y funcionan correctamente desde la aplicación") y 4 ("protección demostrada") de los lineamientos. Las pruebas automáticas sin AWS están en `frontend/tests/` y corren en el CI.
 
-**Cómo registrar:** en la columna *Resultado*, pon ✅ o ❌ y, si falla, lo que salió. En *Evidencia*, pon el nombre de la captura que guardaste en [`evidencias/`](evidencias/) (por ejemplo `07-compra-realizada.png`). Las capturas no deben mostrar tokens, contraseñas, IPs ni el endpoint de RDS.
+Cada prueba indica el resultado esperado, el resultado obtenido (✅ correcto, ❌ con la falla observada) y la captura correspondiente en [`evidencias/`](evidencias/).
 
 | Dato | Valor |
 |---|---|
-| Fecha de ejecución | |
-| Quién ejecuta | |
+| Fecha de ejecución | 17/11/2026 |
+| Ejecutó | Ian Alejandro Rivera Torres |
 | Entorno de la interfaz | https://optativa-1-marketplace.vercel.app |
-| Commit probado | |
+| Commit probado | `2e13f8e` |
 
-## 0. Preparación
+## 0. Condiciones de ejecución
 
-- Laboratorio y RDS encendidos.
-- Cuenta de **Administrador** (la primera se crea como dice el [manual §5](manual_despliegue.md#5-primer-administrador)).
-- Las cuentas de Vendedor y de Comprador se crean durante las pruebas.
-- Texto para la tarjeta de prueba: `4111 1111 1111 1111`, CVV `123`. El pago es simulado: no se cobra nada y la tarjeta no se guarda.
-- Para la sección 1 se necesita la URL de API Gateway en una variable de CloudShell: `URL=https://<api>.execute-api.us-east-1.amazonaws.com`.
+- AWS Academy Learner Lab y la instancia de RDS encendidos.
+- Cuenta de **Administrador** creada como indica el [manual §5](manual_despliegue.md#5-primer-administrador). Las cuentas de Vendedor y de Comprador se crean durante las pruebas.
+- Tarjeta de prueba: `4111 1111 1111 1111`, CVV `123`. El pago es simulado: no se cobra y la tarjeta no se guarda.
+- Sección 1: variable `URL` de CloudShell con la URL base de API Gateway.
 
 ## 1. Seguridad sin sesión (rubro 4, desde CloudShell)
 
-Todas deben responder **401** con `{"error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"}`.
+Resultado esperado en las 5 pruebas: **401** con `{"error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"}`.
 
 | # | Prueba | Comando | Resultado | Evidencia |
 |---|---|---|---|---|
-| 1.1 | Eliminar categoría sin token | `curl -s -w " %{http_code}\n" -X DELETE $URL/categorias/1` | | |
-| 1.2 | Desactivar usuario sin token | `curl -s -w " %{http_code}\n" -X PATCH $URL/admin/usuarios/1/desactivar` | | |
-| 1.3 | Editar producto sin token | `curl -s -w " %{http_code}\n" -X PUT $URL/vendedor/productos/9003 -d '{}'` | | |
-| 1.4 | Comprar sin token | `curl -s -w " %{http_code}\n" -X POST $URL/compras -d '{}'` | | |
-| 1.5 | Token falsificado | `curl -s -w " %{http_code}\n" $URL/carrito -H "Authorization: Bearer abc.def.ghi"` | | |
+| 1.1 | Eliminar categoría sin token | `curl -s -w " %{http_code}\n" -X DELETE $URL/categorias/1` | ✅ | `01-sin-token.png` |
+| 1.2 | Desactivar usuario sin token | `curl -s -w " %{http_code}\n" -X PATCH $URL/admin/usuarios/1/desactivar` | ✅ | `01-sin-token.png` |
+| 1.3 | Editar producto sin token | `curl -s -w " %{http_code}\n" -X PUT $URL/vendedor/productos/9003 -d '{}'` | ✅ | `01-sin-token.png` |
+| 1.4 | Comprar sin token | `curl -s -w " %{http_code}\n" -X POST $URL/compras -d '{}'` | ✅ | `01-sin-token.png` |
+| 1.5 | Token falsificado | `curl -s -w " %{http_code}\n" $URL/carrito -H "Authorization: Bearer abc.def.ghi"` | ✅ | `01-sin-token.png` |
+
+Salida obtenida:
+
+```
+1.1 DELETE categoria:
+{"error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"} 401
+1.2 PATCH desactivar usr:
+{"error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"} 401
+1.3 PUT producto:
+{"error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"} 401
+1.4 POST compras:
+{"error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"} 401
+1.5 token falso:
+{"error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"} 401
+```
 
 ## 2. Administrador: usuarios y categorías
 
@@ -48,7 +62,7 @@ Todas deben responder **401** con `{"error": "Tu sesión no es válida o ya venc
 
 ## 3. Vendedor: productos y stock masivo
 
-Inicia sesión con el vendedor de 2.1.
+Sesión: el vendedor creado en 2.1.
 
 | # | Req. | Pasos | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|---|
@@ -69,7 +83,7 @@ Inicia sesión con el vendedor de 2.1.
 
 ## 4. Visitante: catálogo
 
-Sin iniciar sesión.
+Sin sesión (ventana privada).
 
 | # | Req. | Pasos | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|---|
@@ -105,7 +119,7 @@ Sin iniciar sesión.
 
 ### 5b. Concurrencia sobre la última unidad (rubro 3, opcional)
 
-Usa la variante de 3.6, que tiene stock 1, y una segunda cuenta de comprador (B) en otra ventana privada.
+Datos: la variante de 3.6, con stock 1, y dos compradores (A y B) en ventanas distintas.
 
 | # | Pasos | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|
