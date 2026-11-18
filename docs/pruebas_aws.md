@@ -123,18 +123,18 @@ Sin sesión (ventana privada).
 |---|---|---|---|---|---|
 | 6.1 | A3 | Pedidos | Abre filtrado en Pendiente; aparecen los pedidos A y B | ✅ | [6.1-pedidosPendientes.png](evidencias/6.1-pedidosPendientes.png) |
 | 6.2 | 7.2 | Detalle del pedido A | Comprador, ciudad, estado y CP; **sin datos de pago** | ✅ | [6.2-detalleDePedido.png](evidencias/6.2-detalleDePedido.png) |
-| 6.3 | 7.3 | Pedido A: Pendiente → Enviado | "Estado del pedido actualizado correctamente" | No aparecen todos los estados, solo 2: Cancelado/Enviado | |
-| 6.4 | 7.3 | Pedido A: Enviado → Entregado | "Estado del pedido actualizado correctamente"; ya no se ofrece Enviado ni Pendiente | | |
-| 6.5 | 7.3 | **SP `sp_CancelarPedido`:** pedido B → Cancelado | "Estado del pedido actualizado correctamente" | | |
-| 6.6 | 3.2 | Como vendedor, revisar el stock del producto | Regresó la unidad del pedido B | | |
-| 6.7 | 8.2 | **SP `sp_HistorialVentas` ('Vendedor'):** ventas del vendedor de 2.1, fechas de hoy | Aparece el producto con las unidades del pedido A; el cancelado B no suma | | |
-| 6.8 | 8.2 | Fecha inicial mayor que la final | "La fecha inicial no puede ser mayor a la fecha final" | | |
-| 6.9 | 2.3 | Editar `Pruebas SMAVIB` y elegirla como su propia categoría padre | "Una categoría no puede ser su propia categoría padre" | | |
-| 6.10 | 2.4 | Eliminar `Pruebas SMAVIB` (tiene productos) | "No se puede eliminar una categoría con productos asociados" | | |
-| 6.11 | 2.4 | Eliminar `<b>Prueba XSS</b>` | "Categoría eliminada correctamente" | | |
-| 6.12 | 1.6 | Eliminar al comprador B (o una cuenta de prueba) | "Usuario eliminado correctamente"; en la lista queda Inactivo (baja lógica) | | |
-| 6.13 | 1.2 | Iniciar sesión con esa cuenta | "La cuenta se encuentra inactiva" | | |
-| 6.14 | RBAC | Como Comprador, abrir `/admin/usuarios` | Página "Acceso restringido" | | |
+| 6.3 | 7.3 | Pedido A: Pendiente → Enviado | "Estado del pedido actualizado correctamente" | ✅ | [6.3-cambioEstadoPredidoEnviado.png](evidencias/6.3-cambioEstadoPredidoEnviado.png) |
+| 6.4 | 7.3 | Pedido A: Enviado → Entregado | "Estado del pedido actualizado correctamente"; ya no se ofrece Enviado ni Pendiente | ✅ | [6.4-cambioEstadoPedidoEntregado.png](evidencias/6.4-cambioEstadoPedidoEntregado.png) |
+| 6.5 | 7.3 | **SP `sp_CancelarPedido`:** pedido B → Cancelado | "Estado del pedido actualizado correctamente" | ✅ | [6.5-cambioEstadoPedidoCancelado.png](evidencias/6.5-cambioEstadoPedidoCancelado.png) |
+| 6.6 | 3.2 | Como vendedor, revisar el stock del producto | Regresó la unidad del pedido B | ✅ | [6.6-regresoStock.png](evidencias/6.6-regresoStock.png) |
+| 6.7 | 8.2 | **SP `sp_HistorialVentas` ('Vendedor'):** ventas del vendedor de 2.1, fechas de hoy | Aparece el producto con las unidades del pedido A; el cancelado B no suma | ✅ | [6.7-historialVentas.png](evidencias/6.7-historialVentas.png) |
+| 6.8 | 8.2 | Fecha inicial mayor que la final | "La fecha inicial no puede ser mayor a la fecha final" | ✅ | [6.8-fechaInicialMayor.png](evidencias/6.8-fechaInicialMayor.png) |
+| 6.9 | 2.3 | Editar `Pruebas SMAVIB` y elegirla como su propia categoría padre | "Una categoría no puede ser su propia categoría padre" | ❌ "Ocurrió un error interno. Intenta más tarde" | |
+| 6.10 | 2.4 | Eliminar una categoria (que tiene productos) | "No se puede eliminar una categoría con productos asociados" | ✅ | [6.10-eliminarCategoriaConProductos.png](evidencias/6.10-eliminarCategoriaConProductos.png) |
+| 6.11 | 2.4 | Eliminar `<b>Prueba XSS</b>` | "Categoría eliminada correctamente" | ✅ | [6.11-eliminarCategoriaXSS.png](evidencias/6.11-eliminarCategoriaXSS.png) |
+| 6.12 | 1.6 | Eliminar al comprador B (o una cuenta de prueba) | "Usuario eliminado correctamente"; en la lista queda Inactivo (baja lógica) | ✅ | [6.12-eliminarUsuario.png](evidencias/6.12-eliminarUsuario.png) |
+| 6.13 | 1.2 | Iniciar sesión con esa cuenta | "La cuenta se encuentra inactiva" | ✅ | [6.13-inicioSesionCuentaInactiva.png](evidencias/6.13-inicioSesionCuentaInactiva.png) |
+| 6.14 | RBAC | Como Comprador, abrir `/admin/usuarios` | Página "Acceso restringido" | ✅ | [6.14-abrirUsuariosComoComprador.png](evidencias/6.14-abrirUsuariosComoComprador.png) |
 
 ## 7. Vendedor y Comprador: reportes e historial
 

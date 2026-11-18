@@ -8,6 +8,7 @@ API define como PUT/DELETE/PATCH las hace Flask del lado del servidor.
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
 import api
+import reportes
 from constantes import (
     ESTADOS_PEDIDO,
     MSG_CARRITO_VACIO,
@@ -298,17 +299,7 @@ def pedido(id_pedido):
 @bp.route("/historial")
 @rol_requerido(ROL_COMPRADOR)
 def historial():
-    fechas = {c: request.args.get(c, "").strip() for c in ("fecha_inicio", "fecha_fin")}
-    reporte, error = None, None
-    if any(fechas.values()):   # la primera vez solo se muestra el formulario
-        try:
-            dto = FiltroFechasDTO.from_form(request.args)
-            reporte = HistorialComprasDTO.from_api(
-                api.llamar("GET", "/historial/compras", params=dto.to_dict()))
-        except (ErrorValidacion, api.ApiError) as exc:
-            error = None if asignar(_mensaje(exc), "reporte", request.args) else _mensaje(exc)
-        except ErrorRespuesta:
-            error = MSG_ERROR_INTERNO
+    r = reportes.consultar(request.args, lambda datos: HistorialComprasDTO.from_api(
+        api.llamar("GET", "/historial/compras", params=FiltroFechasDTO.from_form(datos).to_dict())))
     return render_template("historial_compras.html", titulo="Historial de compras",
-                           accion=url_for("comprador.historial"), fechas=fechas,
-                           reporte=reporte, error=error)
+                           accion=url_for("comprador.historial"), **r)

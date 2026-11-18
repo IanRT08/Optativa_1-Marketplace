@@ -6,6 +6,7 @@ token y que el producto sea del vendedor ("Acceso restringido", DFR 3.3).
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 import api
+import reportes
 import catalogos
 from constantes import ESTADOS_PRODUCTO, MSG_ACCESO_RESTRINGIDO, MSG_ERROR_INTERNO, ROL_VENDEDOR
 from dtos import (
@@ -209,16 +210,6 @@ def stock_masivo():
 @bp.route("/ventas")
 @rol_requerido(ROL_VENDEDOR)
 def ventas():
-    fechas = {c: request.args.get(c, "").strip() for c in ("fecha_inicio", "fecha_fin")}
-    reporte, error = None, None
-    if any(fechas.values()):   # la primera vez solo se muestra el formulario
-        try:
-            dto = FiltroFechasDTO.from_form(request.args)
-            reporte = ReporteVentasDTO.from_api(
-                api.llamar("GET", "/vendedor/ventas", params=dto.to_dict()))
-        except (ErrorValidacion, api.ApiError) as exc:
-            error = None if asignar(_mensaje(exc), "reporte", request.args) else _mensaje(exc)
-        except ErrorRespuesta:
-            error = MSG_ERROR_INTERNO
-    return render_template("reporte_ventas.html", titulo="Mis ventas", accion=url_for("vendedor.ventas"),
-                           fechas=fechas, reporte=reporte, error=error)
+    r = reportes.consultar(request.args, lambda datos: ReporteVentasDTO.from_api(
+        api.llamar("GET", "/vendedor/ventas", params=FiltroFechasDTO.from_form(datos).to_dict())))
+    return render_template("reporte_ventas.html", titulo="Mis ventas", accion=url_for("vendedor.ventas"), **r)

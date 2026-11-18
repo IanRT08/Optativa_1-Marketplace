@@ -99,3 +99,31 @@ def test_filas_de_pedidos_abren_el_detalle(R, cliente):
     assert re.search(r'<a data-fila-enlace href="/pedidos/5">', h)
     js = (PLANTILLAS.parent / "static" / "js" / "app.js").read_text(encoding="utf-8")
     assert "a[data-fila-enlace]" in js
+
+
+def test_fecha_invalida_muestra_mes_actual_y_calendario_limitado(R, cliente):
+    # 8.1: con el rango invertido, el error va bajo el campo y la tabla muestra el mes actual.
+    import api
+    import reportes
+
+    def simulada(metodo, ruta, params=None, **kw):
+        if params and params["fecha_inicio"] > params["fecha_fin"]:
+            raise api.ApiError(400, "La fecha inicial no puede ser mayor a la fecha final")
+        return {"mensaje": "Consulta realizada", "total_ventas": 300.0, "productos": [
+            {"id_producto": 1, "producto": "Gorra", "unidades_vendidas": 3, "total_vendido": 300.0}]}
+
+    from unittest import mock
+    with mock.patch.object(api, "llamar", simulada):
+        h = cliente("Vendedor").get("/vendedor/ventas?fecha_inicio=2026-12-01&fecha_fin=2026-11-01").get_data(as_text=True)
+    assert "La fecha inicial no puede ser mayor a la fecha final" in h and "Gorra" in h
+    assert "Mostrando del 01/" in h and 'value="2026-12-01"' in h     # se conserva lo que escribió
+    assert f'min="2026-01-01" max="{reportes.hoy().isoformat()}"' in h
+
+
+def test_alerta_de_error_de_arriba_se_cierra_sola(cliente):
+    from flask import render_template_string
+    import app as modulo
+    with modulo.app.test_request_context():
+        h = render_template_string('{% import "macros.html" as ui %}{{ ui.mensaje("error", "x", autocerrar=True) }}'
+                                   '{{ ui.mensaje("error", "y") }}')
+    assert h.count("data-autocerrar") == 1     # solo la de arriba (flash); la de la página se queda

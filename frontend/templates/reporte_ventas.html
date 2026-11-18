@@ -6,8 +6,8 @@
 
 <form novalidate method="get" action="{{ accion }}" class="panel filtros-linea" data-un-envio>
     {% block filtros_extra %}{% endblock %}
-    {{ ui.campo("fecha_inicio", "Fecha inicial", fechas.fecha_inicio, "date", obligatorio=True) }}
-    {{ ui.campo("fecha_fin", "Fecha final", fechas.fecha_fin, "date", obligatorio=True) }}
+    {{ ui.campo("fecha_inicio", "Fecha inicial", fechas.fecha_inicio, "date", obligatorio=True, attrs=limites) }}
+    {{ ui.campo("fecha_fin", "Fecha final", fechas.fecha_fin, "date", obligatorio=True, attrs=limites) }}
     <div class="acciones">
         {{ ui.boton("Consultar", "primario", "search") }}
     </div>
@@ -16,7 +16,9 @@
 <section class="seccion-resultados" aria-live="polite">
 {% if error %}
     {{ ui.mensaje("error", error) }}
-{% else %}{% block resultado %}
+{% else %}
+{% if periodo %}<p class="nota">Mostrando del {{ periodo.desde }} al {{ periodo.hasta }}.</p>{% endif %}
+{% block resultado %}
 {% if reporte and not reporte.productos %}
     {{ ui.vacio(reporte.mensaje) }}
 {% elif reporte %}

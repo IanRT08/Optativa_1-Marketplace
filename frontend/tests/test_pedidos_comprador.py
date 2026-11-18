@@ -1,6 +1,8 @@
 """Etapa 6: Mis pedidos (7.1), detalle del pedido (7.2) e historial de compras (7.4)."""
 import api
 
+import reportes
+
 PEDIDO = {"mensaje": "Consulta realizada", "pedido": {
     "id_pedido": 4, "fecha": "2026-11-16T10:05:00-06:00", "estado": "Pendiente", "total": 100000.0,
     "direccion": {"calle": "Av. Juárez", "numero": "120-B", "colonia": "Centro", "ciudad": "Monterrey",
@@ -74,7 +76,9 @@ def test_72_administrador_no_usa_la_ruta_del_comprador(R, cliente):
 def test_74_historial_y_total_comprado(R, cliente):
     c = cliente("Comprador")
     h = c.get("/historial").get_data(as_text=True)
-    assert not R.llamadas and "Fecha inicial" in h          # primera visita: solo el formulario
+    # Primera visita: el mes actual (ajuste de Ian, 2026-11-18).
+    mes = reportes.mes_actual()
+    assert R.llamadas[-1] == ("GET", "/historial/compras", mes) and f'value="{mes["fecha_inicio"]}"' in h
     R["/historial/compras"] = {"mensaje": "Consulta realizada", "total_comprado": 1200.0, "pedidos": [
         {"id_pedido": 4, "fecha": "2026-11-16T10:05:00-06:00", "estado": "Cancelado", "total": 500.0, "suma_al_total": False},
         {"id_pedido": 5, "fecha": "2026-11-16T11:00:00-06:00", "estado": "Entregado", "total": 1200.0, "suma_al_total": True}]}
@@ -90,7 +94,9 @@ def test_74_sin_pedidos_y_fecha_faltante(R, cliente):
     assert "No tienes pedidos registrados" in h and "Total comprado" not in h
     n = len(R.llamadas)
     h = c.get("/historial?fecha_inicio=2026-11-01").get_data(as_text=True)
-    assert "Debe completar los campos obligatorios" in h and len(R.llamadas) == n
+    # El error queda bajo el campo y la tabla muestra el mes actual (una sola llamada, la de respaldo).
+    assert "Debe completar los campos obligatorios" in h and len(R.llamadas) == n + 1
+    assert R.llamadas[-1][2] == reportes.mes_actual() and "Mostrando del 01/" in h
 
 
 def test_reportes_de_ventas_comparten_plantilla(R, cliente):

@@ -7,6 +7,7 @@ revisar ("Acceso restringido", DFR 1.3 / 7.3 / 8.2).
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 import api
+import reportes
 import catalogos
 from constantes import (
     ESTADOS_PEDIDO,
@@ -288,19 +289,15 @@ def _vendedores():
 @bp.route("/ventas")
 @rol_requerido(ROL_ADMINISTRADOR)
 def ventas():
-    fechas = {c: request.args.get(c, "").strip() for c in ("id_vendedor", "fecha_inicio", "fecha_fin")}
-    reporte, error, vendedores = None, None, []
     try:
         vendedores = _vendedores()
     except (api.ApiError, ErrorRespuesta) as exc:
-        error = getattr(exc, "mensaje", MSG_ERROR_INTERNO)
-    if any(fechas.values()) and not error:
-        try:
-            dto = FiltroVentasAdminDTO.from_form(request.args)
-            reporte = ReporteVentasDTO.from_api(api.llamar("GET", "/admin/ventas", params=dto.to_dict()))
-        except (ErrorValidacion, api.ApiError) as exc:
-            error = None if asignar(_mensaje(exc), "reporte", request.args) else _mensaje(exc)
-        except ErrorRespuesta:
-            error = MSG_ERROR_INTERNO
+        return render_template("admin/ventas.html", titulo="Ventas por vendedor", accion=url_for("admin.ventas"),
+                               fechas=reportes.mes_actual() | {"id_vendedor": ""}, reporte=None, periodo=None,
+                               error=getattr(exc, "mensaje", MSG_ERROR_INTERNO), vendedores=[],
+                               limites={"min": reportes.FECHA_MINIMA, "max": reportes.hoy().isoformat()})
+    r = reportes.consultar(request.args, lambda datos: ReporteVentasDTO.from_api(
+        api.llamar("GET", "/admin/ventas", params=FiltroVentasAdminDTO.from_form(datos).to_dict())),
+        extra=("id_vendedor",))
     return render_template("admin/ventas.html", titulo="Ventas por vendedor", accion=url_for("admin.ventas"),
-                           fechas=fechas, reporte=reporte, error=error, vendedores=vendedores)
+                           vendedores=vendedores, **r)
