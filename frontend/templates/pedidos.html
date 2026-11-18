@@ -4,7 +4,7 @@
 {% block contenido %}
 <h1>Mis pedidos</h1>
 
-<form method="get" action="{{ url_for('comprador.pedidos') }}" class="panel filtros-linea" data-un-envio>
+<form novalidate method="get" action="{{ url_for('comprador.pedidos') }}" class="panel filtros-linea" data-un-envio>
     {{ ui.selector("estado", "Estado", estados, filtro.estado, vacio="Todos") }}
     {{ ui.campo("fecha", "Fecha", filtro.fecha, "date") }}
     <div class="acciones">

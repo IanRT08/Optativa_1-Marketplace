@@ -24,11 +24,11 @@ Resultado esperado en las 5 pruebas: **401** con `{"error": "Tu sesión no es v�
 
 | # | Prueba | Comando | Resultado | Evidencia |
 |---|---|---|---|---|
-| 1.1 | Eliminar categoría sin token | `curl -s -w " %{http_code}\n" -X DELETE $URL/categorias/1` | ✅ | `01-sin-token.png` |
-| 1.2 | Desactivar usuario sin token | `curl -s -w " %{http_code}\n" -X PATCH $URL/admin/usuarios/1/desactivar` | ✅ | `01-sin-token.png` |
-| 1.3 | Editar producto sin token | `curl -s -w " %{http_code}\n" -X PUT $URL/vendedor/productos/9003 -d '{}'` | ✅ | `01-sin-token.png` |
-| 1.4 | Comprar sin token | `curl -s -w " %{http_code}\n" -X POST $URL/compras -d '{}'` | ✅ | `01-sin-token.png` |
-| 1.5 | Token falsificado | `curl -s -w " %{http_code}\n" $URL/carrito -H "Authorization: Bearer abc.def.ghi"` | ✅ | `01-sin-token.png` |
+| 1.1 | Eliminar categoría sin token | `curl -s -w " %{http_code}\n" -X DELETE $URL/categorias/1` | ✅ | [01-sin-token.png](evidencias/01-sin-token.png) |
+| 1.2 | Desactivar usuario sin token | `curl -s -w " %{http_code}\n" -X PATCH $URL/admin/usuarios/1/desactivar` | ✅ | [01-sin-token.png](evidencias/01-sin-token.png) |
+| 1.3 | Editar producto sin token | `curl -s -w " %{http_code}\n" -X PUT $URL/vendedor/productos/9003 -d '{}'` | ✅ | [01-sin-token.png](evidencias/01-sin-token.png) |
+| 1.4 | Comprar sin token | `curl -s -w " %{http_code}\n" -X POST $URL/compras -d '{}'` | ✅ | [01-sin-token.png](evidencias/01-sin-token.png) |
+| 1.5 | Token falsificado | `curl -s -w " %{http_code}\n" $URL/carrito -H "Authorization: Bearer abc.def.ghi"` | ✅ | [01-sin-token.png](evidencias/01-sin-token.png) |
 
 Salida obtenida:
 
@@ -49,16 +49,16 @@ Salida obtenida:
 
 | # | Req. | Pasos | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|---|
-| 2.1 | 1.3 | Usuarios → Nuevo: rol **Vendedor**, correo nuevo, contraseña válida | "Usuario creado exitosamente" | | |
-| 2.2 | 1.3 | Repetir con el mismo correo | "El correo electrónico ya está registrado" | | |
-| 2.3 | 1.3 | Contraseña `abc` | "La contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un carácter especial" | | |
-| 2.4 | 1.4 | Filtrar por rol Vendedor | Aparece el vendedor de 2.1; sin `password_hash` | | |
-| 2.5 | 1.5 | Editar el apellido del vendedor | "Usuario actualizado correctamente" | | |
-| 2.6 | 1.5 | Editar tu propia cuenta | No aparecen los campos de rol ni de estado | | |
-| 2.7 | 2.1 | Categorías → Nueva: `Pruebas SMAVIB` | "Categoría creada correctamente" | | |
-| 2.8 | 2.1 | Repetir el mismo nombre | "La categoría ya existe" | | |
-| 2.9 | 2.1 | **XSS:** nueva categoría `<b>Prueba XSS</b>` | Se crea y el texto se ve tal cual, **sin negritas** (Jinja escapa la salida) | | |
-| 2.10 | 2.2 | Ver la lista de categorías | Aparecen las dos nuevas | | |
+| 2.1 | 1.3 | Usuarios → Nuevo: rol **Vendedor**, correo nuevo, contraseña válida | "Usuario creado exitosamente" | ✅ | [2.1-crearUsuario.png](evidencias/2.1-crearUsuario.png) |
+| 2.2 | 1.3 | Repetir con el mismo correo | "El correo electrónico ya está registrado" | ✅ | [2.2-correoYaRegistrado.png](evidencias/2.2-correoYaRegistrado.png) |
+| 2.3 | 1.3 | Contraseña `abc` | "La contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un carácter especial" | ✅ | [2.3-contraseniaABC.png](evidencias/2.3-contraseniaABC.png) |
+| 2.4 | 1.4 | Filtrar por rol Vendedor | Aparece el vendedor de 2.1; sin `password_hash` | ✅ | [2.4-filtrarRolVendedor.png](evidencias/2.4-filtrarRolVendedor.png) |
+| 2.5 | 1.5 | Editar el apellido del vendedor | "Usuario actualizado correctamente" | ✅ | [2.5-editarApellidoVendedor.png](evidencias/2.5-editarApellidoVendedor.png) |
+| 2.6 | 1.5 | Editar tu propia cuenta | No aparecen los campos de rol ni de estado | ✅ | [2.6-editarCuentaPropia.png](evidencias/2.6-editarCuentaPropia.png) |
+| 2.7 | 2.1 | Categorías → Nueva: `Pruebas SMAVIB` | "Categoría creada correctamente" | ✅ | [2.7-crearCategoria.png](evidencias/2.7-crearCategoria.png) |
+| 2.8 | 2.1 | Repetir el mismo nombre | "La categoría ya existe" | ✅ | [2.8-nombreCategoriaExistente.png](evidencias/2.8-nombreCategoriaExistente.png) |
+| 2.9 | 2.1 | **XSS:** nueva categoría `<b>Prueba XSS</b>` | Se crea y el texto se ve tal cual, **sin negritas** (Jinja escapa la salida) | ✅ | [2.9-pruebaXSS.png](evidencias/2.9-pruebaXSS.png) |
+| 2.10 | 2.2 | Ver la lista de categorías | Aparecen las dos nuevas | ✅ | [2.10-listaCategorias.png](evidencias/2.10-listaCategorias.png) |
 
 ## 3. Vendedor: productos y stock masivo
 

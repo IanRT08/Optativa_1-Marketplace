@@ -7,7 +7,7 @@
     {{ ui.enlace_boton(url_for('vendedor.nuevo'), "Registrar producto", "primario", "plus") }}
 </div>
 
-<form method="get" action="{{ url_for('vendedor.productos') }}" class="panel filtros-linea" role="search" data-un-envio>
+<form novalidate method="get" action="{{ url_for('vendedor.productos') }}" class="panel filtros-linea" role="search" data-un-envio>
     {{ ui.campo("q", "Palabra clave", filtro.q, "search", attrs={"maxlength": 200}) }}
     {{ ui.selector("id_categoria", "Categoría", categorias, filtro.id_categoria, vacio="Todas", valor="id_categoria", texto="etiqueta") }}
     {{ ui.selector("estado", "Estado", estados, filtro.estado, vacio="Todos") }}
@@ -59,8 +59,8 @@
                                     {{ ui.enlace_boton(url_for('vendedor.editar', id_producto=p.id_producto), "Editar", "secundario", "pencil", attrs={"aria-label": "Editar " ~ p.nombre}) }}
                                     {{ ui.enlace_boton(url_for('vendedor.variantes', id_producto=p.id_producto), "Variantes", "secundario", "layers", attrs={"aria-label": "Variantes de " ~ p.nombre}) }}
                                 {% endif %}
-                                <form method="post" action="{{ url_for('vendedor.estado', id_producto=p.id_producto) }}" data-un-envio
-                                      data-confirmar="{{ '¿Desactivar ' ~ p.nombre ~ '? Dejará de mostrarse en el catálogo.' if p.activo else '¿Activar ' ~ p.nombre ~ '?' }}">
+                                <form novalidate method="post" action="{{ url_for('vendedor.estado', id_producto=p.id_producto) }}" data-un-envio
+                                      data-confirmar="{{ '¿Desactivar ' ~ p.nombre ~ '? Dejará de mostrarse en el catálogo.' if p.activo else '¿Activar ' ~ p.nombre ~ '?' }}"{% if not p.activo %} data-confirmar-tipo="primario"{% endif %}>
                                     {{ ui.csrf() }}
                                     <input type="hidden" name="estado" value="{{ 'Inactivo' if p.activo else 'Activo' }}">
                                     <input type="hidden" name="volver" value="{{ request.full_path }}">

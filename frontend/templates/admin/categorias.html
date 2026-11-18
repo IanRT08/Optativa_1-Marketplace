@@ -22,7 +22,7 @@
                             <td>
                                 <div class="acciones-renglon">
                                     {{ ui.enlace_boton(url_for('admin.categoria_editar', id_categoria=c.id_categoria), "Editar", "secundario", "pencil", attrs={"aria-label": "Editar " ~ c.nombre}) }}
-                                    <form method="post" action="{{ url_for('admin.categoria_eliminar', id_categoria=c.id_categoria) }}" data-un-envio
+                                    <form novalidate method="post" action="{{ url_for('admin.categoria_eliminar', id_categoria=c.id_categoria) }}" data-un-envio
                                           data-confirmar="¿Eliminar la categoría {{ c.nombre }}? No se puede deshacer.">
                                         {{ ui.csrf() }}
                                         {{ ui.boton("Eliminar", "peligro-secundario", "trash-2", attrs={"aria-label": "Eliminar " ~ c.nombre}) }}

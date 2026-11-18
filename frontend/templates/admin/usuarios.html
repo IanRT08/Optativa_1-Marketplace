@@ -7,7 +7,7 @@
     {{ ui.enlace_boton(url_for('admin.usuario_nuevo'), "Crear usuario", "primario", "user-plus") }}
 </div>
 
-<form method="get" action="{{ url_for('admin.usuarios') }}" class="panel filtros-linea" data-un-envio>
+<form novalidate method="get" action="{{ url_for('admin.usuarios') }}" class="panel filtros-linea" data-un-envio>
     {{ ui.selector("rol", "Rol", roles, filtro.rol, vacio="Todos") }}
     {{ ui.selector("estado", "Estado", estados, filtro.estado, vacio="Todos") }}
     <div class="acciones">
@@ -39,7 +39,7 @@
                                 {{ ui.enlace_boton(url_for('admin.usuario_editar', id_usuario=u.id_usuario), "Editar", "secundario", "pencil", attrs={"aria-label": "Editar a " ~ u.nombre_completo}) }}
                                 {# 1.6: no sobre la propia cuenta (regla de Ian) ni sobre una ya inactiva #}
                                 {% if u.id_usuario != id_propio and u.estado == 'Activo' %}
-                                <form method="post" action="{{ url_for('admin.usuario_desactivar', id_usuario=u.id_usuario) }}" data-un-envio
+                                <form novalidate method="post" action="{{ url_for('admin.usuario_desactivar', id_usuario=u.id_usuario) }}" data-un-envio
                                       data-confirmar="¿Eliminar a {{ u.nombre_completo }}? Su cuenta quedará Inactiva.">
                                     {{ ui.csrf() }}
                                     <input type="hidden" name="volver" value="{{ request.full_path }}">

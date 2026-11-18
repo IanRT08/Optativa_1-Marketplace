@@ -53,7 +53,7 @@
                 <div class="cabecera-usuario">
                     {% if usuario %}
                         <p class="usuario">{{ usuario.nombre }} <span class="rol">{{ usuario.rol }}</span></p>
-                        <form method="post" action="{{ url_for('auth.logout') }}">
+                        <form novalidate method="post" action="{{ url_for('auth.logout') }}">
                             {{ ui.csrf() }}
                             {{ ui.boton("Cerrar sesión", "secundario-oscuro", "log-out") }}
                         </form>
@@ -71,7 +71,7 @@
             {% if mensajes %}
                 <div class="mensajes">
                     {% for categoria, texto in mensajes %}
-                        {{ ui.mensaje(categoria if categoria in ("exito", "aviso", "info") else "error", texto) }}
+                        {{ ui.mensaje(categoria if categoria in ("exito", "aviso", "info") else "error", texto, autocerrar=True) }}
                     {% endfor %}
                 </div>
             {% endif %}
@@ -84,5 +84,15 @@
             <p>SMAVIB · Sistema de Marketplace en AWS</p>
         </div>
     </footer>
+    {#- Confirmación de acciones (data-confirmar en el formulario; app.js).
+        Sin JavaScript no se usa y el formulario se envía directo. -#}
+    <dialog id="dialogo-confirmar" class="dialogo" aria-labelledby="dialogo-titulo" aria-describedby="dialogo-texto">
+        <h2 id="dialogo-titulo">Confirmar acción</h2>
+        <p id="dialogo-texto"></p>
+        <div class="acciones acciones-fin">
+            <button type="button" class="btn btn-secundario" data-respuesta="cancelar"><span class="btn-texto">Cancelar</span></button>
+            <button type="button" class="btn btn-peligro" data-respuesta="confirmar"><span class="btn-texto">Confirmar</span></button>
+        </div>
+    </dialog>
 </body>
 </html>

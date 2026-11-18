@@ -4,7 +4,7 @@
 {% block contenido %}
 <h1>{{ titulo }}</h1>
 
-<form method="get" action="{{ accion }}" class="panel filtros-linea" data-un-envio>
+<form novalidate method="get" action="{{ accion }}" class="panel filtros-linea" data-un-envio>
     {% block filtros_extra %}{% endblock %}
     {{ ui.campo("fecha_inicio", "Fecha inicial", fechas.fecha_inicio, "date", obligatorio=True) }}
     {{ ui.campo("fecha_fin", "Fecha final", fechas.fecha_fin, "date", obligatorio=True) }}

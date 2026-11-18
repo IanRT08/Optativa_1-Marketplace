@@ -50,7 +50,7 @@
         {% if es_admin %}
             <h2>Actualizar estado</h2>
             {% if siguientes %}
-                <form method="post" action="{{ url_for('admin.pedido_estado', id_pedido=pedido.id_pedido) }}" data-un-envio
+                <form novalidate method="post" action="{{ url_for('admin.pedido_estado', id_pedido=pedido.id_pedido) }}" data-un-envio
                       data-confirmar="¿Cambiar el estado del pedido #{{ pedido.id_pedido }}? Cancelado y Devuelto reponen el stock y reembolsan el pago.">
                     {{ ui.csrf() }}
                     {{ ui.selector("estado", "Nuevo estado", siguientes, obligatorio=True,

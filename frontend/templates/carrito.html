@@ -48,7 +48,7 @@
                     </td>
                     <td class="num" data-etiqueta="Subtotal">{{ item.subtotal|moneda }}</td>
                     <td class="acciones-col">
-                        <form method="post" action="{{ url_for('comprador.quitar') }}" data-un-envio data-confirmar="¿Quitar {{ item.nombre }} del carrito?">
+                        <form novalidate method="post" action="{{ url_for('comprador.quitar') }}" data-un-envio data-confirmar="¿Quitar {{ item.nombre }} del carrito?">
                             {{ ui.csrf() }}
                             <input type="hidden" name="variantes" value="{{ item.id_variante }}">
                             {{ ui.boton("Quitar", "peligro-secundario", "trash-2", attrs={"aria-label": "Quitar " ~ item.nombre}) }}
@@ -62,7 +62,7 @@
     <p class="nota">Poner la cantidad en 0 quita el producto del carrito.</p>
 
     <div class="dos-columnas">
-        <form method="post" action="{{ url_for('comprador.quitar') }}" id="form-quitar-varios" data-un-envio data-confirmar="¿Quitar los productos seleccionados?">
+        <form novalidate method="post" action="{{ url_for('comprador.quitar') }}" id="form-quitar-varios" data-un-envio data-confirmar="¿Quitar los productos seleccionados?">
             {{ ui.csrf() }}
             {{ ui.boton("Quitar seleccionados", "peligro-secundario", "trash-2") }}
         </form>

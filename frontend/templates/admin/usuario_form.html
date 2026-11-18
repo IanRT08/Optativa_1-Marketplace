@@ -2,10 +2,10 @@
 {% import "macros.html" as ui with context %}
 {% block titulo %}{{ "Crear usuario" if nuevo else "Editar usuario" }}{% endblock %}
 {% block contenido %}
-{{ ui.volver(url_for('admin.usuarios'), "Usuarios") }}
 <div class="formulario">
+    {{ ui.volver(url_for('admin.usuarios'), "Usuarios") }}
     <h1>{{ "Crear usuario" if nuevo else "Editar usuario" }}</h1>
-    <form method="post" action="{{ url_for('admin.usuario_nuevo') if nuevo else url_for('admin.usuario_editar', id_usuario=id_usuario) }}" data-un-envio novalidate autocomplete="off">
+    <form method="post" action="{{ url_for('admin.usuario_nuevo') if nuevo else url_for('admin.usuario_editar', id_usuario=id_usuario) }}" data-un-envio novalidate autocomplete="off"{% if not nuevo %} data-sin-cambios{% endif %}>
         {{ ui.csrf() }}
         <div class="filas filas-2">
             {{ ui.campo("nombre", "Nombre", valores.nombre, obligatorio=True, attrs={"maxlength": 80}) }}

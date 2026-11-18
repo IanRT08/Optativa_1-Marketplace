@@ -2,10 +2,11 @@
 {% import "macros.html" as ui with context %}
 {% block titulo %}{{ titulo }}{% endblock %}
 {% block contenido %}
+<div class="formulario">
 {{ ui.volver(url_for('vendedor.productos'), "Mis productos") }}
 <h1>{{ titulo }}</h1>
 
-<form method="post" action="{{ accion }}" class="formulario" data-un-envio novalidate>
+<form method="post" action="{{ accion }}" data-un-envio novalidate{% if id_producto %} data-sin-cambios{% endif %}>
     {{ ui.csrf() }}
 
     {{ ui.campo("nombre", "Nombre", valores.nombre, obligatorio=True, attrs={"maxlength": 200}) }}
@@ -68,4 +69,5 @@
         {{ ui.enlace_boton(url_for('vendedor.productos'), "Cancelar", "secundario") }}
     </div>
 </form>
+</div>
 {% endblock %}

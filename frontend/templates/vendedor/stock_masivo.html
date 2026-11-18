@@ -6,7 +6,7 @@
     <h1>Actualizar stock masivo</h1>
     <p class="nota">Suma la cantidad al stock de todas las variantes de tus productos de la categoría elegida, en una sola operación.</p>
     <form method="post" action="{{ url_for('vendedor.stock_masivo') }}" data-un-envio novalidate
-          data-confirmar="¿Sumar esta cantidad a todas las variantes de tus productos de la categoría?">
+          data-confirmar="¿Sumar esta cantidad a todas las variantes de tus productos de la categoría?" data-confirmar-tipo="primario">
         {{ ui.csrf() }}
         {{ ui.selector("id_categoria", "Categoría", categorias, previo.id_categoria, obligatorio=True, vacio="Selecciona una categoría", valor="id_categoria", texto="etiqueta") }}
         {{ ui.campo("cantidad", "Cantidad a agregar", previo.cantidad, "number", obligatorio=True, clase="campo-corto",

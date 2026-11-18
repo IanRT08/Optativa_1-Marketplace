@@ -2,11 +2,11 @@
 {% import "macros.html" as ui with context %}
 {% block titulo %}Editar categoría{% endblock %}
 {% block contenido %}
-{{ ui.volver(url_for('admin.categorias'), "Categorías") }}
 <div class="formulario">
+    {{ ui.volver(url_for('admin.categorias'), "Categorías") }}
     <h1>Editar categoría</h1>
     <p class="nota">Si dejas la descripción o la categoría padre vacías, se quitan.</p>
-    <form method="post" action="{{ url_for('admin.categoria_editar', id_categoria=categoria.id_categoria) }}" data-un-envio novalidate>
+    <form method="post" action="{{ url_for('admin.categoria_editar', id_categoria=categoria.id_categoria) }}" data-un-envio novalidate data-sin-cambios>
         {{ ui.csrf() }}
         {% include "admin/_campos_categoria.html" %}
         <div class="acciones">

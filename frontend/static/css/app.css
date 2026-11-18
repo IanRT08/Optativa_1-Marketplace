@@ -174,8 +174,28 @@ a:hover { color: var(--c-900); text-decoration-thickness: 2px; }
 @media (min-width: 900px) { .dos-columnas { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
 
 /* --- Formularios ------------------------------------------------------------- */
-.formulario { max-width: 40rem; }
-.formulario-angosto { max-width: 28rem; }
+/* Páginas de un solo formulario: centradas, igual que sus mensajes. */
+.formulario { max-width: 40rem; margin-inline: auto; }
+.formulario-angosto { max-width: 28rem; margin-inline: auto; }
+.dos-columnas > .formulario { margin-inline: 0; }   /* compra: formulario + resumen */
+.contenido:has(> .formulario) > .mensajes { max-width: 40rem; margin-inline: auto; }
+.contenido:has(> .formulario-angosto) > .mensajes { max-width: 28rem; margin-inline: auto; }
+
+/* Mostrar/ocultar contraseña: botón dentro del campo, a la derecha. */
+.campo-password { position: relative; }
+.campo-password input { padding-right: calc(var(--touch) + var(--s-1)); }
+.btn-ver-password {
+    position: absolute; top: 0; right: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: var(--touch); height: 100%; min-height: var(--touch);
+    padding: 0; border: 0; border-radius: 0 var(--radius) var(--radius) 0;
+    background: transparent; color: var(--c-700); cursor: pointer;
+}
+.btn-ver-password:hover { color: var(--c-900); }   /* sin fondo: no tapa el borde del campo */
+.btn-ver-password[hidden], .alerta-cerrar[hidden] { display: none; }
+.btn-ver-password .icono-ocultar,
+.btn-ver-password[aria-pressed="true"] .icono-mostrar { display: none; }
+.btn-ver-password[aria-pressed="true"] .icono-ocultar { display: inline-block; }
 
 .campo { margin-bottom: var(--s-4); min-width: 0; }
 .campo > label, .grupo legend {
@@ -298,6 +318,29 @@ a:hover { color: var(--c-900); text-decoration-thickness: 2px; }
 .alerta-error { background: var(--danger-soft); color: var(--danger); }
 .alerta-aviso { background: var(--warning-soft); color: var(--warning); }
 .alerta-info { background: var(--bg-soft); color: var(--c-700); }
+.alerta > p { flex: 1; }
+.alerta-cerrar {
+    display: inline-flex; align-items: center; justify-content: center; flex: none;
+    width: var(--touch); height: var(--touch);
+    margin: calc(-1 * var(--s-3)) calc(-1 * var(--s-3)) calc(-1 * var(--s-3)) 0;
+    padding: 0; border: 0; border-radius: var(--radius);
+    background: transparent; color: inherit; cursor: pointer;
+}
+.alerta-cerrar:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+.alerta-cerrar .icono { margin-top: 0; }
+.alerta.saliendo { opacity: 0; transition: opacity var(--dur) var(--ease); }
+
+/* Cuadro de confirmación (<dialog>): mismo lenguaje que paneles y botones. */
+.dialogo {
+    width: min(28rem, calc(100vw - 2 * var(--gutter)));
+    padding: var(--s-5);
+    border: 0; border-radius: var(--radius);
+    background: var(--bg); color: var(--text);
+    box-shadow: var(--shadow-2);
+}
+.dialogo::backdrop { background: color-mix(in srgb, var(--c-900) 55%, transparent); }
+.dialogo h2 { margin-top: 0; font-size: var(--fs-20); }
+.dialogo p { margin: 0; }
 
 /* --- Insignias de estado (icono + texto) ------------------------------------- */
 .insignia {

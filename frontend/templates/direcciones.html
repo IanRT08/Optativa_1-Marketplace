@@ -17,7 +17,7 @@
                 {% for d in direcciones %}
                     <li>
                         <span class="direccion-texto">{{ ui.icono("map-pin") }}<span>{{ d.texto }}</span></span>
-                        <form method="post" action="{{ url_for('comprador.desactivar_direccion', id_direccion=d.id_direccion) }}" data-un-envio data-confirmar="¿Desactivar esta dirección? Ya no podrás elegirla al comprar.">
+                        <form novalidate method="post" action="{{ url_for('comprador.desactivar_direccion', id_direccion=d.id_direccion) }}" data-un-envio data-confirmar="¿Desactivar esta dirección? Ya no podrás elegirla al comprar.">
                             {{ ui.csrf() }}
                             {{ ui.boton("Desactivar", "peligro-secundario", "ban") }}
                         </form>

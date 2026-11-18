@@ -59,7 +59,20 @@
 {%- set error = error or _error(clave or nombre) -%}
 <div class="campo {{ clase }}">
     {{ _etiqueta(id, etiqueta, obligatorio) }}
+    {%- set entrada -%}
     <input id="{{ id }}" name="{{ nombre }}" type="{{ tipo }}"{% if tipo != "password" and valor is not none %} value="{{ valor }}"{% endif %}{% if obligatorio %} required{% endif %}{{ _describe(id, ayuda, error) }}{{ attrs|xmlattr }}>
+    {%- endset %}
+    {% if tipo == "password" %}
+    {#- Mostrar/ocultar: el botón aparece solo con JavaScript (app.js). -#}
+    <div class="campo-password">
+        {{ entrada }}
+        <button type="button" class="btn-ver-password" aria-controls="{{ id }}" aria-pressed="false" aria-label="Mostrar contraseña" hidden>
+            {{- icono("eye", "icono-mostrar") }}{{ icono("eye-off", "icono-ocultar") -}}
+        </button>
+    </div>
+    {% else %}
+    {{ entrada }}
+    {% endif %}
     {{ _ayuda_error(id, ayuda, error) }}
 </div>
 {%- endmacro %}
@@ -102,11 +115,18 @@
 {%- endmacro %}
 
 {#- Mensajes: icono + texto; el error con role=alert, los demás con role=status.
-    No desaparecen solos. -#}
-{% macro mensaje(tipo, texto) -%}
+    Éxito y error se pueden cerrar (botón visible solo con JavaScript).
+    autocerrar: el éxito se oculta solo a los 6 s (app.js; se pausa con el
+    puntero o el foco encima). Los errores nunca se ocultan solos (guía §6). -#}
+{% macro mensaje(tipo, texto, autocerrar=False) -%}
 {%- set iconos = {"exito": "circle-check", "error": "circle-alert", "aviso": "triangle-alert", "info": "info"} -%}
-<div class="alerta alerta-{{ tipo }}" role="{{ 'alert' if tipo == 'error' else 'status' }}">
+{%- set cerrable = tipo in ("exito", "error") -%}
+<div class="alerta alerta-{{ tipo }}" role="{{ 'alert' if tipo == 'error' else 'status' }}"
+     {%- if autocerrar and tipo == "exito" %} data-autocerrar{% endif %}>
     {{ icono(iconos.get(tipo, "info")) }}<p>{{ texto }}</p>
+    {%- if cerrable %}
+    <button type="button" class="alerta-cerrar" aria-label="Cerrar mensaje" hidden>{{ icono("x") }}</button>
+    {%- endif %}
 </div>
 {%- endmacro %}
 
