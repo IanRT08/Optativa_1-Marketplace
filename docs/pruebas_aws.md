@@ -177,3 +177,23 @@ ORDER BY p.id_pedido DESC LIMIT 5;
 |---|---|---|---|---|
 | 9.1 | DevTools → Application → Cookies, con sesión iniciada | Solo `smavib_sesion`, con HttpOnly, Secure y SameSite=Lax; el JWT no aparece en cookies, `localStorage` ni el HTML | ✅ | [9.1-cookiesSesion.png](evidencias/9.1-cookiesSesion.png) |
 | 9.2 | Cerrar sesión y usar "Atrás" del navegador | No muestra datos de la sesión anterior (`Cache-Control: no-store`) | ✅ | [9.2-atrasDespuesDeCerrarSesion.png](evidencias/9.2-atrasDespuesDeCerrarSesion.png) |
+
+## 10. Concurrencia sobre la última unidad (rubro 3: "sin condiciones de carrera")
+
+Dos compradores pagan **al mismo tiempo** el único artículo en stock. `sp_RegistrarCompra` bloquea la fila de la variante con `FOR UPDATE OF v` y revisa el stock dentro de la transacción. La segunda compra espera a que termine la primera, ya encuentra stock 0 y se revierte completa (`ROLLBACK`). Nunca deben salir dos pedidos ni stock negativo.
+
+**Preparación (interfaz):** la compradora A de la sección 5 y una segunda cuenta de comprador (**comprador 2**, con correo `@smavib.test`), cada uno en su propia ventana privada. Los dos carritos deben empezar vacíos: el SP compra todo lo que haya en el carrito.
+
+| # | Req. | Pasos | Resultado esperado | Resultado | Evidencia |
+|---|---|---|---|---|---|
+| 10.1 | 3.1 | Como vendedor, registrar el producto `Proyecto Hail Mary` en la categoría `Libros`, con **stock 1** | "Producto registrado correctamente" | ✅ | [10.1-productoNuevo.png](evidencias/10.1-productoNuevo.png) |
+| 10.2 | 1.1, 9.1 | Registrar al comprador 2 y darle una dirección | "Dirección registrada correctamente" | ✅ | [10.2-nuevaDireccion.png](evidencias/10.2-nuevaDireccion.png) |
+| 10.3 | 5.1 | La compradora A y el comprador 2 agregan 1 unidad de `Proyecto Hail Mary` a su carrito | Los dos: "Producto agregado al carrito" (el stock solo se descuenta al pagar) | ✅ | [10.3.1-agregarAlCarrito.png](evidencias/10.3.1-agregarAlCarrito.png), [10.3.2-agregarAlCarrito.png](evidencias/10.3.2-agregarAlCarrito.png) |
+| 10.4 | 6.1 | **SP `sp_RegistrarCompra` en paralelo:** dos `POST /compras` lanzados a la vez desde CloudShell | Exactamente **una** respuesta `201` con "Compra realizada correctamente" y **una** `400` con "Stock insuficiente para el producto Proyecto Hail Mary" | ✅ | [10.4-comprasEnParalelo.txt](evidencias/10.4-comprasEnParalelo.txt) |
+| 10.5 | 3.2 | Como vendedor, Mis productos | `Proyecto Hail Mary` con stock **0** (no -1) | ✅ | [10.5-stock0.png](evidencias/10.5-stock0.png) |
+| 10.6 | 7.1, 5.2 | Ganador: Mis pedidos. Perdedor: Mis pedidos y Carrito | El ganador tiene el pedido nuevo. El perdedor no tiene pedido nuevo y su carrito conserva el producto (la transacción se revirtió) | ✅ | [10.6-stockInsuficiente.png](evidencias/10.6-stockInsuficiente.png) |
+
+
+**Cómo se ejecutó 10.4.** Se iniciaron las dos sesiones con `POST /auth/login`, se revisó que cada carrito tuviera solo `Proyecto Hail Mary` (`GET /carrito`), se tomó la dirección de cada cuenta (`GET /direcciones`) y se lanzaron los dos `POST /compras` desde dos hilos liberados al mismo instante (`threading.Barrier`). Salieron con 11 ms de diferencia y las dos respuestas llegaron a los ~1.5 s: el comprador 2 salió primero, pero A obtuvo el bloqueo de la fila y el comprador 2 esperó y recibió el 400. El script no se incluye en el reporte; la salida está en la evidencia.
+
+Cualquiera de los dos puede ganar: lo que se comprueba es que solo uno compra.

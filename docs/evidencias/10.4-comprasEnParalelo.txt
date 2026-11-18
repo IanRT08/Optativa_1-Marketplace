@@ -1,0 +1,7 @@
+Prueba 10.4 - sp_RegistrarCompra con dos compras simultaneas (18/11/2026)
+Producto: Proyecto Hail Mary (#26005), stock 1. Dos hilos liberados a la vez con threading.Barrier.
+
+Comprador 2: salida +0 ms, respuesta en 1493 ms -> HTTP 400 {"error": "Stock insuficiente para el producto Proyecto Hail Mary"}
+Comprador A: salida +11 ms, respuesta en 1482 ms -> HTTP 201 {"mensaje": "Compra realizada correctamente", "id_pedido": 9, "total": 480.0}
+
+Despues: stock del producto 0 (disponible=false); carrito de A vacio y pedido 9 Pendiente; carrito del comprador 2 conserva el producto y no tiene pedidos.
