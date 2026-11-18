@@ -8,7 +8,7 @@ Pruebas de punta a punta de SMAVIB en el navegador, contra la API real de AWS (A
 |---|---|
 | Fecha de ejecución | |
 | Quién ejecuta | |
-| Entorno de la interfaz | Local (`python app.py`) / Vercel: |
+| Entorno de la interfaz | https://optativa-1-marketplace.vercel.app |
 | Commit probado | |
 
 ## 0. Preparación

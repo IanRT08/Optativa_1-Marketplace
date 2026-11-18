@@ -11,6 +11,7 @@ Marketplace web con tres roles (**Comprador**, **Vendedor** y **Administrador**)
 | API | 35 rutas REST en API Gateway, una Lambda por requerimiento (Python 3.14) |
 | Seguridad | JWT con control de acceso por rol (RBAC), contraseñas con bcrypt, pago tokenizado, SQL parametrizado, CSRF, CSP y sesión del lado del servidor |
 | Interfaz | Flask + Jinja, CSS propio con variables, adaptable de 360 a 1280 px; Lighthouse de accesibilidad 100 en las pantallas medidas |
+| En línea | **https://optativa-1-marketplace.vercel.app** (Vercel; la API de AWS solo responde mientras el Learner Lab y RDS están encendidos) |
 
 ## Estructura del repositorio
 

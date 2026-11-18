@@ -45,6 +45,11 @@ def crear_app():
         except (TypeError, ValueError):
             return valor or ""
 
+    @app.get("/favicon.ico")
+    def favicon():
+        # Algunos navegadores piden /favicon.ico aunque base.html declare el SVG.
+        return redirect(url_for("static", filename="icons/favicon.svg"), code=301)
+
     # Errores debajo de cada campo y lo que escribió el usuario (errores_campo.py)
     app.context_processor(errores_campo.para_plantilla)
 
