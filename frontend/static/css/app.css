@@ -179,7 +179,7 @@ a:hover { color: var(--c-900); text-decoration-thickness: 2px; }
 .formulario { width: 100%; max-width: 40rem; margin-inline: auto; }
 .formulario-angosto { width: 100%; max-width: 28rem; margin-inline: auto; }
 .dos-columnas > .formulario { margin-inline: 0; }   /* compra: formulario + resumen */
-.contenido:has(> .formulario, > .formulario-angosto, > .pagina-centrada) {
+.contenido:has(> .formulario, > .formulario-angosto, > .pagina-centrada, > .recibo) {
     flex: 1;
     display: flex; flex-direction: column; justify-content: center;
 }
@@ -200,6 +200,14 @@ a:hover { color: var(--c-900); text-decoration-thickness: 2px; }
 /* Avisos de página completa (producto no disponible, 404, acceso restringido). */
 .pagina-centrada { width: 100%; max-width: 32rem; margin-inline: auto; text-align: center; }
 .pagina-centrada h1 { margin-bottom: var(--s-5); }
+
+/* Recibo de compra (6.1): caja centrada con el aviso de éxito encima. */
+.recibo { width: 100%; max-width: 40rem; margin-inline: auto; }
+.recibo > .alerta { margin-bottom: var(--s-4); }
+.recibo-caja { border: 1px solid var(--border-soft); text-align: center; }
+.recibo-caja h1 { margin-top: 0; }
+.recibo-caja .datos { justify-content: center; text-align: left; }
+.recibo-caja .acciones { justify-content: center; }
 
 /* Mostrar/ocultar contraseña: botón dentro del campo, a la derecha. */
 .campo-password { position: relative; }

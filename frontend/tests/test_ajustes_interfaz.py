@@ -64,3 +64,13 @@ def test_estado_vacio_centrado():
     css = (PLANTILLAS.parent / "static" / "css" / "app.css").read_text(encoding="utf-8")
     regla = re.search(r"\.vacio \{[^}]*\}", css).group(0)
     assert "align-items: center" in regla and "text-align: center" in regla
+
+
+def test_recibo_centrado_y_alerta_se_cierra_sola(cliente):
+    # 5.15: recibo en una caja centrada; el aviso de éxito se cierra solo como en las demás pantallas.
+    c = cliente("Comprador")
+    with c.session_transaction() as s:
+        s["ultima_compra"] = {"id_pedido": 5, "total": 455.97}
+    h = c.get("/compra/realizada").get_data(as_text=True)
+    assert '<div class="recibo">' in h and 'class="panel recibo-caja"' in h
+    assert re.search(r'class="alerta[^"]*"[^>]*data-autocerrar', h)

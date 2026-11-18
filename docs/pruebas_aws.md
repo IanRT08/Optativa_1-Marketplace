@@ -98,24 +98,24 @@ Sin sesión (ventana privada).
 
 | # | Req. | Pasos | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|---|
-| 5.1 | 1.1 | Registro con contraseñas distintas | "Las contraseñas no coinciden" | | |
-| 5.2 | 1.1 | Registro válido (comprador A) | Entra con la sesión iniciada al catálogo | | |
-| 5.3 | 1.2 | Cerrar sesión y entrar con contraseña incorrecta | "Contraseña incorrecta" | | |
-| 5.4 | 1.2 | **Inyección SQL:** correo `a@a.com' OR '1'='1` | "El formato del correo electrónico no es válido" | | |
-| 5.5 | 9.1 | Nueva dirección con código postal `123` | "El código postal debe tener 5 dígitos" | | |
-| 5.6 | 9.1 | Dirección válida | "Dirección registrada correctamente" | | |
-| 5.7 | 9.2 | Mis direcciones | Aparece la dirección | | |
-| 5.8 | 4.2 | Detalle del producto de 3.3 con sesión | Muestra el stock exacto ("N unidades") | | |
-| 5.9 | 5.1 | Agregar más unidades que el stock | "La cantidad solicitada supera el stock disponible" | | |
-| 5.10 | 5.1 | Agregar 2 unidades de la variante estándar | "Producto agregado al carrito" | | |
-| 5.11 | 5.1 | Agregar 1 unidad de otro producto cualquiera | "Producto agregado al carrito" | | |
-| 5.12 | 5.3 | Cambiar la cantidad del primero a 3 | "Carrito actualizado correctamente" | | |
-| 5.13 | 5.4 | Quitar el segundo producto | "Producto/s eliminado/s del carrito" | | |
-| 5.14 | 6.1 | Pagar con tarjeta de 15 dígitos | "Datos de pago no válidos" | | |
-| 5.15 | 6.1 | **SP `sp_RegistrarCompra`:** pagar con la tarjeta de prueba (**pedido A**) | "Compra realizada correctamente" con número de orden y total | | |
-| 5.16 | 4.2 | Ver el detalle del producto | El stock bajó 3 unidades | | |
-| 5.17 | 5.2 | Ver el carrito | "Tu carrito está vacío" | | |
-| 5.18 | 6.1 | Agregar 1 unidad y pagar (**pedido B**, se cancela en 6.5) | "Compra realizada correctamente" | | |
+| 5.1 | 1.1 | Registro con contraseñas distintas | "Las contraseñas no coinciden" | ✅ | [5.1-registroContrasenasDiferentes.png](evidencias/5.1-registroContrasenasDiferentes.png) |
+| 5.2 | 1.1 | Registro válido (comprador A) | Entra con la sesión iniciada al catálogo | ✅ | [5.2-registroExitoso.png](evidencias/5.2-registroExitoso.png) |
+| 5.3 | 1.2 | Cerrar sesión y entrar con contraseña incorrecta | "Contraseña incorrecta" | ✅ | [5.3-iniciarSesionContraseniaIncorrecta.png](evidencias/5.3-iniciarSesionContraseniaIncorrecta.png) |
+| 5.4 | 1.2 | **Inyección SQL:** correo `a@a.com' OR '1'='1` | "El formato del correo electrónico no es válido" | ✅ | [5.4-inyeccionSQLregistro.png](evidencias/5.4-inyeccionSQLregistro.png) |
+| 5.5 | 9.1 | Nueva dirección con código postal 4 digitos | "El código postal debe tener 5 dígitos" | ✅ | [5.5-nuevaDireccionCP4digitos.png](evidencias/5.5-nuevaDireccionCP4digitos.png) |
+| 5.6 | 9.1 | Dirección válida | "Dirección registrada correctamente" | ✅ | [5.6-direccionValida.png](evidencias/5.6-direccionValida.png) |
+| 5.7 | 9.2 | Mis direcciones | Aparece la dirección | ✅ | [5.7-misDirecciones.png](evidencias/5.7-misDirecciones.png) |
+| 5.8 | 4.2 | Detalle del producto de 3.3 con sesión | Muestra el stock exacto ("N unidades") | ✅ | [5.8-detalleProductoConSesion.png](evidencias/5.8-detalleProductoConSesion.png) |
+| 5.9 | 5.1 | Agregar más unidades que el stock | "La cantidad solicitada supera el stock disponible" | ✅ | [5.9-masStockdelDisponible.png](evidencias/5.9-masStockdelDisponible.png) |
+| 5.10 | 5.1 | Agregar 2 unidades de la variante estándar | "Producto agregado al carrito" | ✅ | [5.10-agregar2Unidades.png](evidencias/5.10-agregar2Unidades.png) |
+| 5.11 | 5.1 | Agregar 1 unidad de otro producto cualquiera | "Producto agregado al carrito" | ✅ | [5.11-agregarOtroProductoAlCarrito.png](evidencias/5.11-agregarOtroProductoAlCarrito.png) |
+| 5.12 | 5.3 | Cambiar la cantidad del primero a 3 | "Carrito actualizado correctamente" | ✅ | [5.12-cambiarCantidadCarrito1.png](evidencias/5.12-cambiarCantidadCarrito1.png) |
+| 5.13 | 5.4 | Quitar el segundo producto | "Producto/s eliminado/s del carrito" | ✅ | [5.13-quitarProductoCarrito.png](evidencias/5.13-quitarProductoCarrito.png) |
+| 5.14 | 6.1 | Pagar con tarjeta de 15 dígitos | "Datos de pago no válidos" | ✅ | [5.14-tarjeta15Digitos.png](evidencias/5.14-tarjeta15Digitos.png) |
+| 5.15 | 6.1 | **SP `sp_RegistrarCompra`:** pagar con la tarjeta de prueba (**pedido A**) | "Compra realizada correctamente" con número de orden y total | ✅ | [5.15-compraCorrecta.png](evidencias/5.15-compraCorrecta.png) |
+| 5.16 | 4.2 | Ver el detalle del producto | El stock bajó 3 unidades | ✅ | [5.16-bajoStockProducto.png](evidencias/5.16-bajoStockProducto.png) |
+| 5.17 | 5.2 | Ver el carrito | "Tu carrito está vacío" | ✅ | [5.17-carritoVacioDespuesDeCompra.png](evidencias/5.17-carritoVacioDespuesDeCompra.png) |
+| 5.18 | 6.1 | Agregar 1 unidad y pagar (**pedido B**, se cancela en 6.5) | "Compra realizada correctamente" | ✅ | [5.18-pedidoBparaCancelar.png](evidencias/5.18-pedidoBparaCancelar.png) |
 
 ### 5b. Concurrencia sobre la última unidad (rubro 3, opcional)
 

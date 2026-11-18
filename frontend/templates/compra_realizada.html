@@ -2,17 +2,19 @@
 {% import "macros.html" as ui with context %}
 {% block titulo %}{{ mensaje }}{% endblock %}
 {% block contenido %}
-<div class="texto-largo">
-    {{ ui.mensaje("exito", mensaje) }}
-    <h1>Pedido #{{ id_pedido }}</h1>
-    <dl class="datos">
-        <dt>Número de orden</dt><dd><a href="{{ url_for('comprador.pedido', id_pedido=id_pedido) }}">{{ id_pedido }}</a></dd>
-        <dt>Total pagado</dt><dd>{{ total|moneda }}</dd>
-    </dl>
-    <div class="acciones">
-        {{ ui.enlace_boton(url_for('comprador.pedido', id_pedido=id_pedido), "Ver detalle del pedido", "primario", "receipt") }}
-        {{ ui.enlace_boton(url_for('comprador.pedidos'), "Ver mis pedidos", "secundario", "package") }}
-        {{ ui.enlace_boton(url_for('catalogo.inicio'), "Seguir comprando", "terciario") }}
-    </div>
+<div class="recibo">
+    {{ ui.mensaje("exito", mensaje, autocerrar=True) }}
+    <section class="panel recibo-caja" aria-labelledby="titulo-recibo">
+        <h1 id="titulo-recibo">Pedido #{{ id_pedido }}</h1>
+        <dl class="datos">
+            <dt>Número de orden</dt><dd><a href="{{ url_for('comprador.pedido', id_pedido=id_pedido) }}">{{ id_pedido }}</a></dd>
+            <dt>Total pagado</dt><dd>{{ total|moneda }}</dd>
+        </dl>
+        <div class="acciones">
+            {{ ui.enlace_boton(url_for('comprador.pedido', id_pedido=id_pedido), "Ver detalle del pedido", "primario", "receipt") }}
+            {{ ui.enlace_boton(url_for('comprador.pedidos'), "Ver mis pedidos", "secundario", "package") }}
+            {{ ui.enlace_boton(url_for('catalogo.inicio'), "Seguir comprando", "terciario") }}
+        </div>
+    </section>
 </div>
 {% endblock %}
