@@ -127,7 +127,7 @@ Sin sesión (ventana privada).
 | 6.4 | 7.3 | Pedido A: Enviado → Entregado | "Estado del pedido actualizado correctamente"; ya no se ofrece Enviado ni Pendiente | ✅ | [6.4-cambioEstadoPedidoEntregado.png](evidencias/6.4-cambioEstadoPedidoEntregado.png) |
 | 6.5 | 7.3 | **SP `sp_CancelarPedido`:** pedido B → Cancelado | "Estado del pedido actualizado correctamente" | ✅ | [6.5-cambioEstadoPedidoCancelado.png](evidencias/6.5-cambioEstadoPedidoCancelado.png) |
 | 6.6 | 3.2 | Como vendedor, revisar el stock del producto | Regresó la unidad del pedido B | ✅ | [6.6-regresoStock.png](evidencias/6.6-regresoStock.png) |
-| 6.7 | 8.2 | **SP `sp_HistorialVentas` ('Vendedor'):** ventas del vendedor de 2.1, fechas de hoy | Aparece el producto con las unidades del pedido A; el cancelado B no suma | ✅ | [6.7-historialVentas.png](evidencias/6.7-historialVentas.png) |
+| 6.7 | 8.2 | **SP `sp_HistorialVentas` ('Vendedor'):** ventas del vendedor del producto del pedido A (se hizo con Tienda Centro, vendedor 9004 de la carga), fechas de hoy | Aparece el producto con las unidades del pedido A; el cancelado B no suma | ✅ | [6.7-historialVentas.png](evidencias/6.7-historialVentas.png) |
 | 6.8 | 8.2 | Fecha inicial mayor que la final | "La fecha inicial no puede ser mayor a la fecha final" | ✅ | [6.8-fechaInicialMayor.png](evidencias/6.8-fechaInicialMayor.png) |
 | 6.9 | 2.3 | Editar `Pruebas SMAVIB` y elegirla como su propia categoría padre | "Una categoría no puede ser su propia categoría padre" | ✅ | [6.9-categoriaPadreDeSiMisma.png](evidencias/6.9-categoriaPadreDeSiMisma.png) |
 | 6.10 | 2.4 | Eliminar una categoria (que tiene productos) | "No se puede eliminar una categoría con productos asociados" | ✅ | [6.10-eliminarCategoriaConProductos.png](evidencias/6.10-eliminarCategoriaConProductos.png) |
@@ -140,12 +140,12 @@ Sin sesión (ventana privada).
 
 | # | Req. | Pasos | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|---|
-| 7.1 | 8.1 | **SP `sp_HistorialVentas` ('Vendedor'):** como vendedor, Mis ventas de hoy | Mismo total que en 6.7 | | |
-| 7.2 | 7.1 | Como comprador A, Mis pedidos | A en Entregado y B en Cancelado | | |
-| 7.3 | 7.1 | Filtrar por estado Cancelado | Solo el pedido B | | |
-| 7.4 | 7.2 | Detalle del pedido A | Productos, precio unitario histórico, dirección completa y últimos 4 dígitos | | |
-| 7.5 | 7.2 | **Solo sus datos:** abrir `/pedidos/<id>` de un pedido de otro comprador | "Acceso restringido" | | |
-| 7.6 | 7.4 | **SP `sp_HistorialVentas` ('Comprador'):** historial de hoy | Pedidos A y B; B marcado "(no suma)"; "Total comprado" = total de A | | |
+| 7.1 | 8.1 | **SP `sp_HistorialVentas` ('Vendedor'):** como vendedor de 2.1, Mis ventas de hoy. Antes, como comprador A, comprar 1 unidad de su producto (el de 3.3; si no tiene stock, subirlo con 3.5): **pedido C** | El producto de 3.3 con 1 unidad y el total del pedido C. (Primer intento: "No hay ventas en el periodo seleccionado", porque los pedidos A y B eran de un producto de Tienda Centro) | ✅ | [7.1-misVentasHoy.png](evidencias/7.1-misVentasHoy.png) |
+| 7.2 | 7.1 | Como comprador A, Mis pedidos | A en Entregado y B en Cancelado | ✅ | [7.2-misPedidos.png](evidencias/7.2-misPedidos.png) |
+| 7.3 | 7.1 | Filtrar por estado Cancelado | Solo el pedido B | ✅ | [7.3-filtrarPorEstado.png](evidencias/7.3-filtrarPorEstado.png) |
+| 7.4 | 7.2 | Detalle del pedido A | Productos, precio unitario histórico, dirección completa y últimos 4 dígitos | ✅ | [7.4-detallePedido.png](evidencias/7.4-detallePedido.png) |
+| 7.5 | 7.2 | **Solo sus datos:** abrir `/pedidos/<id>` de un pedido de otro comprador | "Acceso restringido" | ✅ | [7.5-abrirPedidoQueNoEsTuyo.png](evidencias/7.5-abrirPedidoQueNoEsTuyo.png) |
+| 7.6 | 7.4 | **SP `sp_HistorialVentas` ('Comprador'):** historial de hoy | Pedidos A y B; B marcado "(no suma)"; "Total comprado" = total de A | ✅ | [7.6-historialPedidos.png](evidencias/7.6-historialPedidos.png) |
 
 ## 8. Base de datos (DataGrip, rubros 3 y 4)
 
