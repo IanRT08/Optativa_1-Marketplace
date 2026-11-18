@@ -7,7 +7,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 import api
 import catalogos
-from constantes import ESTADOS_PRODUCTO, MSG_ERROR_INTERNO, ROL_VENDEDOR
+from constantes import ESTADOS_PRODUCTO, MSG_ACCESO_RESTRINGIDO, MSG_ERROR_INTERNO, ROL_VENDEDOR
 from dtos import (
     ErrorRespuesta,
     ErrorValidacion,
@@ -36,8 +36,21 @@ def _mensaje(exc):
     return getattr(exc, "mensaje", None) or str(exc)
 
 
+def _es_propio(id_producto):
+    """¿El producto es del vendedor de la sesión? La 3.2 solo trae los productos
+    del vendedor del token y pagina con id_producto > cursor: con cursor = id - 1,
+    el primer renglón es ese producto solo si es suyo (una llamada, igual que 1.5)."""
+    datos = api.llamar("GET", "/vendedor/productos", params={"cursor": id_producto - 1})
+    filas = datos.get("productos")
+    return (isinstance(filas, list) and bool(filas) and isinstance(filas[0], dict)
+            and filas[0].get("id_producto") == id_producto)
+
+
 def _detalle(id_producto):
-    """4.2 con el token del vendedor: datos actuales para 3.3 y 3.6."""
+    """4.2 con el token del vendedor: datos actuales para 3.3 y 3.6.
+    Un producto ajeno no se muestra (regla 7: cada usuario solo ve lo suyo)."""
+    if not _es_propio(id_producto):
+        raise api.AccesoRestringido(403, MSG_ACCESO_RESTRINGIDO)
     return ProductoDetalleDTO.from_api(api.llamar("GET", f"/productos/{id_producto}"))
 
 

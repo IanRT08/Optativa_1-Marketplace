@@ -2,7 +2,7 @@
 {% import "macros.html" as ui with context %}
 {% block titulo %}{{ mensaje }}{% endblock %}
 {% block contenido %}
-<div class="texto-largo">
+<div class="pagina-centrada">
     <h1>{{ mensaje }}</h1>
     {{ ui.enlace_boton(url_for('catalogo.inicio'), "Ir al catálogo", "primario", "store") }}
 </div>

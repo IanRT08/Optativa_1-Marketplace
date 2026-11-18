@@ -174,12 +174,32 @@ a:hover { color: var(--c-900); text-decoration-thickness: 2px; }
 @media (min-width: 900px) { .dos-columnas { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
 
 /* --- Formularios ------------------------------------------------------------- */
-/* Páginas de un solo formulario: centradas, igual que sus mensajes. */
-.formulario { max-width: 40rem; margin-inline: auto; }
-.formulario-angosto { max-width: 28rem; margin-inline: auto; }
+/* Páginas de un solo formulario y avisos: centrados a lo ancho y a lo alto
+   (el <main> ocupa el alto libre entre cabecera y pie). */
+.formulario { width: 100%; max-width: 40rem; margin-inline: auto; }
+.formulario-angosto { width: 100%; max-width: 28rem; margin-inline: auto; }
 .dos-columnas > .formulario { margin-inline: 0; }   /* compra: formulario + resumen */
-.contenido:has(> .formulario) > .mensajes { max-width: 40rem; margin-inline: auto; }
-.contenido:has(> .formulario-angosto) > .mensajes { max-width: 28rem; margin-inline: auto; }
+.contenido:has(> .formulario, > .formulario-angosto, > .pagina-centrada) {
+    flex: 1;
+    display: flex; flex-direction: column; justify-content: center;
+}
+.contenido:has(> .formulario) > .mensajes { width: 100%; max-width: 40rem; margin-inline: auto; }
+.contenido:has(> .formulario-angosto) > .mensajes,
+.contenido:has(> .pagina-centrada) > .mensajes { width: 100%; max-width: 28rem; margin-inline: auto; }
+
+/* Botón final de la página de formulario, centrado. */
+.contenido > :is(.formulario, .formulario-angosto) .acciones { justify-content: center; }
+.contenido > :is(.formulario, .formulario-angosto) form > .btn:not(.btn-bloque) {
+    display: flex; width: fit-content; margin: var(--s-5) auto 0;
+}
+/* "¿No tienes cuenta? Crear cuenta" bajo el formulario: separado y centrado. */
+:is(.formulario, .formulario-angosto) > form + .nota {
+    margin: var(--s-5) 0 0; max-width: none; text-align: center;
+}
+
+/* Avisos de página completa (producto no disponible, 404, acceso restringido). */
+.pagina-centrada { width: 100%; max-width: 32rem; margin-inline: auto; text-align: center; }
+.pagina-centrada h1 { margin-bottom: var(--s-5); }
 
 /* Mostrar/ocultar contraseña: botón dentro del campo, a la derecha. */
 .campo-password { position: relative; }

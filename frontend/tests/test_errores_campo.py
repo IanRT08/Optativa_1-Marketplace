@@ -99,6 +99,7 @@ def test_vendedor(R, cliente):
     h = cliente("Vendedor").post("/vendedor/productos/nuevo", data=dict(pf, precio="10", descripcion="x" * 1001)).get_data(as_text=True)
     assert bajo(h, "c-descripcion", largo) and 'id="c-nombre-error"' not in h
     R["/productos/5"] = {"producto": dict(PRODUCTO["producto"], id_producto=5)}
+    R[("GET", "/vendedor/productos")] = {"productos": [{"id_producto": 5}], "siguiente_cursor": None}  # es suyo
     R[("POST", "/vendedor/productos/5/variantes")] = E(400, "No puedes elegir dos valores del mismo atributo")
     h = cliente("Vendedor").post("/vendedor/productos/5/variantes", data={"valores": ["1", "3"], "stock": "2"}).get_data(as_text=True)
     assert grupo(h, "valores", "No puedes elegir dos valores del mismo atributo")
