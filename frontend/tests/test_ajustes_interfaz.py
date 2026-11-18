@@ -36,3 +36,31 @@ def test_producto_ajeno_no_se_abre(R, cliente):
         r = c.get(ruta)
         assert r.status_code == 403 and "Acceso restringido" in r.get_data(as_text=True)
     assert not any(ruta == "/productos/9003" for _, ruta, _ in R.llamadas)   # ni siquiera se consulta
+
+
+def test_rango_de_precio_invalido_muestra_productos(monkeypatch, cliente):
+    # 4.3: el error va debajo del precio mínimo y la pantalla no queda vacía:
+    # se muestran los productos sin el rango de precio, y los enlaces no lo llevan.
+    import api
+    llamadas = []
+
+    def simulada(metodo, ruta, params=None, **kw):
+        if ruta == "/productos":
+            llamadas.append(params)
+        if params and "precio_min" in params:
+            raise api.ApiError(400, "El precio mínimo no puede ser mayor al máximo")
+        return {"productos": [{"id_producto": 9003, "nombre": "Celular X", "precio": 250}],
+                "siguiente_cursor": "abc"}
+
+    monkeypatch.setattr(api, "llamar", simulada)
+    h = cliente().get("/?q=cel&precio_min=500&precio_max=100").get_data(as_text=True)
+    assert "El precio mínimo no puede ser mayor al máximo" in h
+    assert "Celular X" in h
+    assert llamadas[-1] == {"q": "cel"}
+    assert "cursor=abc" in h and "precio_min=500" not in h.split('class="rejilla-productos"')[1]
+
+
+def test_estado_vacio_centrado():
+    css = (PLANTILLAS.parent / "static" / "css" / "app.css").read_text(encoding="utf-8")
+    regla = re.search(r"\.vacio \{[^}]*\}", css).group(0)
+    assert "align-items: center" in regla and "text-align: center" in regla

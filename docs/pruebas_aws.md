@@ -87,12 +87,12 @@ Sin sesión (ventana privada).
 
 | # | Req. | Pasos | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|---|
-| 4.1 | 4.1 | Abrir el catálogo y pasar a la página siguiente | 20 productos por página, ordenados por precio | | |
-| 4.2 | 4.1 | Filtrar por la categoría `Pruebas SMAVIB` | Aparece el producto de 3.3 | | |
-| 4.3 | 4.1 | Precio mínimo `500`, máximo `100` | "El precio mínimo no puede ser mayor al máximo" | | |
-| 4.4 | 4.1 | Buscar `zzzzzz` | "No se encontraron productos" | | |
-| 4.5 | 4.2 | Detalle del producto | Muestra "Disponible", no el número de unidades | | |
-| 4.6 | 5.1 | "Agregar al carrito" sin sesión | Manda al inicio de sesión y, al entrar, regresa al producto | | |
+| 4.1 | 4.1 | Abrir el catálogo y pasar a la página siguiente | 20 productos por página, ordenados por precio | ✅ | [4.1-abrirCatalogoPaginaSiguiente.png](evidencias/4.1-abrirCatalogoPaginaSiguiente.png) |
+| 4.2 | 4.1 | Filtrar por la categoría `Celulares` | Aparece el producto de 3.3 | ✅ | [4.2-filtrarPorCategoria.png](evidencias/4.2-filtrarPorCategoria.png) |
+| 4.3 | 4.1 | Precio mínimo `500`, máximo `100` | "El precio mínimo no puede ser mayor al máximo" | ✅ | [4.3-buscarPrecioMinimoMaximo.png](evidencias/4.3-buscarPrecioMinimoMaximo.png) |
+| 4.4 | 4.1 | Buscar `zzzz` | "No se encontraron productos" | ✅ | [4.4-buscarProductoZZZZ.png](evidencias/4.4-buscarProductoZZZZ.png) |
+| 4.5 | 4.2 | Detalle del producto | Muestra "Disponible", no el número de unidades | ✅ | [4.5-detalleProductoSinSesion.png](evidencias/4.5-detalleProductoSinSesion.png) |
+| 4.6 | 5.1 | "Agregar al carrito" sin sesión | Manda al inicio de sesión y, al entrar, regresa al producto | ✅ | [4.6-agregarAlCarritoSinSesion.png](evidencias/4.6-agregarAlCarritoSinSesion.png) |
 
 ## 5. Comprador: registro, direcciones, carrito y compra
 

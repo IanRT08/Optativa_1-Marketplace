@@ -34,17 +34,17 @@
             {{ ui.mensaje("error", error) }}
         {% elif pagina and not pagina.productos %}
             {% if pagina.siguiente_cursor %}
-                {{ ui.vacio(msg_sin_productos, url_for('catalogo.inicio', cursor=pagina.siguiente_cursor, **busqueda.filtros()), "Seguir buscando", "search") }}
+                {{ ui.vacio(msg_sin_productos, url_for('catalogo.inicio', cursor=pagina.siguiente_cursor, **filtros), "Seguir buscando", "search") }}
             {% else %}
-                {{ ui.vacio(msg_sin_productos, url_for('catalogo.inicio') if busqueda.filtros() else None, "Quitar filtros") }}
+                {{ ui.vacio(msg_sin_productos, url_for('catalogo.inicio') if filtros else None, "Quitar filtros") }}
             {% endif %}
         {% elif pagina %}
             <ul class="rejilla-productos">
                 {% for p in pagina.productos %}{{ ui.tarjeta_producto(p) }}{% endfor %}
             </ul>
             {{ ui.paginacion(
-                url_for('catalogo.inicio', **busqueda.filtros()) if not es_primera_pagina else None,
-                url_for('catalogo.inicio', cursor=pagina.siguiente_cursor, **busqueda.filtros()) if pagina.siguiente_cursor else None) }}
+                url_for('catalogo.inicio', **filtros) if not es_primera_pagina else None,
+                url_for('catalogo.inicio', cursor=pagina.siguiente_cursor, **filtros) if pagina.siguiente_cursor else None) }}
         {% endif %}
     </section>
 </div>
