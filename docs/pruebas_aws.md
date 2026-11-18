@@ -55,7 +55,7 @@ Salida obtenida:
 | 2.4 | 1.4 | Filtrar por rol Vendedor | Aparece el vendedor de 2.1; sin `password_hash` | ✅ | [2.4-filtrarRolVendedor.png](evidencias/2.4-filtrarRolVendedor.png) |
 | 2.5 | 1.5 | Editar el apellido del vendedor | "Usuario actualizado correctamente" | ✅ | [2.5-editarApellidoVendedor.png](evidencias/2.5-editarApellidoVendedor.png) |
 | 2.6 | 1.5 | Editar tu propia cuenta | No aparecen los campos de rol ni de estado | ✅ | [2.6-editarCuentaPropia.png](evidencias/2.6-editarCuentaPropia.png) |
-| 2.7 | 2.1 | Categorías → Nueva: `Pruebas SMAVIB` | "Categoría creada correctamente" | ✅ | [2.7-crearCategoria.png](evidencias/2.7-crearCategoria.png) |
+| 2.7 | 2.1 | Categorías → Nueva: `Libros` | "Categoría creada correctamente" | ✅ | [2.7-crearCategoria.png](evidencias/2.7-crearCategoria.png) |
 | 2.8 | 2.1 | Repetir el mismo nombre | "La categoría ya existe" | ✅ | [2.8-nombreCategoriaExistente.png](evidencias/2.8-nombreCategoriaExistente.png) |
 | 2.9 | 2.1 | **XSS:** nueva categoría `<b>Prueba XSS</b>` | Se crea y el texto se ve tal cual, **sin negritas** (Jinja escapa la salida) | ✅ | [2.9-pruebaXSS.png](evidencias/2.9-pruebaXSS.png) |
 | 2.10 | 2.2 | Ver la lista de categorías | Aparecen las dos nuevas | ✅ | [2.10-listaCategorias.png](evidencias/2.10-listaCategorias.png) |
