@@ -129,7 +129,7 @@ Sin sesión (ventana privada).
 | 6.6 | 3.2 | Como vendedor, revisar el stock del producto | Regresó la unidad del pedido B | ✅ | [6.6-regresoStock.png](evidencias/6.6-regresoStock.png) |
 | 6.7 | 8.2 | **SP `sp_HistorialVentas` ('Vendedor'):** ventas del vendedor de 2.1, fechas de hoy | Aparece el producto con las unidades del pedido A; el cancelado B no suma | ✅ | [6.7-historialVentas.png](evidencias/6.7-historialVentas.png) |
 | 6.8 | 8.2 | Fecha inicial mayor que la final | "La fecha inicial no puede ser mayor a la fecha final" | ✅ | [6.8-fechaInicialMayor.png](evidencias/6.8-fechaInicialMayor.png) |
-| 6.9 | 2.3 | Editar `Pruebas SMAVIB` y elegirla como su propia categoría padre | "Una categoría no puede ser su propia categoría padre" | ❌ "Ocurrió un error interno. Intenta más tarde" | |
+| 6.9 | 2.3 | Editar `Pruebas SMAVIB` y elegirla como su propia categoría padre | "Una categoría no puede ser su propia categoría padre" | ✅ | [6.9-categoriaPadreDeSiMisma.png](evidencias/6.9-categoriaPadreDeSiMisma.png) |
 | 6.10 | 2.4 | Eliminar una categoria (que tiene productos) | "No se puede eliminar una categoría con productos asociados" | ✅ | [6.10-eliminarCategoriaConProductos.png](evidencias/6.10-eliminarCategoriaConProductos.png) |
 | 6.11 | 2.4 | Eliminar `<b>Prueba XSS</b>` | "Categoría eliminada correctamente" | ✅ | [6.11-eliminarCategoriaXSS.png](evidencias/6.11-eliminarCategoriaXSS.png) |
 | 6.12 | 1.6 | Eliminar al comprador B (o una cuenta de prueba) | "Usuario eliminado correctamente"; en la lista queda Inactivo (baja lógica) | ✅ | [6.12-eliminarUsuario.png](evidencias/6.12-eliminarUsuario.png) |
