@@ -175,5 +175,5 @@ ORDER BY p.id_pedido DESC LIMIT 5;
 
 | # | Pasos | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|
-| 9.1 | DevTools → Application → Cookies, con sesión iniciada | Solo `smavib_sesion`, con HttpOnly, Secure y SameSite=Lax; el JWT no aparece en cookies, `localStorage` ni el HTML | | |
-| 9.2 | Cerrar sesión y usar "Atrás" del navegador | No muestra datos de la sesión anterior (`Cache-Control: no-store`) | | |
+| 9.1 | DevTools → Application → Cookies, con sesión iniciada | Solo `smavib_sesion`, con HttpOnly, Secure y SameSite=Lax; el JWT no aparece en cookies, `localStorage` ni el HTML | ✅ | [9.1-cookiesSesion.png](evidencias/9.1-cookiesSesion.png) |
+| 9.2 | Cerrar sesión y usar "Atrás" del navegador | No muestra datos de la sesión anterior (`Cache-Control: no-store`) | ✅ | [9.2-atrasDespuesDeCerrarSesion.png](evidencias/9.2-atrasDespuesDeCerrarSesion.png) |
