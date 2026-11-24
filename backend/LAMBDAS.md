@@ -1299,6 +1299,148 @@ Función **nueva**. La Lambda vieja `consultar/{productoID}` no se toca.
 
 ---
 
+## lambda-crearResena: Crear reseña de producto (Comprador)
+
+**Ficha de configuración**
+| Campo | Valor |
+|---|---|
+| Método y ruta | `POST /productos/{id}/resenas` (el parámetro de ruta se llama `id`) |
+| Acceso | Token JWT con rol **Comprador** |
+| VPC | Sí: subredes de RDS y grupo de seguridad de las Lambdas |
+| Variables de entorno | DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_NAME_RESENAS, JWT_SECRET |
+| Layers | Layer 1 + Layer 2 (`smavib-common:4`) |
+| Timeout / memoria | 10 s / 128 MB |
+
+**Body (JSON)**
+```json
+{"calificacion": 5, "comentario": "Excelente producto, llegó en perfecto estado."}
+```
+- `calificacion`: entero del 1 al 5 (obligatorio).
+- `comentario`: texto obligatorio, máximo 1000 caracteres. Se aplica `validar_texto`.
+- El comprador debe tener al menos un pedido **Entregado** con ese producto (verificado en `marketplace`).
+- Un comprador solo puede reseñar un producto una vez (`uq_resena_usuario_producto`).
+
+**Respuestas**
+| Status | Body | Caso |
+|---|---|---|
+| 201 | `{"mensaje": "Reseña registrada correctamente", "id_resena": 1}` | Datos correctos |
+| 400 | `{"error": "Debe completar los campos obligatorios"}` | Falta `calificacion` o `comentario` |
+| 400 | `{"error": "La calificación debe ser un número entero del 1 al 5"}` | Fuera de rango o no entero |
+| 400 | `{"error": "El comentario no puede superar 1000 caracteres"}` | Comentario demasiado largo |
+| 400 | `{"error": "El comentario no puede tener espacios en blanco seguidos"}` (y demás mensajes de `validar_texto`) | Formato de texto inválido |
+| 401 | `{"error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"}` | Token ausente, inválido o vencido |
+| 403 | `{"error": "Acceso restringido"}` | El rol no es Comprador |
+| 403 | `{"error": "Solo puedes reseñar productos que hayas recibido"}` | No tiene un pedido Entregado con ese producto |
+| 404 | `{"error": "El producto no existe"}` | Id inexistente, no válido o producto Inactivo |
+| 409 | `{"error": "Ya escribiste una reseña para este producto"}` | Reseña duplicada |
+| 500 | `{"error": "Ocurrió un error interno. Intenta más tarde"}` | Error no controlado |
+
+**Prueba en consola**: `{"headers": {"Authorization": "Bearer <token comprador>"}, "pathParameters": {"id": "120"}, "body": "{\"calificacion\":5,\"comentario\":\"Excelente producto.\"}"}`
+
+**Código:** [`lambdas/lambda-crearResena/lambda_function.py`](lambdas/lambda-crearResena/lambda_function.py)
+
+---
+
+## lambda-consultarResenas: Consultar reseñas de un producto (abierta)
+
+**Ficha de configuración**
+| Campo | Valor |
+|---|---|
+| Método y ruta | `GET /productos/{id}/resenas?cursor=` (el parámetro de ruta se llama `id`) |
+| Acceso | **Abierta**, sin token |
+| VPC | Sí: subredes de RDS y grupo de seguridad de las Lambdas |
+| Variables de entorno | DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_NAME_RESENAS |
+| Layers | Layer 1 + Layer 2 (`smavib-common:4`) |
+| Timeout / memoria | 10 s / 128 MB |
+
+**Query string**
+- `cursor`: `siguiente_cursor` de la página anterior. Omitido o no válido → primera página.
+
+**Respuestas**
+| Status | Body | Caso |
+|---|---|---|
+| 200 | `{"mensaje": "Consulta realizada", "resenas": [{"id_resena": 1, "id_usuario": 15, "calificacion": 5, "comentario": "Excelente.", "fecha": "2026-11-18T10:00:00"}], "promedio_calificacion": 4.5, "siguiente_cursor": 20}` | Hay reseñas (`siguiente_cursor` es `null` en la última página) |
+| 200 | `{"mensaje": "No hay reseñas para este producto", "resenas": [], "siguiente_cursor": null}` | Sin reseñas activas |
+| 404 | `{"error": "El producto no existe"}` | Id inexistente, no válido o producto Inactivo |
+| 500 | `{"error": "Ocurrió un error interno. Intenta más tarde"}` | Error no controlado |
+
+**Prueba en consola**: `{"pathParameters": {"id": "120"}}` · con paginación: `{"pathParameters": {"id": "120"}, "queryStringParameters": {"cursor": "20"}}`
+
+**Código:** [`lambdas/lambda-consultarResenas/lambda_function.py`](lambdas/lambda-consultarResenas/lambda_function.py)
+
+---
+
+## lambda-editarResena: Editar reseña propia (Comprador)
+
+**Ficha de configuración**
+| Campo | Valor |
+|---|---|
+| Método y ruta | `PUT /resenas/{id}` (el parámetro de ruta se llama `id`) |
+| Acceso | Token JWT con rol **Comprador** |
+| VPC | Sí: subredes de RDS y grupo de seguridad de las Lambdas |
+| Variables de entorno | DB_HOST, DB_USER, DB_PASSWORD, DB_NAME_RESENAS, JWT_SECRET |
+| Layers | Layer 1 + Layer 2 (`smavib-common:4`) |
+| Timeout / memoria | 10 s / 128 MB |
+
+**Body (JSON)**: PUT completo; ambos campos son obligatorios.
+```json
+{"calificacion": 4, "comentario": "Buen producto, aunque tardó en llegar."}
+```
+- Solo el dueño de la reseña puede editarla.
+- Las reseñas inactivas (eliminadas) se tratan como inexistentes.
+
+**Respuestas**
+| Status | Body | Caso |
+|---|---|---|
+| 200 | `{"mensaje": "Reseña actualizada correctamente", "id_resena": 1}` | Edición válida |
+| 400 | `{"error": "Debe completar los campos obligatorios"}` | Falta `calificacion` o `comentario` |
+| 400 | `{"error": "La calificación debe ser un número entero del 1 al 5"}` | Fuera de rango o no entero |
+| 400 | `{"error": "El comentario no puede superar 1000 caracteres"}` | Comentario demasiado largo |
+| 400 | `{"error": "El comentario no puede tener espacios en blanco seguidos"}` (y demás mensajes de `validar_texto`) | Formato de texto inválido |
+| 401 | `{"error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"}` | Token ausente, inválido o vencido |
+| 403 | `{"error": "Acceso restringido"}` | El rol no es Comprador, o la reseña es de otro usuario |
+| 404 | `{"error": "La reseña no existe"}` | Id inexistente, no válido o reseña inactiva |
+| 500 | `{"error": "Ocurrió un error interno. Intenta más tarde"}` | Error no controlado |
+
+**Prueba en consola**: `{"headers": {"Authorization": "Bearer <token comprador>"}, "pathParameters": {"id": "1"}, "body": "{\"calificacion\":4,\"comentario\":\"Buen producto.\"}"}`
+
+**Código:** [`lambdas/lambda-editarResena/lambda_function.py`](lambdas/lambda-editarResena/lambda_function.py)
+
+---
+
+## lambda-eliminarResena: Eliminar reseña (Comprador o Administrador)
+
+**Ficha de configuración**
+| Campo | Valor |
+|---|---|
+| Método y ruta | `DELETE /resenas/{id}` (el parámetro de ruta se llama `id`) |
+| Acceso | Token JWT con rol **Comprador** (solo la suya) o **Administrador** (cualquiera) |
+| VPC | Sí: subredes de RDS y grupo de seguridad de las Lambdas |
+| Variables de entorno | DB_NAME_RESENAS, JWT_SECRET |
+| Layers | Layer 1 + Layer 2 (`smavib-common:4`) |
+| Timeout / memoria | 10 s / 128 MB |
+
+**Body**: ninguno. La reseña se elige con `{id}` en la ruta.
+
+**Reglas**
+- Baja lógica: `activa = 0`. La reseña deja de aparecer en `GET /productos/{id}/resenas`.
+- Una reseña ya inactiva se trata como inexistente (404).
+
+**Respuestas**
+| Status | Body | Caso |
+|---|---|---|
+| 200 | `{"mensaje": "Reseña eliminada correctamente", "id_resena": 1}` | Baja lógica válida |
+| 401 | `{"error": "Tu sesión no es válida o ya venció. Inicia sesión nuevamente"}` | Token ausente, inválido o vencido |
+| 403 | `{"error": "Acceso restringido"}` | Rol Vendedor, o Comprador intentando eliminar la reseña de otro |
+| 404 | `{"error": "La reseña no existe"}` | Id inexistente, no válido o reseña ya inactiva |
+| 500 | `{"error": "Ocurrió un error interno. Intenta más tarde"}` | Error no controlado |
+
+**Prueba en consola**: `{"headers": {"Authorization": "Bearer <token comprador o admin>"}, "pathParameters": {"id": "1"}}`
+
+**Código:** [`lambdas/lambda-eliminarResena/lambda_function.py`](lambdas/lambda-eliminarResena/lambda_function.py)
+
+---
+
 ## lambda-cargaDynamo: carga inicial del catálogo en DynamoDB (herramienta, una sola vez)
 
 Lee de RDS los productos que creó [`database/04_carga_inicial.sql`](../database/04_carga_inicial.sql) y los escribe en DynamoDB con `BatchWriteItem` (DFR, Requerimientos de Eficiencia). **No se conecta a API Gateway**: se invoca a mano desde la consola de Lambda (pestaña *Test*), así que solo la puede ejecutar quien tenga acceso a la cuenta.
