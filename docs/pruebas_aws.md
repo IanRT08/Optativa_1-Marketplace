@@ -179,7 +179,7 @@ aws dynamodb scan --table-name Productos --select COUNT --query Count
 | 8.1 | `prefijo` = `$2b$` y `largo` = 60 en todas las cuentas creadas | ✅ | [8.1-contrasenaHasheada.png](evidencias/8.1-contrasenaHasheada.png) |
 | 8.2 | `token` empieza con `tok_`; `ultimos4` = últimos 4 de la tarjeta usada (`4567` en los pedidos A, B y C; `4242` en el pedido 4 de las pruebas de humo) | ✅ | [8.2-pagoTokenizado.png](evidencias/8.2-pagoTokenizado.png) |
 | 8.3 | Pedido A Entregado con pago "Aprobado"; pedido B Cancelado con pago "Reembolsado" | ✅ | [8.3-estadosYcancelacion.png](evidencias/8.3-estadosYcancelacion.png) |
-| 8.4 | `productos_rds` ≥ 17,000 y el conteo de DynamoDB igual al de RDS (los productos creados en las pruebas también se escriben en DynamoDB) | ✅ | `8.4-conteoCatalogo.png`|
+| 8.4 | `productos_rds` ≥ 17,000 y el conteo de DynamoDB igual al de RDS (los productos creados en las pruebas también se escriben en DynamoDB) | ✅ | [8.4-conteoCatalogo.png](evidencias/8.4-conteoCatalogo.png), [8.4-conteoCatalogoDynamoDB.png](evidencias/8.4-conteoCatalogoDynamoDB.png) |
 
 ## 9. Interfaz (cookie y token)
 
