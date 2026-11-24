@@ -5,8 +5,9 @@ Ubicación dentro del zip de la Layer:  python/smavib_common.py
 Requiere la Layer 1 (PyMySQL, bcrypt, PyJWT).
 
 Variables de entorno que lee (solo cuando se usan):
-    DB_HOST, DB_USER, DB_PASSWORD, DB_NAME   -> obtener_conexion()
-    JWT_SECRET                               -> emitir_token() / validar_token()
+    DB_HOST, DB_USER, DB_PASSWORD, DB_NAME          -> obtener_conexion()
+    DB_HOST, DB_USER, DB_PASSWORD, DB_NAME_RESENAS  -> obtener_conexion_resenas()
+    JWT_SECRET                                      -> emitir_token() / validar_token()
 """
 import base64
 import datetime
@@ -289,6 +290,53 @@ def _deshacer_transaccion_pendiente():
     if _conexion is not None and _conexion.open:
         try:
             _conexion.rollback()
+        except Exception:
+            pass
+
+
+# ---------------------------------------------------------------------------
+# Conexión al schema de reseñas (misma instancia RDS, DB_NAME_RESENAS)
+# Las 35 Lambdas existentes no usan esto; solo las Lambdas de reseñas.
+# ---------------------------------------------------------------------------
+_conexion_resenas = None
+
+
+def _crear_conexion_resenas():
+    return pymysql.connect(
+        host=os.environ["DB_HOST"],
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASSWORD"],
+        database=os.environ["DB_NAME_RESENAS"],
+        port=3306,
+        charset="utf8mb4",
+        cursorclass=pymysql.cursors.DictCursor,
+        autocommit=True,
+        init_command="SET time_zone = '-06:00'",
+        connect_timeout=5,
+        read_timeout=15,
+        write_timeout=15,
+    )
+
+
+def obtener_conexion_resenas():
+    """Devuelve la conexión al schema resenas; reconecta si se cayó."""
+    global _conexion_resenas
+    try:
+        if _conexion_resenas is None or not _conexion_resenas.open:
+            _conexion_resenas = _crear_conexion_resenas()
+        else:
+            _conexion_resenas.ping(reconnect=True)
+    except pymysql.err.OperationalError as e:
+        print(f"Reintentando conexión a resenas: {e!r}")
+        _conexion_resenas = _crear_conexion_resenas()
+    return _conexion_resenas
+
+
+def _deshacer_transaccion_resenas():
+    """Deshace una transacción pendiente en el schema de reseñas."""
+    if _conexion_resenas is not None and _conexion_resenas.open:
+        try:
+            _conexion_resenas.rollback()
         except Exception:
             pass
 
