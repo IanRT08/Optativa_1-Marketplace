@@ -44,42 +44,6 @@ CREATE TABLE IF NOT EXISTS categoria (
         FOREIGN KEY (id_categoria_padre) REFERENCES categoria (id_categoria)
 );
 
-CREATE TABLE IF NOT EXISTS usuario (
-    id_usuario     INT UNSIGNED     NOT NULL AUTO_INCREMENT,
-    id_rol         TINYINT UNSIGNED NOT NULL,
-    nombre         VARCHAR(80)      NOT NULL,
-    apellido       VARCHAR(80)      NOT NULL,
-    email          VARCHAR(150)     NOT NULL,
-    password_hash  VARCHAR(255)     NOT NULL,
-    estado         ENUM('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
-    fecha_registro DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id_usuario),
-    UNIQUE KEY uq_usuario_email (email),
-    CONSTRAINT fk_usuario_rol
-        FOREIGN KEY (id_rol) REFERENCES rol (id_rol));
-
-CREATE TABLE IF NOT EXISTS categoria (
-    id_categoria     INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    nombre           VARCHAR(100) NOT NULL,
-    descripcion      VARCHAR(255) NULL,
-    id_categoria_padre INT UNSIGNED NULL,
-    PRIMARY KEY (id_categoria),
-    UNIQUE KEY uq_categoria_nombre (nombre),
-    CONSTRAINT fk_categoria_padre
-        FOREIGN KEY (id_categoria_padre) REFERENCES categoria (id_categoria)
-);
-
-CREATE TABLE IF NOT EXISTS categoria (
-    id_categoria     INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    nombre           VARCHAR(100) NOT NULL,
-    descripcion      VARCHAR(255) NULL,
-    id_categoria_padre INT UNSIGNED NULL,
-    PRIMARY KEY (id_categoria),
-    UNIQUE KEY uq_categoria_nombre (nombre),
-    CONSTRAINT fk_categoria_padre
-        FOREIGN KEY (id_categoria_padre) REFERENCES categoria (id_categoria)
-);
-
 CREATE TABLE IF NOT EXISTS marca (
     id_marca INT UNSIGNED NOT NULL AUTO_INCREMENT,
     nombre   VARCHAR(100) NOT NULL,
