@@ -29,7 +29,7 @@
             {% if usuario %}
                 {% if usuario.rol == "Comprador" and usuario.id_usuario == r.id_usuario %}
                     <details class="resena-editar">
-                        <summary>Editar</summary>
+                        <summary>{{ ui.icono("pencil") }}<span>Editar</span></summary>
                         <form method="post" action="{{ url_for('comprador.editar_resena', id_resena=r.id_resena) }}"
                               class="form-resena" data-un-envio novalidate>
                             {{ ui.csrf() }}
@@ -40,21 +40,25 @@
                             {{ ui.area("comentario", "Comentario",
                                 previos.get("comentario", r.comentario), obligatorio=True,
                                 attrs={"maxlength": 1000, "rows": 3}) }}
-                            {{ ui.boton("Guardar cambios", "primario") }}
+                            <div class="resena-acciones">
+                                {{ ui.boton("Guardar cambios", "primario") }}
+                                <button type="button" form="" class="btn btn-terciario"
+                                        onclick="this.closest('details').removeAttribute('open')">Cancelar</button>
+                            </div>
                         </form>
                     </details>
                     <form method="post" action="{{ url_for('comprador.eliminar_resena', id_resena=r.id_resena) }}"
                           data-confirmar="¿Eliminar esta reseña?" data-un-envio novalidate>
                         {{ ui.csrf() }}
                         <input type="hidden" name="id_producto" value="{{ id_producto }}">
-                        {{ ui.boton("Eliminar", "peligro") }}
+                        {{ ui.boton("Eliminar", "peligro-secundario", "trash-2") }}
                     </form>
                 {% elif usuario.rol == "Administrador" %}
                     <form method="post" action="{{ url_for('comprador.eliminar_resena', id_resena=r.id_resena) }}"
                           data-confirmar="¿Eliminar esta reseña?" data-un-envio novalidate>
                         {{ ui.csrf() }}
                         <input type="hidden" name="id_producto" value="{{ id_producto }}">
-                        {{ ui.boton("Eliminar", "peligro") }}
+                        {{ ui.boton("Eliminar", "peligro-secundario", "trash-2") }}
                     </form>
                 {% endif %}
             {% endif %}

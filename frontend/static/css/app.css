@@ -612,8 +612,12 @@ a:hover { color: var(--c-900); text-decoration-thickness: 2px; }
 .resena-fecha { margin-left: auto; }
 .resena-comentario { margin: 0 0 var(--s-3); }
 .resena-editar { margin-top: var(--s-3); }
-.resena-editar summary { cursor: pointer; color: var(--c-700); font-size: var(--fs-14); }
+.resena-editar summary { cursor: pointer; display: inline-flex; align-items: center; gap: var(--s-2); color: var(--c-700); font-size: var(--fs-14); list-style: none; }
+.resena-editar summary::-webkit-details-marker { display: none; }
+.resena-editar summary .icono { width: 1rem; height: 1rem; }
 .resena-editar .form-resena { margin-top: var(--s-3); }
+.resena-acciones { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; margin-top: var(--s-2); }
+.resena-editar + form { margin-top: var(--s-3); }
 
 /* Botón "Ver reseñas" en el detalle de producto: separado de la sección anterior */
 .acciones-secundarias { margin-top: var(--s-6); }
