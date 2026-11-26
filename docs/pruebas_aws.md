@@ -207,3 +207,22 @@ Dos compradores pagan **al mismo tiempo** el único artículo en stock. `sp_Regi
 **Cómo se ejecutó 10.4.** Se iniciaron las dos sesiones con `POST /auth/login`, se revisó que cada carrito tuviera solo `Proyecto Hail Mary` (`GET /carrito`), se tomó la dirección de cada cuenta (`GET /direcciones`) y se lanzaron los dos `POST /compras` desde dos hilos liberados al mismo instante (`threading.Barrier`). Salieron con 11 ms de diferencia y las dos respuestas llegaron a los ~1.5 s: el comprador 2 salió primero, pero A obtuvo el bloqueo de la fila y el comprador 2 esperó y recibió el 400. El script no se incluye en el reporte; la salida está en la evidencia.
 
 Cualquiera de los dos puede ganar: lo que se comprueba es que solo uno compra.
+
+## 11. Reseñas
+
+Sesión: el comprador A de la sección 5 (tiene el pedido A en estado Entregado con el producto de 3.3).
+
+| # | Req. | Pasos | Resultado esperado | Resultado | Evidencia |
+|---|---|---|---|---|---|
+| 11.1 | Consultar | Sin sesión, abrir `/productos/<id>/resenas` del producto de 3.3 | Lista vacía: "Este producto aún no tiene reseñas"; el formulario de nueva reseña **no** aparece | ✅ | [11.1-resenas-sin-sesion.png](evidencias/11.1-resenas-sin-sesion.png) |
+| 11.2 | Crear | Como comprador A, abrir la misma página | Aparece el formulario "Escribir una reseña" | ✅ | [11.2-formulario-resena.png](evidencias/11.2-formulario-resena.png) |
+| 11.3 | Crear | Enviar el formulario con el comentario vacío | "Debe completar los campos obligatorios" debajo del campo correspondiente | ✅ | [11.3-resena-campos-vacios.png](evidencias/11.3-resena-campos-vacios.png) |
+| 11.4 | Crear | Calificación 4, comentario válido | "Reseña publicada correctamente"; la reseña aparece en la lista con el nombre del comprador, 4 estrellas y la fecha de hoy | ⬜ | [11.4-resena-creada.png](evidencias/11.4-resena-creada.png) |
+| 11.5 | Crear | Intentar publicar una segunda reseña para el mismo producto | "Ya escribiste una reseña para este producto" | ⬜ | [11.5-resena-duplicada.png](evidencias/11.5-resena-duplicada.png) |
+| 11.6 | Crear | Como comprador 2 (de la sección 10, sin pedido Entregado con ese producto), intentar publicar una reseña | "Solo puedes reseñar productos que hayas recibido" | ⬜ | [11.6-resena-sin-pedido.png](evidencias/11.6-resena-sin-pedido.png) |
+| 11.7 | Editar | Como comprador A, abrir "Editar" en su reseña y cambiar la calificación a 5 | "Reseña actualizada correctamente"; la lista muestra 5 estrellas | ⬜ | [11.7-resena-editada.png](evidencias/11.7-resena-editada.png) |
+| 11.8 | Editar | **Solo sus datos:** como comprador 2, intentar editar la reseña del comprador A (PUT `/resenas/<id>` con token del comprador 2) desde CloudShell | 403 "Acceso restringido" | ⬜ | [11.8-editar-resena-ajena.png](evidencias/11.8-editar-resena-ajena.png) |
+| 11.9 | Eliminar | Como Administrador, eliminar la reseña del comprador A | "Reseña eliminada correctamente"; la lista queda vacía | ⬜ | [11.9-resena-eliminada-admin.png](evidencias/11.9-resena-eliminada-admin.png) |
+| 11.10 | Eliminar | Como comprador A, intentar eliminar una reseña ya eliminada (DELETE `/resenas/<id>` desde CloudShell) | 404 "La reseña no existe" | ⬜ | [11.10-resena-ya-eliminada.png](evidencias/11.10-resena-ya-eliminada.png) |
+| 11.11 | Promedio | Crear dos reseñas nuevas (comprador A: 4 estrellas; comprador 2, que ya tiene pedido Entregado del producto de 3.3 tras el pedido C de 7.1: 2 estrellas) | El promedio que aparece en la página es **3.0 / 5** | ⬜ | [11.11-promedio-resenas.png](evidencias/11.11-promedio-resenas.png) |
+| 11.12 | RBAC | Como Vendedor, intentar publicar una reseña (POST `/productos/<id>/resenas` con token de Vendedor) desde CloudShell | 403 "Acceso restringido" | ⬜ | [11.12-resena-como-vendedor.png](evidencias/11.12-resena-como-vendedor.png) |

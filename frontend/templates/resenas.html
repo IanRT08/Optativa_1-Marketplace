@@ -36,7 +36,7 @@
                             <input type="hidden" name="id_producto" value="{{ id_producto }}">
                             {{ ui.selector("calificacion", "Calificación",
                                 [("1","1 ★"),("2","2 ★★"),("3","3 ★★★"),("4","4 ★★★★"),("5","5 ★★★★★")],
-                                previos.get("calificacion", r.calificacion|string), obligatorio=True) }}
+                                previos.get("calificacion", r.calificacion|string), obligatorio=True, valor=0, texto=1) }}
                             {{ ui.area("comentario", "Comentario",
                                 previos.get("comentario", r.comentario), obligatorio=True,
                                 attrs={"maxlength": 1000, "rows": 3}) }}
@@ -78,7 +78,7 @@
         {{ ui.csrf() }}
         {{ ui.selector("calificacion", "Calificación",
             [("1","1 ★"),("2","2 ★★"),("3","3 ★★★"),("4","4 ★★★★"),("5","5 ★★★★★")],
-            previos.get("calificacion", ""), obligatorio=True) }}
+            previos.get("calificacion", ""), obligatorio=True, valor=0, texto=1) }}
         {{ ui.area("comentario", "Comentario", previos.get("comentario", ""), obligatorio=True,
                    attrs={"maxlength": 1000, "rows": 4,
                           "placeholder": "Cuéntanos tu experiencia con este producto"}) }}
