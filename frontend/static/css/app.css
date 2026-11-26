@@ -486,7 +486,7 @@ a:hover { color: var(--c-900); text-decoration-thickness: 2px; }
 .vacio p { margin: 0 0 var(--s-3); font-size: var(--fs-20); font-weight: var(--fw-semibold); }
 .vacio p:last-child { margin: 0; }
 
-.paginacion { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-6); align-items: center; }
+.paginacion { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-6); align-items: center; justify-content: center; }
 .paginacion-num { min-width: 2.5rem; justify-content: center; }
 .paginacion-actual { cursor: default; pointer-events: none; }
 
@@ -599,3 +599,21 @@ a:hover { color: var(--c-900); text-decoration-thickness: 2px; }
     .tabla-apilada td.celda-cantidad { flex-wrap: wrap; }
     .tabla-apilada td.celda-cantidad .campo-error { flex-basis: 100%; }
 }
+
+/* --- Reseñas (11) -------------------------------------------------------------- */
+.lista-resenas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-4); }
+.resena {
+    background: var(--surface); border: 1px solid var(--border-soft);
+    border-radius: var(--radius); padding: var(--s-4) var(--s-5);
+}
+.resena-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); margin-bottom: var(--s-3); }
+.resena-autor { font-weight: var(--fw-semibold); }
+.resena-cal { color: var(--c-500); letter-spacing: 0.05em; }
+.resena-fecha { margin-left: auto; }
+.resena-comentario { margin: 0 0 var(--s-3); }
+.resena-editar { margin-top: var(--s-3); }
+.resena-editar summary { cursor: pointer; color: var(--c-700); font-size: var(--fs-14); }
+.resena-editar .form-resena { margin-top: var(--s-3); }
+
+/* Botón "Ver reseñas" en el detalle de producto: separado de la sección anterior */
+.acciones-secundarias { margin-top: var(--s-6); }
