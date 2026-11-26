@@ -57,7 +57,8 @@ def crear_app():
     def usuario_actual():
         # Solo nombre y rol para las plantillas; el token nunca sale de aquí.
         if hay_sesion():
-            return {"usuario": {"nombre": session.get("nombre"), "rol": session.get("rol")}}
+            return {"usuario": {"nombre": session.get("nombre"), "rol": session.get("rol"),
+                                "id_usuario": session.get("id_usuario")}}
         return {"usuario": None}
 
     # --- Errores -----------------------------------------------------------

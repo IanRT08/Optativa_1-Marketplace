@@ -39,6 +39,7 @@ def lambda_handler(event, context):
     cursor = entero_positivo(params.get("cursor")) or 0
 
     con_r = obtener_conexion_resenas()
+    con_m = obtener_conexion()
     with con_r.cursor() as cur:
         cur.execute(
             """
@@ -54,6 +55,19 @@ def lambda_handler(event, context):
         )
         filas = cur.fetchall()
 
+    # Obtener nombres desde marketplace
+    nombres = {}
+    if filas:
+        ids = tuple(r["id_usuario"] for r in filas[:PAGINA])
+        placeholders = ",".join(["%s"] * len(ids))
+        with con_m.cursor() as cur:
+            cur.execute(
+                f"SELECT id_usuario, CONCAT(nombre, ' ', apellido) AS nombre_completo FROM usuario WHERE id_usuario IN ({placeholders})",
+                ids,
+            )
+            for row in cur.fetchall():
+                nombres[row["id_usuario"]] = row["nombre_completo"]
+
     hay_siguiente = len(filas) > PAGINA
     resenas = filas[:PAGINA]
     siguiente_cursor = resenas[-1]["id_resena"] if hay_siguiente else None
@@ -68,11 +82,12 @@ def lambda_handler(event, context):
         "Consulta realizada",
         resenas=[
             {
-                "id_resena":    r["id_resena"],
-                "id_usuario":   r["id_usuario"],
-                "calificacion": r["calificacion"],
-                "comentario":   r["comentario"],
-                "fecha":        r["fecha"],
+                "id_resena":      r["id_resena"],
+                "id_usuario":     r["id_usuario"],
+                "nombre_usuario": nombres.get(r["id_usuario"], "Usuario"),
+                "calificacion":   r["calificacion"],
+                "comentario":     r["comentario"],
+                "fecha":          r["fecha"],
             }
             for r in resenas
         ],

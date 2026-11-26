@@ -324,7 +324,7 @@ def resenas(id_producto):
     except ErrorRespuesta:
         error = MSG_ERROR_INTERNO
     return render_template("resenas.html", id_producto=id_producto, pagina=pagina, error=error,
-                           msg_vacio=MSG_SIN_RESENAS)
+                           msg_vacio=MSG_SIN_RESENAS, previos={})
 
 
 @bp.route("/productos/<int:id_producto>/resenas/crear", methods=["POST"])
