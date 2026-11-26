@@ -46,5 +46,6 @@ def lambda_handler(event, context):
             "UPDATE resena SET activa = 0 WHERE id_resena = %s",
             (id_resena,),
         )
+    con_r.commit()
 
     return ok("Reseña eliminada correctamente", id_resena=id_resena)

@@ -72,5 +72,6 @@ def lambda_handler(event, context):
             """,
             (calificacion, comentario, id_resena),
         )
+    con_r.commit()
 
     return ok("Reseña actualizada correctamente", id_resena=id_resena)

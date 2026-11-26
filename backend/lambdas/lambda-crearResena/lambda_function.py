@@ -87,20 +87,36 @@ def lambda_handler(event, context):
 
     con_r = obtener_conexion_resenas()
     with con_r.cursor() as cur:
-        try:
+        cur.execute(
+            "SELECT id_resena, activa FROM resena WHERE id_usuario = %s AND id_producto = %s",
+            (id_usuario, id_producto),
+        )
+        existente = cur.fetchone()
+
+    if existente:
+        if existente["activa"]:
+            raise ErrorNegocio(409, "Ya escribiste una reseña para este producto")
+        # Reseña eliminada: se reactiva con los nuevos datos
+        with con_r.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO resena (id_usuario, id_producto, calificacion, comentario)
-                VALUES (%s, %s, %s, %s)
+                UPDATE resena SET calificacion = %s, comentario = %s, activa = 1
+                WHERE id_resena = %s
                 """,
-                (id_usuario, id_producto, calificacion, comentario),
+                (calificacion, comentario, existente["id_resena"]),
             )
-        except Exception as e:
-            # errno 1062 = Duplicate entry (uq_resena_usuario_producto)
-            if hasattr(e, "args") and len(e.args) >= 1 and e.args[0] == 1062:
-                raise ErrorNegocio(409, "Ya escribiste una reseña para este producto")
-            raise
+        con_r.commit()
+        return ok("Reseña registrada correctamente", status=201, id_resena=existente["id_resena"])
 
+    with con_r.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO resena (id_usuario, id_producto, calificacion, comentario)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (id_usuario, id_producto, calificacion, comentario),
+        )
         id_resena = cur.lastrowid
+    con_r.commit()
 
     return ok("Reseña registrada correctamente", status=201, id_resena=id_resena)
