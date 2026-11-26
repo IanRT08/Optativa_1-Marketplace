@@ -42,9 +42,11 @@
             <ul class="rejilla-productos">
                 {% for p in pagina.productos %}{{ ui.tarjeta_producto(p) }}{% endfor %}
             </ul>
+            {%- set num = request.args.get('pagina', 1)|int %}
             {{ ui.paginacion(
-                url_for('catalogo.inicio', **filtros) if not es_primera_pagina else None,
-                url_for('catalogo.inicio', cursor=pagina.siguiente_cursor, **filtros) if pagina.siguiente_cursor else None) }}
+                url_for('catalogo.inicio', pagina=num-1, **filtros) if not es_primera_pagina else None,
+                url_for('catalogo.inicio', cursor=pagina.siguiente_cursor, pagina=num+1, **filtros) if pagina.siguiente_cursor else None,
+                num=num) }}
         {% endif %}
     </section>
 </div>

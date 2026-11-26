@@ -53,9 +53,11 @@
                 </tbody>
             </table>
         </div>
+        {%- set num = request.args.get('pagina', 1)|int %}
         {{ ui.paginacion(
-            url_for('admin.usuarios', **filtro.filtros()) if filtro.cursor else None,
-            url_for('admin.usuarios', cursor=pagina.siguiente_cursor, **filtro.filtros()) if pagina.siguiente_cursor else None) }}
+            url_for('admin.usuarios', pagina=num-1, **filtro.filtros()) if filtro.cursor else None,
+            url_for('admin.usuarios', cursor=pagina.siguiente_cursor, pagina=num+1, **filtro.filtros()) if pagina.siguiente_cursor else None,
+            num=num) }}
     {% endif %}
 </section>
 {% endblock %}

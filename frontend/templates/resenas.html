@@ -62,8 +62,12 @@
         {% endfor %}
     </ul>
 
+    {%- set num = request.args.get('pagina', 1)|int %}
     {% if pagina.siguiente_cursor %}
-        {{ ui.paginacion(url_for('comprador.resenas', id_producto=id_producto, cursor=pagina.siguiente_cursor)) }}
+        {{ ui.paginacion(
+            url_for('comprador.resenas', id_producto=id_producto, pagina=num-1) if num > 1 else None,
+            url_for('comprador.resenas', id_producto=id_producto, cursor=pagina.siguiente_cursor, pagina=num+1),
+            num=num) }}
     {% endif %}
 
 {% else %}

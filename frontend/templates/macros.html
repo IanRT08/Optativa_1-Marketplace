@@ -151,12 +151,15 @@
 </div>
 {%- endmacro %}
 
-{#- Paginación por cursor: la API solo avanza. -#}
-{% macro paginacion(primera=None, siguiente=None, texto_siguiente="Página siguiente") -%}
+{#- Paginación por cursor: la API solo avanza.
+    num: número de página actual (1-based). Las URLs de primera/siguiente
+    deben incluir el parámetro pagina correspondiente. -#}
+{% macro paginacion(primera=None, siguiente=None, num=1) -%}
 {% if primera or siguiente %}
 <nav class="paginacion" aria-label="Páginas">
-    {% if primera %}{{ enlace_boton(primera, "Primera página", "secundario", "chevrons-left") }}{% endif %}
-    {% if siguiente %}<a class="btn btn-secundario" href="{{ siguiente }}"><span class="btn-texto">{{ texto_siguiente }}</span>{{ icono("chevron-right") }}</a>{% endif %}
+    {% if primera %}<a class="btn btn-secundario paginacion-num" href="{{ primera }}" aria-label="Página anterior">{{ icono("chevron-left") }}<span class="btn-texto">{{ num - 1 }}</span></a>{% endif %}
+    <span class="btn btn-primario paginacion-num paginacion-actual" aria-current="page" aria-label="Página {{ num }}"><span class="btn-texto">{{ num }}</span></span>
+    {% if siguiente %}<a class="btn btn-secundario paginacion-num" href="{{ siguiente }}" aria-label="Página siguiente">{{ icono("chevron-right") }}<span class="btn-texto">{{ num + 1 }}</span></a>{% endif %}
 </nav>
 {% endif %}
 {%- endmacro %}
