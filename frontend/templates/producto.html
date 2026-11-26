@@ -104,4 +104,8 @@
     {% endif %}
 </div>
 {% endif %}
+
+<div class="acciones-secundarias">
+    {{ ui.enlace_boton(url_for('comprador.resenas', id_producto=producto.id_producto), "Ver reseñas", "secundario") }}
+</div>
 {% endblock %}

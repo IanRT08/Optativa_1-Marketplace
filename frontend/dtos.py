@@ -21,6 +21,7 @@ from constantes import (
     CATEGORIA_NOMBRE_MAX,
     CIUDAD_MAX,
     COLONIA_MAX,
+    COMENTARIO_MAX,
     DESCRIPCION_MAX,
     EMAIL_MAX,
     EMPAQUE_MAX,
@@ -31,8 +32,10 @@ from constantes import (
     ESTADOS_PEDIDO,
     ESTADOS_PRODUCTO,
     ESTADOS_USUARIO,
+    MSG_CALIFICACION_NO_VALIDA,
     MSG_CAMPOS_OBLIGATORIOS,
     MSG_CANTIDAD_ENTERA,
+    MSG_COMENTARIO_LARGO,
     MSG_CORREO_FORMATO,
     MSG_DIRECCION_LARGA,
     MSG_CATEGORIA_LARGA,
@@ -1368,6 +1371,78 @@ class EstadoPedidoDTO:
         estado = _texto(form, "estado")
         _obligatorios(estado)
         return cls(estado=_opcion(estado, ESTADOS_PEDIDO, MSG_ESTADO_NO_VALIDO))
+
+    def to_dict(self):
+        return asdict(self)
+
+
+# =============================================================================
+# Reseñas -> GET /productos/{id}/resenas, POST, PUT /resenas/{id}, DELETE
+# =============================================================================
+@dataclass(frozen=True)
+class ResenaFormDTO:
+    calificacion: int
+    comentario: str
+
+    @classmethod
+    def from_form(cls, form):
+        cal = _texto(form, "calificacion")
+        com = _texto(form, "comentario")
+        _obligatorios(cal, com)
+        if not cal.isdigit() or not (1 <= int(cal) <= 5):
+            raise ErrorValidacion(MSG_CALIFICACION_NO_VALIDA)
+        if len(com) > COMENTARIO_MAX:
+            raise ErrorValidacion(MSG_COMENTARIO_LARGO)
+        return cls(calificacion=int(cal), comentario=com)
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ResenaDTO:
+    id_resena: int
+    id_usuario: int
+    nombre_usuario: str
+    calificacion: int
+    comentario: str
+    fecha: str
+
+    @classmethod
+    def from_api(cls, d):
+        return cls(
+            id_resena=_entero(d, "id_resena"),
+            id_usuario=_entero(d, "id_usuario"),
+            nombre_usuario=_cadena(d, "nombre_usuario", obligatorio=False),
+            calificacion=_entero(d, "calificacion"),
+            comentario=_cadena(d, "comentario"),
+            fecha=_cadena(d, "fecha", obligatorio=False),
+        )
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class PaginaResenasDTO:
+    resenas: list
+    siguiente_cursor: Optional[int]
+    promedio_calificacion: Optional[float]
+    mensaje: str
+
+    @classmethod
+    def from_api(cls, datos):
+        filas = datos.get("resenas")
+        if not isinstance(filas, list):
+            raise ErrorRespuesta("resenas")
+        cursor = datos.get("siguiente_cursor")
+        promedio = datos.get("promedio_calificacion")
+        return cls(
+            resenas=[ResenaDTO.from_api(f) for f in filas if isinstance(f, dict)],
+            siguiente_cursor=cursor if isinstance(cursor, int) else None,
+            promedio_calificacion=float(promedio) if isinstance(promedio, (int, float)) and not isinstance(promedio, bool) else None,
+            mensaje=_cadena(datos, "mensaje", obligatorio=False),
+        )
 
     def to_dict(self):
         return asdict(self)

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui with context %}
+{% block titulo %}Reseñas del producto{% endblock %}
+
+{% block contenido %}
+{{ ui.volver(url_for('catalogo.detalle', id_producto=id_producto), "Volver al producto") }}
+
+<h1>Reseñas</h1>
+
+{% if error %}
+    {{ ui.mensaje("error", error) }}
+{% elif pagina and pagina.resenas %}
+    {% if pagina.promedio_calificacion is not none %}
+        <p class="texto-apoyo">Promedio: <strong>{{ "%.1f"|format(pagina.promedio_calificacion) }} / 5</strong></p>
+    {% endif %}
+
+    <ul class="lista-resenas" aria-label="Reseñas del producto">
+        {% for r in pagina.resenas %}
+        <li class="resena">
+            <div class="resena-cabeza">
+                <span class="resena-autor">{{ r.nombre_usuario or "Usuario" }}</span>
+                <span class="resena-cal" aria-label="Calificación {{ r.calificacion }} de 5">
+                    {% for i in range(1, 6) %}{{ "★" if i <= r.calificacion else "☆" }}{% endfor %}
+                </span>
+                <span class="resena-fecha texto-apoyo">{{ r.fecha }}</span>
+            </div>
+            <p class="resena-comentario">{{ r.comentario }}</p>
+
+            {% if usuario %}
+                {% if usuario.rol == "Comprador" and usuario.id_usuario == r.id_usuario %}
+                    <details class="resena-editar">
+                        <summary>Editar</summary>
+                        <form method="post" action="{{ url_for('comprador.editar_resena', id_resena=r.id_resena) }}"
+                              class="form-resena" data-un-envio novalidate>
+                            {{ ui.csrf() }}
+                            <input type="hidden" name="id_producto" value="{{ id_producto }}">
+                            {{ ui.selector("calificacion", "Calificación",
+                                [("1","1 ★"),("2","2 ★★"),("3","3 ★★★"),("4","4 ★★★★"),("5","5 ★★★★★")],
+                                previos.get("calificacion", r.calificacion|string), obligatorio=True) }}
+                            {{ ui.area("comentario", "Comentario",
+                                previos.get("comentario", r.comentario), obligatorio=True,
+                                attrs={"maxlength": 1000, "rows": 3}) }}
+                            {{ ui.boton("Guardar cambios", "primario") }}
+                        </form>
+                    </details>
+                    <form method="post" action="{{ url_for('comprador.eliminar_resena', id_resena=r.id_resena) }}"
+                          data-confirmar="¿Eliminar esta reseña?" data-un-envio novalidate>
+                        {{ ui.csrf() }}
+                        <input type="hidden" name="id_producto" value="{{ id_producto }}">
+                        {{ ui.boton("Eliminar", "peligro") }}
+                    </form>
+                {% elif usuario.rol == "Administrador" %}
+                    <form method="post" action="{{ url_for('comprador.eliminar_resena', id_resena=r.id_resena) }}"
+                          data-confirmar="¿Eliminar esta reseña?" data-un-envio novalidate>
+                        {{ ui.csrf() }}
+                        <input type="hidden" name="id_producto" value="{{ id_producto }}">
+                        {{ ui.boton("Eliminar", "peligro") }}
+                    </form>
+                {% endif %}
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+
+    {% if pagina.siguiente_cursor %}
+        {{ ui.paginacion(url_for('comprador.resenas', id_producto=id_producto, cursor=pagina.siguiente_cursor)) }}
+    {% endif %}
+
+{% else %}
+    {{ ui.vacio(msg_vacio) }}
+{% endif %}
+
+{% if usuario and usuario.rol == "Comprador" %}
+<section aria-labelledby="titulo-nueva-resena">
+    <h2 id="titulo-nueva-resena">Escribir una reseña</h2>
+    <form method="post" action="{{ url_for('comprador.crear_resena', id_producto=id_producto) }}"
+          class="form-resena" data-un-envio novalidate>
+        {{ ui.csrf() }}
+        {{ ui.selector("calificacion", "Calificación",
+            [("1","1 ★"),("2","2 ★★"),("3","3 ★★★"),("4","4 ★★★★"),("5","5 ★★★★★")],
+            previos.get("calificacion", ""), obligatorio=True) }}
+        {{ ui.area("comentario", "Comentario", previos.get("comentario", ""), obligatorio=True,
+                   attrs={"maxlength": 1000, "rows": 4,
+                          "placeholder": "Cuéntanos tu experiencia con este producto"}) }}
+        {{ ui.boton("Publicar reseña", "primario") }}
+    </form>
+</section>
+{% endif %}
+{% endblock %}

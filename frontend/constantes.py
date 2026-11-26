@@ -37,6 +37,9 @@ TRANSICIONES_PEDIDO = {
     "Devuelto": (),
 }
 VENDEDORES_MAX_PAGINAS = 10   # selector de 8.2: hasta 200 vendedores (1.4 pagina de 20)
+# Reseñas (tabla resena en schema resenas)
+COMENTARIO_MAX = 1000
+
 # 9.1 (tabla direccion)
 CALLE_MAX = 150
 NUMERO_MAX = 20
@@ -85,6 +88,9 @@ MSG_USUARIO_NO_EXISTE = "El usuario no existe"
 MSG_CATEGORIA_LARGA = "El nombre no puede superar 100 caracteres y la descripción 255"
 MSG_CATEGORIA_PADRE_NO_EXISTE = "La categoría padre no existe"
 MSG_PEDIDO_NO_EXISTE = "El pedido no existe"
+MSG_CALIFICACION_NO_VALIDA = "La calificación debe ser un número entre 1 y 5"
+MSG_COMENTARIO_LARGO = "El comentario no puede superar 1000 caracteres"
+MSG_SIN_RESENAS = "Este producto aún no tiene reseñas"
 MSG_VENDEDOR_NO_EXISTE = "El vendedor no existe"
 
 # --- Llamadas a API Gateway --------------------------------------------------

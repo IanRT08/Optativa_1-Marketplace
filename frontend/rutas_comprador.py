@@ -15,7 +15,9 @@ from constantes import (
     MSG_COMPRA_REALIZADA,
     MSG_ERROR_INTERNO,
     MSG_PRODUCTO_NO_DISPONIBLE,
+    MSG_SIN_RESENAS,
     MSG_STOCK_INSUFICIENTE,
+    ROL_ADMINISTRADOR,
     ROL_COMPRADOR,
 )
 from dtos import (
@@ -32,8 +34,10 @@ from dtos import (
     FiltroPedidosDTO,
     HistorialComprasDTO,
     PaginaPedidosDTO,
+    PaginaResenasDTO,
     PedidoDetalleDTO,
     QuitarCarritoDTO,
+    ResenaFormDTO,
 )
 from errores_campo import asignar, avisar
 from seguridad import hay_sesion, recordar_destino, rol_requerido
@@ -303,3 +307,68 @@ def historial():
         api.llamar("GET", "/historial/compras", params=FiltroFechasDTO.from_form(datos).to_dict())))
     return render_template("historial_compras.html", titulo="Historial de compras",
                            accion=url_for("comprador.historial"), **r)
+
+
+# =============================================================================
+# Reseñas: GET lista (abierta), POST crear, POST editar, POST eliminar
+# =============================================================================
+@bp.route("/productos/<int:id_producto>/resenas")
+def resenas(id_producto):
+    cursor = request.args.get("cursor", "")
+    params = {"cursor": cursor} if cursor else {}
+    pagina, error = None, None
+    try:
+        pagina = PaginaResenasDTO.from_api(api.llamar("GET", f"/productos/{id_producto}/resenas", params=params))
+    except api.ApiError as exc:
+        error = exc.mensaje
+    except ErrorRespuesta:
+        error = MSG_ERROR_INTERNO
+    return render_template("resenas.html", id_producto=id_producto, pagina=pagina, error=error,
+                           msg_vacio=MSG_SIN_RESENAS)
+
+
+@bp.route("/productos/<int:id_producto>/resenas/crear", methods=["POST"])
+@rol_requerido(ROL_COMPRADOR)
+def crear_resena(id_producto):
+    try:
+        dto = ResenaFormDTO.from_form(request.form)
+        datos = api.llamar("POST", f"/productos/{id_producto}/resenas", json=dto.to_dict())
+        flash(datos.get("mensaje") or "Reseña publicada correctamente", "exito")
+    except (ErrorValidacion, api.ApiError) as exc:
+        avisar(exc, "resena", request.form, redirige=True)
+    return redirect(url_for("comprador.resenas", id_producto=id_producto))
+
+
+@bp.route("/resenas/<int:id_resena>/editar", methods=["POST"])
+@rol_requerido(ROL_COMPRADOR)
+def editar_resena(id_resena):
+    id_producto = request.form.get("id_producto", "")
+    try:
+        dto = ResenaFormDTO.from_form(request.form)
+        datos = api.llamar("PUT", f"/resenas/{id_resena}", json=dto.to_dict())
+        flash(datos.get("mensaje") or "Reseña actualizada correctamente", "exito")
+    except (ErrorValidacion, api.ApiError) as exc:
+        avisar(exc, "resena", request.form, redirige=True)
+    destino = url_for("comprador.resenas", id_producto=id_producto) if id_producto.isdigit() else url_for("catalogo.inicio")
+    return redirect(destino)
+
+
+@bp.route("/resenas/<int:id_resena>/eliminar", methods=["POST"])
+def eliminar_resena(id_resena):
+    """Comprador elimina la suya; Administrador elimina cualquiera.
+    Ambos roles llegan a esta ruta; el token decide en la Lambda."""
+    from seguridad import hay_sesion
+    if not hay_sesion():
+        return redirect(url_for("auth.login"))
+    rol = session.get("rol")
+    if rol not in (ROL_COMPRADOR, ROL_ADMINISTRADOR):
+        abort(403)
+    id_producto = request.form.get("id_producto", "")
+    try:
+        datos = api.llamar("DELETE", f"/resenas/{id_resena}")
+        flash(datos.get("mensaje") or "Reseña eliminada correctamente", "exito")
+    except api.ApiError as exc:
+        flash(exc.mensaje, "error")
+    if id_producto.isdigit():
+        return redirect(url_for("comprador.resenas", id_producto=int(id_producto)))
+    return redirect(url_for("catalogo.inicio"))

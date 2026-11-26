@@ -16,12 +16,14 @@ from datetime import date
 from flask import flash, g, session
 
 from constantes import (
+    MSG_CALIFICACION_NO_VALIDA,
     MSG_CAMPOS_OBLIGATORIOS,
     MSG_CANTIDAD_ENTERA,
     MSG_CATEGORIA_LARGA,
     MSG_CATEGORIA_NO_EXISTE,
     MSG_CATEGORIA_PADRE_NO_EXISTE,
     MSG_COMBINACION_LARGA,
+    MSG_COMENTARIO_LARGO,
     MSG_CORREO_FORMATO,
     MSG_DIRECCION_LARGA,
     MSG_DIRECCION_NO_VALIDA,
@@ -65,6 +67,7 @@ FORMULARIOS = {
     "filtro_productos": (("id_categoria", "estado"), ()),
     "filtro_usuarios": (("rol", "estado"), ()),
     "filtro_catalogo": (("precio_min", "precio_max", "id_categoria"), ()),
+    "resena": (("calificacion", "comentario"), ("calificacion", "comentario")),
 }
 
 # Campos que son radio (si no se elige ninguno, el navegador no los envía).
@@ -108,6 +111,10 @@ _REGLAS = {
     "No se encontraron productos para actualizar": ("id_categoria",),
     "La fecha inicial no puede ser mayor a la fecha final": ("fecha_inicio",),
     MSG_VENDEDOR_NO_EXISTE: ("id_vendedor",),
+    MSG_CALIFICACION_NO_VALIDA: ("calificacion",),
+    MSG_COMENTARIO_LARGO: ("comentario",),
+    "Ya reseñaste este producto": (),
+    "Solo puedes reseñar productos que hayas comprado y recibido": (),
 }
 
 # validar_texto de las Lambdas: "{etiqueta} no puede ..." (la más larga primero).
