@@ -21,10 +21,10 @@ def test_71_lista_filtros_y_paginacion(R, cliente):
     h = c.get("/pedidos").get_data(as_text=True)
     assert "#4" in h and "Pendiente" in h and 'href="/pedidos/4"' in h
     assert R.llamadas[-1] == ("GET", "/pedidos", {})
-    assert "cursor=4" in h and "Primera página" not in h
+    assert "cursor=4" in h and "aria-current=\"page\"" in h
     h = c.get("/pedidos?estado=Enviado&fecha=2026-11-16&cursor=4").get_data(as_text=True)
     assert R.llamadas[-1][2] == {"estado": "Enviado", "fecha": "2026-11-16", "cursor": "4"}
-    assert "Primera página" in h and "Quitar filtros" in h
+    assert "pagina=1" in h and "Quitar filtros" in h
 
 
 def test_71_sin_pedidos_y_errores(R, cliente):
